@@ -1,0 +1,7 @@
+{
+  "name": "Excel Accounting",
+  "databaseUrl": "jdbc:h2:tcp://localhost/~/test",
+  "databaseUser": "sa",
+  "databasePassword": "",
+  "developmentMode": true
+}
