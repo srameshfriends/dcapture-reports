@@ -1,72 +1,78 @@
 package excel.accounting.service;
 
-import excel.accounting.db.DataProcessor;
 import excel.accounting.db.QueryBuilder;
 import excel.accounting.entity.Account;
-import excel.accounting.model.RowData;
+import excel.accounting.poi.ExcelTypeConverter;
 import excel.accounting.shared.DataConverter;
-import excel.accounting.shared.RowDataProvider;
+import excel.accounting.db.RowTypeConverter;
 import org.apache.poi.ss.usermodel.Cell;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Account Service
  */
-public class AccountService implements RowDataProvider<Account> {
-    private DataProcessor dataProcessor;
+public class AccountService extends AbstractService implements RowTypeConverter<Account>, ExcelTypeConverter<Account> {
 
-    public void setDataProcessor(DataProcessor dataProcessor) {
-        this.dataProcessor = dataProcessor;
+    @Override
+    protected String getSqlFileName() {
+        return "account.sql";
     }
 
     public List<Account> loadAll() {
-        QueryBuilder queryBuilder = new QueryBuilder();
-        queryBuilder.append("SELECT id, code, name FROM entity.account;");
-        return dataProcessor.findRowDataList(queryBuilder, this);
+        QueryBuilder queryBuilder = getQueryBuilder("loadAll");
+       // return getDataProcessor().findRowDataList(queryBuilder, this);
+        return new ArrayList<>();
     }
 
-    public void insert(List<Account> accountList) {
-        for (Account account : accountList) {
-            dataProcessor.insert(account.updateQuery(null));
-        }
+    public void insertAccount(Account account) {
+        QueryBuilder queryBuilder = getQueryBuilder("insertAccount");
+        queryBuilder.add(1, account.getAccountNumber());
+        queryBuilder.add(2, account.getName());
+        System.out.println(queryBuilder.getQuery());
+        getDataProcessor().insert(queryBuilder);
+    }
+
+    public void insertAccount(List<Account> accountList) {
+        accountList.forEach(this::insertAccount);
+    }
+
+
+    @Override
+    public Account getRowType(QueryBuilder builder, Object[] objectArray) {
+        Account account = new Account();
+        Integer id = (Integer) objectArray[0];
+        String accountNumber = (String) objectArray[1];
+        String name = (String) objectArray[2];
+        //
+        account.setId(id);
+        account.setAccountNumber(accountNumber);
+        account.setName(name);
+        return account;
     }
 
     @Override
-    public Account getRowData(int rowIndex, List<Cell> cellList) {
+    public Account getExcelType(int rowIndex, List<Cell> cellList) {
         if (rowIndex == 0) {
             return null;
         }
         Account account = new Account();
         int id = DataConverter.getInteger(cellList.get(0));
-        String code = cellList.get(1).getStringCellValue();
+        String accountNumber = cellList.get(1).getStringCellValue();
         String name = cellList.get(2).getStringCellValue();
         //
         account.setId(id);
-        account.setCode(code);
+        account.setAccountNumber(accountNumber);
         account.setName(name);
         return account;
     }
 
     @Override
-    public Account getRowData(String queryName, Object[] objectArray) {
-        Account account = new Account();
-        Integer id = (Integer) objectArray[0];
-        String code = (String) objectArray[1];
-        String name = (String) objectArray[2];
-        //
-        account.setId(id);
-        account.setCode(code);
-        account.setName(name);
-        return account;
-    }
-
-    @Override
-    public String[] getCellData(Account account) {
-        String[] cellData = new String[3];
-        cellData[0] = account.getId() + "";
-        cellData[1] = account.getCode();
+    public Object[] getExcelRow(Account account) {
+        Object[] cellData = new String[3];
+        cellData[0] = account.getId();
+        cellData[1] = account.getAccountNumber();
         cellData[2] = account.getName();
         return cellData;
     }

@@ -19,7 +19,7 @@ public class ApplicationControl {
     }
 
     private void initialize() throws Exception {
-        final Path configPath = FileHelper.getClassPathLocation("config/application.json");
+        final Path configPath = FileHelper.getClassPath("config/application.json");
         if (configPath == null) {
             throw new NullPointerException("Application config json is missing");
         }

@@ -1,6 +1,6 @@
 package excel.accounting.ui;
 
-import excel.accounting.model.RowData;
+import excel.accounting.model.EntityRow;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -13,59 +13,59 @@ import java.util.Date;
  * Data List View
  */
 public class DataListView {
-    private final TableView<RowData> tableView;
+    private final TableView<EntityRow> tableView;
 
     public DataListView() {
         tableView = new TableView<>();
     }
 
-    public TableColumn<RowData, String> addTextColumn(String name, String title) {
-        TableColumn<RowData, String> column = new TableColumn<>();
+    public TableColumn<EntityRow, String> addTextColumn(String name, String title) {
+        TableColumn<EntityRow, String> column = new TableColumn<>();
         column.setId(name);
         column.setText(title);
-        column.setCellValueFactory(new PropertyValueFactory<RowData, String>(name));
+        column.setCellValueFactory(new PropertyValueFactory<EntityRow, String>(name));
         tableView.getColumns().add(column);
         return column;
     }
 
-    public TableColumn<RowData, BigDecimal> addDecimalColumn(String name, String title) {
-        TableColumn<RowData, BigDecimal> column = new TableColumn<>();
+    public TableColumn<EntityRow, BigDecimal> addDecimalColumn(String name, String title) {
+        TableColumn<EntityRow, BigDecimal> column = new TableColumn<>();
         column.setId(name);
         column.setText(title);
-        column.setCellValueFactory(new PropertyValueFactory<RowData, BigDecimal>(name));
+        column.setCellValueFactory(new PropertyValueFactory<EntityRow, BigDecimal>(name));
         tableView.getColumns().add(column);
 
         return column;
     }
 
-    public TableColumn<RowData, Integer> addIntegerColumn(String name, String title) {
-        TableColumn<RowData, Integer> column = new TableColumn<>();
+    public TableColumn<EntityRow, Integer> addIntegerColumn(String name, String title) {
+        TableColumn<EntityRow, Integer> column = new TableColumn<>();
         column.setId(name);
         column.setText(title);
-        column.setCellValueFactory(new PropertyValueFactory<RowData, Integer>(name));
+        column.setCellValueFactory(new PropertyValueFactory<EntityRow, Integer>(name));
         tableView.getColumns().add(column);
         return column;
     }
 
-    public TableColumn<RowData, Date> addDateColumn(String name, String title) {
-        TableColumn<RowData, Date> column = new TableColumn<>();
+    public TableColumn<EntityRow, Date> addDateColumn(String name, String title) {
+        TableColumn<EntityRow, Date> column = new TableColumn<>();
         column.setId(name);
         column.setText(title);
-        column.setCellValueFactory(new PropertyValueFactory<RowData, Date>(name));
+        column.setCellValueFactory(new PropertyValueFactory<EntityRow, Date>(name));
         tableView.getColumns().add(column);
         return column;
     }
 
-    public TableColumn<RowData, Boolean> addBooleanColumn(String name, String title) {
-        TableColumn<RowData, Boolean> column = new TableColumn<>();
+    public TableColumn<EntityRow, Boolean> addBooleanColumn(String name, String title) {
+        TableColumn<EntityRow, Boolean> column = new TableColumn<>();
         column.setId(name);
         column.setText(title);
-        column.setCellValueFactory(new PropertyValueFactory<RowData, Boolean>(name));
+        column.setCellValueFactory(new PropertyValueFactory<EntityRow, Boolean>(name));
         tableView.getColumns().add(column);
         return column;
     }
 
-    public TableView<RowData> getTableView() {
+    public TableView<EntityRow> getTableView() {
         return tableView;
     }
 }

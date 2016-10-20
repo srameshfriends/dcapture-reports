@@ -17,12 +17,6 @@ public class Main extends Application {
         viewManager.addView(new AccountView());
     }
 
-    private void createTable(ApplicationControl control) {
-        DataProcessor dataProcessor = control.getDataProcessor();
-        dataProcessor.create(dataProcessor.createSchema());
-        dataProcessor.create(new Account().createQuery());
-    }
-
     @Override
     public void start(Stage primaryStage) throws Exception {
         ApplicationControl control = ApplicationControl.instance();
@@ -30,7 +24,6 @@ public class Main extends Application {
         viewManager.start(primaryStage, control);
         addView(viewManager);
         viewManager.showView("accountView");
-        createTable(control);
         primaryStage.setOnCloseRequest(event -> onApplicationCloseEvent());
     }
 

@@ -1,7 +1,7 @@
 package excel.accounting.view;
 
 import excel.accounting.entity.Account;
-import excel.accounting.model.RowData;
+import excel.accounting.model.EntityRow;
 import excel.accounting.poi.ReadExcelData;
 import excel.accounting.poi.WriteExcelData;
 import excel.accounting.service.AccountService;
@@ -82,7 +82,7 @@ public class AccountView extends AbstractView implements ViewHolder {
         if (accountList == null || accountList.isEmpty()) {
             return;
         }
-        ObservableList<RowData> observableList = FXCollections.observableArrayList(accountList);
+        ObservableList<EntityRow> observableList = FXCollections.observableArrayList(accountList);
         dataListView.getTableView().setItems(observableList);
     }
 
@@ -94,7 +94,7 @@ public class AccountView extends AbstractView implements ViewHolder {
         ReadExcelData<Account> readExcelData = new ReadExcelData<>(file, accountService);
         List<Account> rowDataList = readExcelData.readRowData(3, true);
         if (!rowDataList.isEmpty()) {
-            accountService.insert(rowDataList);
+            accountService.insertAccount(rowDataList);
         }
         loadRecords();
     }
@@ -106,7 +106,7 @@ public class AccountView extends AbstractView implements ViewHolder {
         if (file == null) {
             return;
         }
-        WriteExcelData writeExcelData = new WriteExcelData(file, accountService);
+        WriteExcelData<Account> writeExcelData = new WriteExcelData<>(file, accountService);
         writeExcelData.writeRowData(getName(), accountService.loadAll());
     }
 }

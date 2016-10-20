@@ -1,11 +1,9 @@
 package excel.accounting.model;
 
-import excel.accounting.db.QueryBuilder;
-
 /**
- * Row Data
+ * Entity Row
  */
-public abstract class RowData {
+public abstract class EntityRow {
     private int id;
 
     public int getId() {
@@ -19,8 +17,4 @@ public abstract class RowData {
     public boolean isNew() {
         return getId() < 1;
     }
-
-    public abstract String createQuery();
-
-    public abstract QueryBuilder updateQuery(String queryName);
 }

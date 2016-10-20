@@ -1,76 +1,115 @@
 package excel.accounting.db;
 
-import javax.management.AttributeList;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.*;
 
 /**
  * Query Parameter
  */
 public class QueryBuilder {
-    private String name;
-    private StringBuilder builder;
-    private List<Object> parameters;
+    private final String queryName, queryTemplate;
+    private StringBuilder selectBuilder, joinBuilder, whereBuilder, orderByBuilder;
+    private String limitQuery;
+    private Map<Integer, Object> parameters;
 
-    public QueryBuilder() {
-        builder = new StringBuilder();
-        parameters = new ArrayList<>();
+    QueryBuilder(String queryName) {
+        this.queryName = queryName;
+        parameters = new HashMap<>();
+        queryTemplate = null;
     }
 
-    public QueryBuilder append(String queryText) {
-        builder.append(queryText);
+    QueryBuilder(String queryName, String queryTemplate) {
+        this.queryName = queryName;
+        this.queryTemplate = queryTemplate;
+    }
+
+    public String getQueryName() {
+        return queryName;
+    }
+
+    public String getQueryTemplate() {
+        return queryTemplate;
+    }
+
+    private void appendSelect(String txt) {
+        if (selectBuilder == null) {
+            selectBuilder = new StringBuilder();
+        }
+        selectBuilder.append(txt);
+    }
+
+    private void appendJoin(String txt) {
+        if (joinBuilder == null) {
+            joinBuilder = new StringBuilder();
+        }
+        joinBuilder.append(txt);
+    }
+
+    private void appendOrderBy(String txt) {
+        if (orderByBuilder == null) {
+            orderByBuilder = new StringBuilder();
+        }
+        orderByBuilder.append(txt);
+    }
+
+    private void appendWhere(String txt) {
+        if (whereBuilder == null) {
+            whereBuilder = new StringBuilder();
+        }
+        whereBuilder.append(txt);
+    }
+
+    public QueryBuilder select(String query) {
+        appendSelect(query);
         return QueryBuilder.this;
     }
 
-    public QueryBuilder addInteger(int integer) {
-        parameters.add(integer);
+    public QueryBuilder where(String query) {
+        appendWhere(query);
         return QueryBuilder.this;
     }
 
-    public QueryBuilder addDate(Date date) {
-        parameters.add(date);
+    public QueryBuilder orderBy(String query) {
+        appendOrderBy(query);
         return QueryBuilder.this;
     }
 
-    public QueryBuilder addBigDecimal(BigDecimal bigDecimal) {
-        parameters.add(bigDecimal == null ? BigDecimal.ZERO : bigDecimal);
+    public QueryBuilder limit(int startFrom, int rowCount) {
+        limitQuery = " limit " + rowCount + " offset " + startFrom;
         return QueryBuilder.this;
     }
 
-    public QueryBuilder addString(String text) {
-        parameters.add(text == null ? "" : text);
+    public QueryBuilder add(int index, Object parameter) {
+        parameters.put(index, parameter);
         return QueryBuilder.this;
     }
 
-    public QueryBuilder add(boolean bool) {
-        parameters.add(bool);
-        return QueryBuilder.this;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getQuery() {
-        return builder.toString();
-    }
-
-    public List<Object> getParameters() {
+    public Map<Integer, Object> getParameters() {
         return parameters;
     }
 
-    public void setParameters(List<Object> parameters) {
-        this.parameters = parameters;
-    }
-
-    @Override
-    public String toString() {
-        return builder.toString().isEmpty() ? super.toString() : builder.toString();
+    public String getQuery() {
+        String query = "";
+        System.out.println(getQueryTemplate() + " query template");
+        if (getQueryTemplate() != null) {
+            query = getQueryTemplate();
+        }
+        if (query.contains("$select") && selectBuilder != null) {
+            query = StringUtils.replace(query, "$select", selectBuilder.toString());
+        }
+        if (query.contains("$where") && whereBuilder != null) {
+            query = StringUtils.replace(query, "$where", whereBuilder.toString());
+        }
+        if (query.contains("$join") && joinBuilder != null) {
+            query = StringUtils.replace(query, "$where", joinBuilder.toString());
+        }
+        if (query.contains("$orderby") && orderByBuilder != null) {
+            query = StringUtils.replace(query, "$orderby", orderByBuilder.toString());
+        }
+        if (limitQuery != null) {
+            query = query.concat(limitQuery);
+        }
+        return query;
     }
 }

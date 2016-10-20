@@ -1,14 +1,17 @@
 package excel.accounting.db;
 
 import excel.accounting.model.ApplicationConfig;
-import excel.accounting.shared.RowDataProvider;
+import excel.accounting.shared.FileHelper;
 import org.apache.log4j.Logger;
 import org.h2.jdbcx.JdbcConnectionPool;
 import org.h2.tools.Server;
 
+import java.io.File;
 import java.math.BigDecimal;
+import java.nio.file.Path;
 import java.sql.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Data Processor
@@ -16,35 +19,63 @@ import java.util.*;
 public class DataProcessor {
     private static final Logger logger = Logger.getLogger(DataProcessor.class);
     private JdbcConnectionPool jdbcConnectionPool;
+    private Map<String, Map<String, String>> namedQueryMap;
 
     public void startDatabase(ApplicationConfig config) throws Exception {
         jdbcConnectionPool = JdbcConnectionPool.create(config.getDatabaseUrl(), config.getDatabaseUser(),
                 config.getDatabasePassword());
+        namedQueryMap = new HashMap<>();
+        addNamedQueries();
+        executeTableForwardQuery();
+    }
 
+    private String getSchema() {
+        return "entity";
     }
 
     private Connection getConnection() throws SQLException {
         return jdbcConnectionPool.getConnection();
     }
 
-    private void addParameter(PreparedStatement statement, List<Object> parameterList) throws SQLException {
-        int index = 1;
-        for (Object parameter : parameterList) {
+    private void addParameter(PreparedStatement statement, Map<Integer, Object> parameterMap) throws SQLException {
+        for (Map.Entry<Integer, Object> entry : parameterMap.entrySet()) {
+            Object parameter = entry.getValue();
             if (parameter == null) {
-                index += 1;
-                continue;
-            }
-            if (parameter instanceof String) {
-                statement.setString(index, (String) parameter);
+                statement.setString(entry.getKey(), null);
+            } else if (parameter instanceof String) {
+                statement.setString(entry.getKey(), (String) parameter);
             } else if (parameter instanceof Integer) {
-                statement.setInt(index, (Integer) parameter);
+                statement.setInt(entry.getKey(), (Integer) parameter);
             } else if (parameter instanceof BigDecimal) {
-                statement.setBigDecimal(index, (BigDecimal) parameter);
+                statement.setBigDecimal(entry.getKey(), (BigDecimal) parameter);
             } else if (parameter instanceof Boolean) {
-                statement.setBoolean(index, (Boolean) parameter);
+                statement.setBoolean(entry.getKey(), (Boolean) parameter);
+            } else {
+                DataType dataType = (DataType) parameter;
+                if (DataType.DateType.equals(dataType)) {
+                    statement.setDate(entry.getKey(), null);
+                } else if (DataType.IntegerType.equals(dataType)) {
+                    statement.setInt(entry.getKey(), 0);
+                } else if (DataType.DoubleType.equals(dataType)) {
+                    statement.setDouble(entry.getKey(), 0);
+                } else if (DataType.BigDecimalType.equals(dataType)) {
+                    statement.setBigDecimal(entry.getKey(), BigDecimal.ZERO);
+                } else if (DataType.StringType.equals(dataType)) {
+                    statement.setString(entry.getKey(), null);
+                } else if (DataType.BooleanType.equals(dataType)) {
+                    statement.setBoolean(entry.getKey(), false);
+                }
             }
-            index += 1;
         }
+    }
+
+    public QueryBuilder getQueryBuilder(String fileName, String queryName) {
+        String queryTemplate = null;
+        Map<String, String> queryTemplateMap = namedQueryMap.get(fileName);
+        if (queryTemplateMap != null) {
+            queryTemplate = queryTemplateMap.get(queryName);
+        }
+        return queryTemplate == null ? new QueryBuilder(queryName) : new QueryBuilder(queryName, queryTemplate);
     }
 
     public Object findObject(QueryBuilder query) {
@@ -66,13 +97,13 @@ public class DataProcessor {
         return value;
     }
 
-    public List<Object[]> findObjects(QueryBuilder query) {
-        logger.debug(query.getQuery());
+    public List<Object[]> findObjects(QueryBuilder builder) {
+        logger.info(builder.getQuery());
         try {
             List<Object[]> resultList = new ArrayList<>();
             Connection con = getConnection();
             Statement stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery(query.getQuery());
+            ResultSet rs = stmt.executeQuery(builder.getQuery());
             int columnCount = rs.getMetaData().getColumnCount();
             while (rs.next()) {
                 Object[] result = new Object[columnCount];
@@ -91,11 +122,11 @@ public class DataProcessor {
         return null;
     }
 
-    public <T> List<T> findRowDataList(QueryBuilder builder, RowDataProvider<T> rowDataProvider) {
+    public <T> List<T> findRowDataList(QueryBuilder builder, RowTypeConverter<T> rowTypeConverter) {
         List<T> dataList = new ArrayList<>();
         List<Object[]> objList = findObjects(builder);
         for (Object[] obj : objList) {
-            T rowData = rowDataProvider.getRowData(builder.getName(), obj);
+            T rowData = rowTypeConverter.getRowType(builder, obj);
             if (rowData != null) {
                 dataList.add(rowData);
             }
@@ -187,8 +218,54 @@ public class DataProcessor {
         }
     }
 
-    public String createSchema() {
-        return "CREATE SCHEMA IF NOT EXISTS entity";
+    private void executeTableForwardQuery() throws Exception {
+        List<String> queryList = new ArrayList<>();
+        for (Map<String, String> queryMap : namedQueryMap.values()) {
+            queryList.addAll(queryMap.values().stream().filter("create table"::equals).collect(Collectors.toList()));
+        }
+        Connection connection = getConnection();
+        Statement statement = connection.createStatement();
+        statement.executeUpdate("CREATE SCHEMA IF NOT EXISTS " + getSchema() + ";");
+        for (String createQuery : queryList) {
+            logger.info("Table : " + createQuery);
+            statement.executeUpdate(createQuery);
+        }
+        statement.close();
+        connection.close();
+    }
+
+    private void addNamedQueries() throws Exception {
+        Path path = FileHelper.getClassPath("");
+        File dir = path == null ? null : path.toFile();
+        List<File> sqlFileList = dir == null ? null : FileHelper.getFilesInDirectory(dir, "sql");
+        System.out.println(sqlFileList == null ? "file not found " : sqlFileList.size());
+        if (sqlFileList != null) {
+            for (File sqlFile : sqlFileList) {
+                addNamedQueries(sqlFile);
+            }
+        }
+    }
+
+    private void addNamedQueries(File sqlFile) throws Exception {
+        final String fileName = FileHelper.getNameWithoutExtension(sqlFile);
+        Map<String, String> queryTemplateMap = new HashMap<>();
+        namedQueryMap.put(fileName, queryTemplateMap);
+        //
+        List<String> sqlList = FileHelper.readAllLines(sqlFile);
+        String name = "", query;
+        StringBuilder builder = new StringBuilder();
+        for (String sql : sqlList) {
+            if (sql.trim().startsWith("--")) {
+                query = builder.toString();
+                if (!name.isEmpty() && !query.isEmpty()) {
+                    queryTemplateMap.put(name, query.toLowerCase().trim());
+                }
+                name = sql.trim().replace("--", "");
+                builder = new StringBuilder();
+            } else {
+                builder.append(sql);
+            }
+        }
     }
 
     public static void main(String... args) throws Exception {

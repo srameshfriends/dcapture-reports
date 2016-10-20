@@ -18,6 +18,7 @@
         <h2>1.4.192</h2>
         <poi>3.15</poi>
         <gson>2.6.2</gson>
+        <commons-lang3>3.4</commons-lang3>
     </properties>
 
     <dependencies>
@@ -56,6 +57,12 @@
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
             <version>${commons-logging}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.4</version>
         </dependency>
 
         <dependency>

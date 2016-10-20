@@ -1,7 +1,6 @@
 package excel.accounting.poi;
 
 import excel.accounting.shared.FileHelper;
-import excel.accounting.shared.RowDataProvider;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
@@ -19,11 +18,11 @@ import java.util.List;
  */
 public class ReadExcelData<T> {
     private final File file;
-    private final RowDataProvider<T> rowDataProvider;
+    private final ExcelTypeConverter<T> excelTypeConverter;
 
-    public ReadExcelData(File file, RowDataProvider<T> rowDataProvider) {
+    public ReadExcelData(File file, ExcelTypeConverter<T> excelTypeConverter) {
         this.file = file;
-        this.rowDataProvider = rowDataProvider;
+        this.excelTypeConverter = excelTypeConverter;
     }
 
     public List<T> readRowData(int columnCount, boolean ignoreHeader) {
@@ -51,7 +50,7 @@ public class ReadExcelData<T> {
                 Row row = sheet.getRow(rowIndex);
                 List<Cell> cellList = getCellList(columnCount, row);
                 if (!cellList.isEmpty()) {
-                    T rowData = rowDataProvider.getRowData(rowIndex, cellList);
+                    T rowData = excelTypeConverter.getExcelType(rowIndex, cellList);
                     if (rowData != null) {
                         resultList.add(rowData);
                     }
@@ -74,7 +73,7 @@ public class ReadExcelData<T> {
                 Row row = sheet.getRow(rowIndex);
                 List<Cell> cellList = getCellList(columnCount, row);
                 if (!cellList.isEmpty()) {
-                    T rowData = rowDataProvider.getRowData(rowIndex, cellList);
+                    T rowData = excelTypeConverter.getExcelType(rowIndex, cellList);
                     if (rowData != null) {
                         resultList.add(rowData);
                     }
