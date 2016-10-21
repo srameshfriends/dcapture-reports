@@ -28,4 +28,8 @@ public abstract class AbstractView implements ViewHolder {
     protected DataProcessor getDataProcessor() {
         return applicationControl.getDataProcessor();
     }
+
+    protected Object getService(String name) {
+        return applicationControl.getService(name);
+    }
 }

@@ -40,11 +40,10 @@ public class AccountView extends AbstractView implements ViewHolder {
 
     @Override
     public Node createControl() {
-        accountService = new AccountService();
-        accountService.setDataProcessor(getDataProcessor());
+        accountService = (AccountService) getService("accountService");
         dataListView = new DataListView();
         dataListView.addIntegerColumn("id", "Id").setMinWidth(100);
-        dataListView.addTextColumn("code", "Code").setMinWidth(220);
+        dataListView.addTextColumn("accountNumber", "Account Number").setMinWidth(220);
         dataListView.addTextColumn("name", "Name").setMinWidth(320);
         //
         VBox basePanel = new VBox();
@@ -75,6 +74,10 @@ public class AccountView extends AbstractView implements ViewHolder {
     @Override
     public boolean canCloseView() {
         return true;
+    }
+
+    @Override
+    public void closeView() {
     }
 
     private void loadRecords() {

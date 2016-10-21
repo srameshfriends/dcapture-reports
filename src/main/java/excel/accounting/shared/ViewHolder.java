@@ -21,5 +21,7 @@ public interface ViewHolder {
 
     boolean canCloseView();
 
+    void closeView();
+
     void onResize(double width, double height);
 }

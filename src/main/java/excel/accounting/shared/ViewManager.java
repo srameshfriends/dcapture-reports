@@ -109,4 +109,8 @@ public class ViewManager {
         holder.onResize(getContentWidth(), getContentHeight());
         currentView = holder;
     }
+
+    public void closeAll() {
+        viewRegister.values().forEach(ViewHolder::closeView);
+    }
 }

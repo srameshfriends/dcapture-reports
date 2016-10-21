@@ -1,10 +1,7 @@
 package excel.accounting.client;
 
-import excel.accounting.db.DataProcessor;
-import excel.accounting.entity.Account;
 import excel.accounting.shared.ApplicationControl;
 import excel.accounting.shared.ViewManager;
-import excel.accounting.view.AccountView;
 import javafx.application.Application;
 import javafx.stage.Stage;
 
@@ -12,22 +9,24 @@ import javafx.stage.Stage;
  * Main
  */
 public class Main extends Application {
-
-    private void addView(ViewManager viewManager) {
-        viewManager.addView(new AccountView());
-    }
+    private ApplicationControl applicationControl;
+    private ViewManager viewManager;
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        ApplicationControl control = ApplicationControl.instance();
-        ViewManager viewManager = new ViewManager();
-        viewManager.start(primaryStage, control);
-        addView(viewManager);
+        applicationControl = ApplicationControl.instance();
+        viewManager = new ViewManager();
+        viewManager.start(primaryStage, applicationControl);
+        Registry.registerView(viewManager);
+        Registry.registerService(applicationControl);
         viewManager.showView("accountView");
+
         primaryStage.setOnCloseRequest(event -> onApplicationCloseEvent());
     }
 
     private void onApplicationCloseEvent() {
+        viewManager.closeAll();
+        applicationControl.close();
     }
 
     public static void main(String[] args) {

@@ -1,6 +1,7 @@
 package excel.accounting.db;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import java.util.*;
 
@@ -13,15 +14,10 @@ public class QueryBuilder {
     private String limitQuery;
     private Map<Integer, Object> parameters;
 
-    QueryBuilder(String queryName) {
-        this.queryName = queryName;
-        parameters = new HashMap<>();
-        queryTemplate = null;
-    }
-
     QueryBuilder(String queryName, String queryTemplate) {
         this.queryName = queryName;
         this.queryTemplate = queryTemplate;
+        parameters = new HashMap<>();
     }
 
     public String getQueryName() {
@@ -90,11 +86,7 @@ public class QueryBuilder {
     }
 
     public String getQuery() {
-        String query = "";
-        System.out.println(getQueryTemplate() + " query template");
-        if (getQueryTemplate() != null) {
-            query = getQueryTemplate();
-        }
+        String query = getQueryTemplate();
         if (query.contains("$select") && selectBuilder != null) {
             query = StringUtils.replace(query, "$select", selectBuilder.toString());
         }
@@ -111,5 +103,15 @@ public class QueryBuilder {
             query = query.concat(limitQuery);
         }
         return query;
+    }
+
+    @Override
+    public int hashCode() {
+        return queryName.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return queryName;
     }
 }

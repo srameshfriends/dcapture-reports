@@ -1,13 +1,13 @@
 package excel.accounting.service;
 
 import excel.accounting.db.QueryBuilder;
+import excel.accounting.db.Transaction;
 import excel.accounting.entity.Account;
 import excel.accounting.poi.ExcelTypeConverter;
 import excel.accounting.shared.DataConverter;
 import excel.accounting.db.RowTypeConverter;
 import org.apache.poi.ss.usermodel.Cell;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -17,27 +17,26 @@ public class AccountService extends AbstractService implements RowTypeConverter<
 
     @Override
     protected String getSqlFileName() {
-        return "account.sql";
+        return "account";
     }
 
     public List<Account> loadAll() {
         QueryBuilder queryBuilder = getQueryBuilder("loadAll");
-       // return getDataProcessor().findRowDataList(queryBuilder, this);
-        return new ArrayList<>();
+        return getDataReader().findRowDataList(queryBuilder, this);
     }
 
-    public void insertAccount(Account account) {
+    private void insertAccount(Account account) {
         QueryBuilder queryBuilder = getQueryBuilder("insertAccount");
         queryBuilder.add(1, account.getAccountNumber());
         queryBuilder.add(2, account.getName());
-        System.out.println(queryBuilder.getQuery());
-        getDataProcessor().insert(queryBuilder);
+        Transaction transaction = createTransaction();
+        transaction.execute(queryBuilder);
+        transaction.commit();
     }
 
     public void insertAccount(List<Account> accountList) {
         accountList.forEach(this::insertAccount);
     }
-
 
     @Override
     public Account getRowType(QueryBuilder builder, Object[] objectArray) {
