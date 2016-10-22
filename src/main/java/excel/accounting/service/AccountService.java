@@ -3,12 +3,17 @@ package excel.accounting.service;
 import excel.accounting.db.QueryBuilder;
 import excel.accounting.db.Transaction;
 import excel.accounting.entity.Account;
+import excel.accounting.entity.Status;
 import excel.accounting.poi.ExcelTypeConverter;
 import excel.accounting.shared.DataConverter;
 import excel.accounting.db.RowTypeConverter;
 import org.apache.poi.ss.usermodel.Cell;
 
+import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Account Service
@@ -25,54 +30,145 @@ public class AccountService extends AbstractService implements RowTypeConverter<
         return getDataReader().findRowDataList(queryBuilder, this);
     }
 
-    private void insertAccount(Account account) {
-        QueryBuilder queryBuilder = getQueryBuilder("insertAccount");
-        queryBuilder.add(1, account.getAccountNumber());
-        queryBuilder.add(2, account.getName());
+    /**
+     * status, account_number
+     */
+    private void updateStatus(Status requiredStatus, Status changedStatus, List<Account> accountList) {
+        List<Account> filteredList = filteredByStatus(requiredStatus, accountList);
+        if (filteredList.isEmpty()) {
+            return;
+        }
+        for (Account account : filteredList) {
+            account.setStatus(changedStatus);
+        }
+        QueryBuilder queryBuilder = getQueryBuilder("updateStatus");
         Transaction transaction = createTransaction();
-        transaction.execute(queryBuilder);
-        transaction.commit();
+        transaction.setBatchQuery(queryBuilder);
+        for (Account account : accountList) {
+            transaction.addBatch(getRowObjectMap(queryBuilder, account));
+        }
+        transaction.executeBatch();
+    }
+
+    public void setAsDrafted(List<Account> accountList) {
+        updateStatus(Status.Verified, Status.Drafted, accountList);
+    }
+
+    public void setAsVerified(List<Account> accountList) {
+        updateStatus(Status.Drafted, Status.Verified, accountList);
+    }
+
+    public void setAsClosed(List<Account> accountList) {
+        updateStatus(Status.Verified, Status.Closed, accountList);
+        updateStatus(Status.Linked, Status.Closed, accountList);
     }
 
     public void insertAccount(List<Account> accountList) {
-        accountList.forEach(this::insertAccount);
+        QueryBuilder queryBuilder = getQueryBuilder("insertAccount");
+        Transaction transaction = createTransaction();
+        transaction.setBatchQuery(queryBuilder);
+        for (Account account : accountList) {
+            transaction.addBatch(getRowObjectMap(queryBuilder, account));
+        }
+        transaction.executeBatch();
     }
 
+    public void deleteAccount(List<Account> accountList) {
+        List<Account> filteredList = filteredByStatus(Status.Drafted, accountList);
+        if (filteredList.isEmpty()) {
+            return;
+        }
+        QueryBuilder queryBuilder = getQueryBuilder("deleteAccount");
+        Transaction transaction = createTransaction();
+        transaction.setBatchQuery(queryBuilder);
+        for (Account account : accountList) {
+            transaction.addBatch(getRowObjectMap(queryBuilder, account));
+        }
+        transaction.executeBatch();
+    }
+
+    /**
+     * id, account_number, name, category, status, currency, balance, description
+     */
     @Override
     public Account getRowType(QueryBuilder builder, Object[] objectArray) {
         Account account = new Account();
-        Integer id = (Integer) objectArray[0];
-        String accountNumber = (String) objectArray[1];
-        String name = (String) objectArray[2];
-        //
-        account.setId(id);
-        account.setAccountNumber(accountNumber);
-        account.setName(name);
+        account.setId((Integer) objectArray[0]);
+        account.setAccountNumber((String) objectArray[1]);
+        account.setName((String) objectArray[2]);
+        account.setCategory((String) objectArray[3]);
+        account.setStatus(DataConverter.getStatus(objectArray[4]));
+        account.setCurrency((String) objectArray[5]);
+        account.setBalance((BigDecimal) objectArray[6]);
+        account.setDescription((String) objectArray[7]);
         return account;
     }
 
+    /**
+     * id, account_number, name, category, status, currency, balance, description
+     */
     @Override
-    public Account getExcelType(int rowIndex, List<Cell> cellList) {
-        if (rowIndex == 0) {
-            return null;
+    public Map<Integer, Object> getRowObjectMap(QueryBuilder builder, Account type) {
+        Map<Integer, Object> map = new HashMap<>();
+        if ("insertAccount".equals(builder.getQueryName())) {
+            map.put(1, type.getAccountNumber());
+            map.put(2, type.getName());
+            map.put(3, null);
+            map.put(4, Status.Drafted.toString());
+            map.put(5, type.getCurrency());
+            map.put(6, BigDecimal.ZERO);
+            map.put(7, type.getDescription());
+        } else if ("deleteAccount".equals(builder.getQueryName())) {
+            map.put(1, type.getAccountNumber());
+        } else if ("updateStatus".equals(builder.getQueryName())) {
+            map.put(1, type.getStatus().toString());
+            map.put(2, type.getAccountNumber());
         }
+        return map;
+    }
+
+    /**
+     * account_number, name, category, status, currency, balance, description
+     */
+    @Override
+    public String[] getColumnNames() {
+        return new String[]{"Account Number", "Name", "Account Category", "Status", "Currency", "Account Balance",
+                "Description"};
+    }
+
+    /**
+     * account_number, name, category, status, currency, balance, description
+     */
+    @Override
+    public Account getExcelType(String type, Cell[] array) {
         Account account = new Account();
-        int id = DataConverter.getInteger(cellList.get(0));
-        String accountNumber = cellList.get(1).getStringCellValue();
-        String name = cellList.get(2).getStringCellValue();
-        //
-        account.setId(id);
-        account.setAccountNumber(accountNumber);
-        account.setName(name);
+        account.setAccountNumber(DataConverter.getString(array[0]));
+        account.setName(DataConverter.getString(array[1]));
+        account.setCategory(DataConverter.getString(array[2]));
+        account.setStatus(DataConverter.getStatus(array[3]));
+        account.setCurrency(DataConverter.getString(array[4]));
+        account.setBalance(DataConverter.getBigDecimal(array[5]));
+        account.setDescription(DataConverter.getString(array[6]));
         return account;
     }
 
+    /**
+     * account_number, name, category, status, currency, balance, description
+     */
     @Override
-    public Object[] getExcelRow(Account account) {
-        Object[] cellData = new String[3];
-        cellData[0] = account.getId();
-        cellData[1] = account.getAccountNumber();
-        cellData[2] = account.getName();
+    public Object[] getExcelRow(String type, Account account) {
+        Object[] cellData = new Object[7];
+        cellData[0] = account.getAccountNumber();
+        cellData[1] = account.getName();
+        cellData[2] = account.getCategory();
+        cellData[3] = account.getStatus().toString();
+        cellData[4] = account.getCurrency();
+        cellData[5] = account.getBalance();
+        cellData[6] = account.getDescription();
         return cellData;
+    }
+
+    private List<Account> filteredByStatus(Status status, List<Account> accList) {
+        return accList.stream().filter(acc -> status.equals(acc.getStatus())).collect(Collectors.toList());
     }
 }

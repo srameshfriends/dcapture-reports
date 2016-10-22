@@ -1,7 +1,7 @@
 package excel.accounting.client;
 
 import excel.accounting.shared.ApplicationControl;
-import excel.accounting.shared.ViewManager;
+import excel.accounting.ui.ViewManager;
 import javafx.application.Application;
 import javafx.stage.Stage;
 
@@ -16,11 +16,9 @@ public class Main extends Application {
     public void start(Stage primaryStage) throws Exception {
         applicationControl = ApplicationControl.instance();
         viewManager = new ViewManager();
-        viewManager.start(primaryStage, applicationControl);
+        viewManager.start(applicationControl, primaryStage);
         Registry.registerView(viewManager);
         Registry.registerService(applicationControl);
-        viewManager.showView("accountView");
-
         primaryStage.setOnCloseRequest(event -> onApplicationCloseEvent());
     }
 

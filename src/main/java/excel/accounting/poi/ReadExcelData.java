@@ -17,10 +17,12 @@ import java.util.List;
  * Read Excel Data
  */
 public class ReadExcelData<T> {
+    private final String type;
     private final File file;
     private final ExcelTypeConverter<T> excelTypeConverter;
 
-    public ReadExcelData(File file, ExcelTypeConverter<T> excelTypeConverter) {
+    public ReadExcelData(String type, File file, ExcelTypeConverter<T> excelTypeConverter) {
+        this.type = type;
         this.file = file;
         this.excelTypeConverter = excelTypeConverter;
     }
@@ -48,12 +50,9 @@ public class ReadExcelData<T> {
             int rowCount = sheet.getPhysicalNumberOfRows();
             for (int rowIndex = ignoreHeader ? 1 : 0; rowIndex < rowCount; rowIndex++) {
                 Row row = sheet.getRow(rowIndex);
-                List<Cell> cellList = getCellList(columnCount, row);
-                if (!cellList.isEmpty()) {
-                    T rowData = excelTypeConverter.getExcelType(rowIndex, cellList);
-                    if (rowData != null) {
-                        resultList.add(rowData);
-                    }
+                T rowData = excelTypeConverter.getExcelType(type, getCellArray(columnCount, row));
+                if (rowData != null) {
+                    resultList.add(rowData);
                 }
             }
         } catch (Exception ex) {
@@ -71,12 +70,9 @@ public class ReadExcelData<T> {
             int rowCount = sheet.getPhysicalNumberOfRows();
             for (int rowIndex = ignoreHeader ? 1 : 0; rowIndex < rowCount; rowIndex++) {
                 Row row = sheet.getRow(rowIndex);
-                List<Cell> cellList = getCellList(columnCount, row);
-                if (!cellList.isEmpty()) {
-                    T rowData = excelTypeConverter.getExcelType(rowIndex, cellList);
-                    if (rowData != null) {
-                        resultList.add(rowData);
-                    }
+                T rowData = excelTypeConverter.getExcelType(type, getCellArray(columnCount, row));
+                if (rowData != null) {
+                    resultList.add(rowData);
                 }
             }
         } catch (Exception ex) {
@@ -85,12 +81,12 @@ public class ReadExcelData<T> {
         return resultList;
     }
 
-    private List<Cell> getCellList(int columnCount, Row row) {
-        List<Cell> cellList = new ArrayList<>();
+    private Cell[] getCellArray(int columnCount, Row row) {
+        Cell[] cellArray = new Cell[columnCount];
         for (int columnIndex = 0; columnIndex < columnCount; columnIndex++) {
             Cell cell = row.getCell(columnIndex, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
-            cellList.add(cell);
+            cellArray[columnIndex] = cell;
         }
-        return cellList;
+        return cellArray;
     }
 }

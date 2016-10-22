@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import java.sql.*;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -19,6 +20,7 @@ public class Transaction {
     private final DataProcessor dataProcessor;
     private Connection connection;
     private Map<QueryBuilder, PreparedStatement> statementMap;
+    private PreparedStatement batchStatement;
 
     public Transaction(DataProcessor dataProcessor) {
         this.dataProcessor = dataProcessor;
@@ -28,12 +30,17 @@ public class Transaction {
         if (connection == null) {
             connection = dataProcessor.getConnection();
             connection.setAutoCommit(false);
-            statementMap = new HashMap<>();
         }
         return connection;
     }
 
     public void execute(QueryBuilder builder) {
+        if (batchStatement != null) {
+            throw new RuntimeException("Batch transaction is enabled, should not be use execute");
+        }
+        if (statementMap == null) {
+            statementMap = new HashMap<>();
+        }
         try {
             PreparedStatement statement = getConnection().prepareStatement(builder.getQuery());
             addParameter(statement, builder.getParameters());
@@ -43,7 +50,79 @@ public class Transaction {
         }
     }
 
+    public void setBatchQuery(QueryBuilder builder) {
+        if (statementMap != null) {
+            throw new RuntimeException("Execute query added, Batch transaction not able to use");
+        }
+        if (batchStatement != null) {
+            throw new RuntimeException("Already batch query updated, can not be override");
+        }
+        try {
+            batchStatement = getConnection().prepareStatement(builder.getQuery());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void addBatch(Map<Integer, Object> parameterMap) {
+        if (statementMap != null) {
+            throw new RuntimeException("Execute query added, Batch transaction not able to use");
+        }
+        if (batchStatement == null) {
+            throw new NullPointerException("Batch query should not be null");
+        }
+        try {
+            addParameter(batchStatement, parameterMap);
+            batchStatement.addBatch();
+        } catch (SQLException e) {
+            if (logger.isDebugEnabled()) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void addBatch(Object... parameterArray) {
+        Map<Integer, Object> parameterMap = new HashMap<>();
+        int index = 1;
+        for (Object obj : parameterArray) {
+            parameterMap.put(index, obj);
+            index += 1;
+        }
+        addBatch(parameterMap);
+    }
+
+    public void addBatch(List<Object> parameterArray) {
+        Map<Integer, Object> parameterMap = new HashMap<>();
+        int index = 1;
+        for (Object obj : parameterArray) {
+            parameterMap.put(index, obj);
+            index += 1;
+        }
+        addBatch(parameterMap);
+    }
+
+    public void executeBatch() {
+        if (batchStatement == null) {
+            throw new RuntimeException("Batch transaction is disabled");
+        }
+        try {
+            batchStatement.executeBatch();
+            connection.commit();
+            close(connection);
+            connection = null;
+            batchStatement = null;
+        } catch (SQLException e) {
+            rollback(connection);
+            if (logger.isDebugEnabled()) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     public void commit() {
+        if (batchStatement != null) {
+            throw new RuntimeException("Batch transaction is disabled!");
+        }
         try {
             for (PreparedStatement statement : statementMap.values()) {
                 statement.execute();
@@ -55,7 +134,9 @@ public class Transaction {
             connection = null;
         } catch (SQLException ex) {
             rollback(connection);
-            ex.printStackTrace();
+            if (logger.isDebugEnabled()) {
+                ex.printStackTrace();
+            }
         }
     }
 

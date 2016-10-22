@@ -1,13 +1,10 @@
 package excel.accounting.poi;
 
-import excel.accounting.db.RowTypeConverter;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.omg.CORBA.DoubleHolder;
-import org.omg.CORBA.INTERNAL;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -19,29 +16,39 @@ import java.util.List;
  * Write Excel Data
  */
 public class WriteExcelData<T> {
+    private String type;
     private final File file;
     private final ExcelTypeConverter<T> excelTypeConverter;
 
-    public WriteExcelData(File file, ExcelTypeConverter<T> excelTypeConverter) {
+    public WriteExcelData(String type, File file, ExcelTypeConverter<T> excelTypeConverter) {
+        this.type = type;
         this.file = file;
         this.excelTypeConverter = excelTypeConverter;
     }
 
     public void writeRowData(String name, List<T> dataList) {
+        String[] columnNameArray = excelTypeConverter.getColumnNames();
+        if (columnNameArray == null || 1 > columnNameArray.length) {
+            throw new NullPointerException("Export to excel column names should not be empty");
+        }
         try {
             Workbook workbook = new HSSFWorkbook();
             Sheet sheet = workbook.createSheet(name);
-            int rowIndex = 0;
+            Row headerRow = sheet.createRow(0);
+            addCell(headerRow, columnNameArray);
+            int rowIndex = 1;
             for (T rowData : dataList) {
                 Row row = sheet.createRow(rowIndex);
-                Object[] cellData = excelTypeConverter.getExcelRow(rowData);
+                Object[] cellData = excelTypeConverter.getExcelRow(type, rowData);
                 if (cellData != null) {
                     addCell(row, cellData);
                 }
                 rowIndex += 1;
             }
-            workbook.write(new FileOutputStream(file));
+            FileOutputStream outputStream = new FileOutputStream(file);
+            workbook.write(outputStream);
             workbook.close();
+            outputStream.close();
         } catch (Exception ex) {
             ex.printStackTrace();
         }

@@ -1,5 +1,7 @@
-package excel.accounting.shared;
+package excel.accounting.ui;
 
+import excel.accounting.shared.ApplicationControl;
+import excel.accounting.ui.ViewConfig;
 import javafx.scene.Node;
 import javafx.stage.Stage;
 
@@ -13,9 +15,7 @@ public interface ViewHolder {
 
     Stage getPrimaryStage();
 
-    String getName();
-
-    String getTitle();
+    ViewConfig getViewConfig();
 
     Node createControl();
 
@@ -23,5 +23,9 @@ public interface ViewHolder {
 
     void closeView();
 
-    void onResize(double width, double height);
+    void openView(double width, double height);
+
+    void onWidthChanged(double width);
+
+    void onHeightChanged(double height);
 }

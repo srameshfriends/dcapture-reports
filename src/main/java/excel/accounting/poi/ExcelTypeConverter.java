@@ -11,7 +11,9 @@ import java.util.List;
  */
 public interface ExcelTypeConverter<T> {
 
-    T getExcelType(int rowIndex, List<Cell> cellList);
+    String[] getColumnNames();
 
-    Object[] getExcelRow(T dataType);
+    T getExcelType(String type, Cell[] cellArray);
+
+    Object[] getExcelRow(String type, T dataType);
 }

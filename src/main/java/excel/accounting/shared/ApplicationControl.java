@@ -46,7 +46,7 @@ public class ApplicationControl {
         return applicationConfig;
     }
 
-    DataProcessor getDataProcessor() {
+    public DataProcessor getDataProcessor() {
         return dataProcessor;
     }
 
