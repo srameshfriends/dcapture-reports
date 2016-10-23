@@ -26,14 +26,14 @@ public class WriteExcelData<T> {
         this.excelTypeConverter = excelTypeConverter;
     }
 
-    public void writeRowData(String name, List<T> dataList) {
+    public void writeRowData(List<T> dataList) {
         String[] columnNameArray = excelTypeConverter.getColumnNames();
         if (columnNameArray == null || 1 > columnNameArray.length) {
             throw new NullPointerException("Export to excel column names should not be empty");
         }
         try {
             Workbook workbook = new HSSFWorkbook();
-            Sheet sheet = workbook.createSheet(name);
+            Sheet sheet = workbook.createSheet("Excel Accounting");
             Row headerRow = sheet.createRow(0);
             addCell(headerRow, columnNameArray);
             int rowIndex = 1;

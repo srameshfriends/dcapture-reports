@@ -1,17 +1,17 @@
 package excel.accounting.view;
 
-import excel.accounting.entity.Account;
-import excel.accounting.ui.*;
+import excel.accounting.entity.IncomeCategory;
 import excel.accounting.poi.ReadExcelData;
 import excel.accounting.poi.WriteExcelData;
-import excel.accounting.service.AccountService;
+import excel.accounting.service.IncomeCategoryService;
 import excel.accounting.shared.FileHelper;
+import excel.accounting.ui.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
@@ -22,48 +22,48 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * Account View
+ * Income Category View
  *
  * @author Ramesh
  * @since Oct, 2016
  */
-public class AccountView extends AbstractView implements ViewHolder {
+public class IncomeCategoryView extends AbstractView implements ViewHolder {
     private final String exportActionId = "exportAction", deleteActionId = "deleteAction";
     private final String exportSelectedActionId = "exportSelectedAction";
     private final String confirmedActionId = "confirmedAction";
     private final String closedActionId = "closedAction", draftedActionId = "draftedAction";
 
-    private ReadableTableView<Account> readableTableView;
-    private AccountService accountService;
+    private ReadableTableView<IncomeCategory> tableView;
+    private IncomeCategoryService incomeCategoryService;
     private VBox basePanel;
 
     @Override
     public ViewConfig getViewConfig() {
-        return new ViewConfig(ViewGroup.Registers, "accountView", "Account");
+        return new ViewConfig(ViewGroup.Income, "incomeCategoryView", "Income Category");
     }
 
     @Override
     public Node createControl() {
         ViewListener viewListener = new ViewListener();
-        accountService = (AccountService) getService("accountService");
-        readableTableView = new ReadableTableView<Account>().create();
-        readableTableView.addTextColumn("accountNumber", "Account Number").setPrefWidth(120);
-        readableTableView.addTextColumn("name", "Name").setPrefWidth(220);
-        readableTableView.addTextColumn("description", "Description").setPrefWidth(260);
-        readableTableView.addTextColumn("category", "Category").setMinWidth(120);
-        readableTableView.addTextColumn("currency", "Currency").setMinWidth(60);
-        readableTableView.addDecimalColumn("balance", "Account Balance").setMinWidth(160);
-        readableTableView.addTextColumn("status", "Status").setMinWidth(80);
-        readableTableView.addSelectionChangeListener(viewListener);
-        readableTableView.setContextMenuHandler(viewListener);
-        readableTableView.addContextMenuItem(draftedActionId, "Update As Drafted");
-        readableTableView.addContextMenuItem(confirmedActionId, "Update As Confirmed");
-        readableTableView.addContextMenuItem(closedActionId, "Update As Closed");
-        readableTableView.addContextMenuItem(exportSelectedActionId, "Export Accounts");
-        readableTableView.addContextMenuItem(deleteActionId, "Delete Accounts");
+        incomeCategoryService = (IncomeCategoryService) getService("incomeCategoryService");
+        tableView = new ReadableTableView<IncomeCategory>().create();
+        tableView.addTextColumn("code", "Category Code").setPrefWidth(120);
+        tableView.addTextColumn("name", "Name").setPrefWidth(200);
+        tableView.addTextColumn("description", "Description").setPrefWidth(280);
+        tableView.addTextColumn("currency", "Currency").setMinWidth(60);
+        tableView.addTextColumn("creditAccount", "Credit Account").setMinWidth(180);
+        tableView.addTextColumn("debitAccount", "Debit Account").setMinWidth(180);
+        tableView.addTextColumn("status", "Status").setMinWidth(80);
+        tableView.addSelectionChangeListener(viewListener);
+        tableView.setContextMenuHandler(viewListener);
+        tableView.addContextMenuItem(draftedActionId, "Update As Drafted");
+        tableView.addContextMenuItem(confirmedActionId, "Update As Confirmed");
+        tableView.addContextMenuItem(closedActionId, "Update As Closed");
+        tableView.addContextMenuItem(exportSelectedActionId, "Export Income Categories");
+        tableView.addContextMenuItem(deleteActionId, "Delete Income Categories");
         //
         basePanel = new VBox();
-        basePanel.getChildren().addAll(createToolbar(), readableTableView.getTableView());
+        basePanel.getChildren().addAll(createToolbar(), tableView.getTableView());
         return basePanel;
     }
 
@@ -108,31 +108,32 @@ public class AccountView extends AbstractView implements ViewHolder {
     }
 
     private void statusChangedEvent(String actionId) {
-        if (!confirmDialog("Update Status", "Are you really wish to change selected accounts Status?")) {
+        if (!confirmDialog("Update Income Category Status",
+                "Are you really wish to change selected income category Status?")) {
             return;
         }
         if (confirmedActionId.equals(actionId)) {
-            accountService.setAsConfirmed(readableTableView.getSelectedItems());
+            incomeCategoryService.setAsConfirmed(tableView.getSelectedItems());
         } else if (draftedActionId.equals(actionId)) {
-            accountService.setAsDrafted(readableTableView.getSelectedItems());
+            incomeCategoryService.setAsDrafted(tableView.getSelectedItems());
         } else if (closedActionId.equals(actionId)) {
-            accountService.setAsClosed(readableTableView.getSelectedItems());
+            incomeCategoryService.setAsClosed(tableView.getSelectedItems());
         }
         loadRecords();
     }
 
     private void deleteEvent() {
-        accountService.deleteAccount(readableTableView.getSelectedItems());
+        incomeCategoryService.deleteIncomeCategory(tableView.getSelectedItems());
         loadRecords();
     }
 
     private void loadRecords() {
-        List<Account> accountList = accountService.loadAll();
-        if (accountList == null || accountList.isEmpty()) {
+        List<IncomeCategory> categoryList = incomeCategoryService.loadAll();
+        if (categoryList == null || categoryList.isEmpty()) {
             return;
         }
-        ObservableList<Account> observableList = FXCollections.observableArrayList(accountList);
-        readableTableView.setItems(observableList);
+        ObservableList<IncomeCategory> observableList = FXCollections.observableArrayList(categoryList);
+        tableView.setItems(observableList);
     }
 
     private void importFromExcelEvent() {
@@ -140,53 +141,53 @@ public class AccountView extends AbstractView implements ViewHolder {
         if (file == null) {
             return;
         }
-        ReadExcelData<Account> readExcelData = new ReadExcelData<>("", file, accountService);
-        List<Account> rowDataList = readExcelData.readRowData(accountService.getColumnNames().length, true);
-        if (rowDataList.isEmpty()) {
+        ReadExcelData<IncomeCategory> readExcelData = new ReadExcelData<>("", file, incomeCategoryService);
+        List<IncomeCategory> dataList = readExcelData.readRowData(incomeCategoryService.getColumnNames().length, true);
+        if (dataList.isEmpty()) {
             return;
         }
-        List<String> existingNumberList = accountService.findAccountNumberList();
-        List<Account> updateList = new ArrayList<>();
-        List<Account> insertList = new ArrayList<>();
-        for (Account account : rowDataList) {
-            if (existingNumberList.contains(account.getAccountNumber())) {
-                updateList.add(account);
+        List<String> existingCodeList = incomeCategoryService.findCodeList();
+        List<IncomeCategory> updateList = new ArrayList<>();
+        List<IncomeCategory> insertList = new ArrayList<>();
+        for (IncomeCategory category : dataList) {
+            if (existingCodeList.contains(category.getCode())) {
+                updateList.add(category);
             } else {
-                insertList.add(account);
+                insertList.add(category);
             }
         }
         if (!updateList.isEmpty()) {
-            accountService.updateAccount(updateList);
+            incomeCategoryService.updateIncomeCategory(updateList);
         }
         if (!insertList.isEmpty()) {
-            accountService.insertAccount(insertList);
+            incomeCategoryService.insertIncomeCategory(insertList);
         }
         loadRecords();
     }
 
     /*
-    id, account_number, name, category, status, currency, balance, description
+    id, code, name, status, currency, credit_account, debit_account, description
     */
     private void exportToExcelEvent(final String actionId) {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyMMddHHmm");
         String fileName = simpleDateFormat.format(new Date());
-        fileName = "accounts" + fileName + ".xls";
+        fileName = "income-category" + fileName + ".xls";
         File file = FileHelper.showSaveFileDialogExcel(fileName, getPrimaryStage());
         if (file == null) {
             return;
         }
-        WriteExcelData<Account> writeExcelData = new WriteExcelData<>(actionId, file, accountService);
+        WriteExcelData<IncomeCategory> writeExcelData = new WriteExcelData<>(actionId, file, incomeCategoryService);
         if (exportSelectedActionId.equals(actionId)) {
-            List<Account> selected = readableTableView.getSelectedItems();
+            List<IncomeCategory> selected = tableView.getSelectedItems();
             writeExcelData.writeRowData(selected);
         } else {
-            writeExcelData.writeRowData(accountService.loadAll());
+            writeExcelData.writeRowData(incomeCategoryService.loadAll());
         }
 
     }
 
     private void onRowSelectionChanged(boolean isRowSelected) {
-        readableTableView.setDisable(!isRowSelected, exportSelectedActionId, draftedActionId, confirmedActionId,
+        tableView.setDisable(!isRowSelected, exportSelectedActionId, draftedActionId, confirmedActionId,
                 closedActionId);
     }
 

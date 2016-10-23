@@ -1,9 +1,9 @@
 package excel.accounting.client;
 
-import excel.accounting.service.AccountService;
+import excel.accounting.service.*;
 import excel.accounting.shared.ApplicationControl;
 import excel.accounting.ui.ViewManager;
-import excel.accounting.view.AccountView;
+import excel.accounting.view.*;
 
 /**
  * Registry
@@ -14,11 +14,23 @@ import excel.accounting.view.AccountView;
 abstract class Registry {
 
     static void registerView(ViewManager manager) {
+        // Register
+        manager.addView(new CurrencyView());
         manager.addView(new AccountView());
+        // Income
+        manager.addView(new IncomeCategoryView());
+        manager.addView(new IncomeItemView());
+        // Expense
+        manager.addView(new ExpenseCategoryView());
+        manager.addView(new ExpenseItemView());
     }
 
     static void registerService(ApplicationControl control) {
+        control.addService("currencyService", new CurrencyService());
         control.addService("accountService", new AccountService());
-
+        control.addService("incomeCategoryService", new IncomeCategoryService());
+        control.addService("incomeItemService", new IncomeItemService());
+        control.addService("expenseCategoryService", new ExpenseCategoryService());
+        control.addService("expenseItemService", new ExpenseItemService());
     }
 }

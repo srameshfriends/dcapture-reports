@@ -15,6 +15,7 @@ import java.util.List;
  * FileHelper
  */
 public class FileHelper {
+    private static File lastAccessFolder;
 
     public static Path getClassPath(String pathValue) throws Exception {
         pathValue = pathValue == null ? "" : pathValue.trim();
@@ -29,22 +30,58 @@ public class FileHelper {
         return url == null ? null : Paths.get(url.toURI());
     }
 
-    public static File showOpenFileDialogExcelOnly(String title, Stage stage) {
-        FileChooser.ExtensionFilter filter = new FileChooser.ExtensionFilter( //
-                "Excel", "*.xls", "*.xlsx", "*.XLS", "*.XLSX");
+    public static File showOpenFileDialogExcel(Stage stage) {
+        FileChooser.ExtensionFilter filter = new FileChooser.ExtensionFilter("Excel", "*.xls", "*.xlsx");
         FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Open Excel File");
         fileChooser.getExtensionFilters().add(filter);
-        fileChooser.setTitle(title);
-        return fileChooser.showOpenDialog(stage);
+        fileChooser.setInitialDirectory(getLastAccessFolder());
+        File openFile = fileChooser.showOpenDialog(stage);
+        if (openFile != null) {
+            setLastAccessFolder(openFile);
+        }
+        return openFile;
+    }
+
+    public static File showSaveFileDialogExcel(String fileName, Stage stage) {
+        FileChooser.ExtensionFilter filter = new FileChooser.ExtensionFilter("Excel", "*.xls");
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Save Excel File");
+        fileChooser.getExtensionFilters().add(filter);
+        fileChooser.setInitialDirectory(getLastAccessFolder());
+        fileChooser.setInitialFileName(fileName);
+        File saveFile = fileChooser.showSaveDialog(stage);
+        if (saveFile != null) {
+            setLastAccessFolder(saveFile);
+        }
+        return saveFile;
     }
 
     public static List<File> getFilesInDirectory(File dir, String extension) {
-        final String ext = extension.startsWith(".") ? extension.toLowerCase() :  ".".concat(extension).toLowerCase();
+        final String ext = extension.startsWith(".") ? extension.toLowerCase() : ".".concat(extension).toLowerCase();
         File[] files = dir.listFiles((dir1, name) -> name.toLowerCase().endsWith(ext));
-        if(files == null || files.length == 0) {
+        if (files == null || files.length == 0) {
             return null;
         }
         return Arrays.asList(files);
+    }
+
+    private static void setLastAccessFolder(File file) {
+        if (file.isFile()) {
+            lastAccessFolder = file.getParentFile();
+        } else if (file.isDirectory()) {
+            lastAccessFolder = file;
+        }
+    }
+
+    private static File getLastAccessFolder() {
+        if (lastAccessFolder == null) {
+            File homeFolder = new File(System.getProperty("user.home"));
+            if (homeFolder.isDirectory()) {
+                lastAccessFolder = homeFolder;
+            }
+        }
+        return lastAccessFolder;
     }
 
     public static String getFileExtension(File file) {

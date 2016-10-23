@@ -25,9 +25,20 @@ public class AccountService extends AbstractService implements RowTypeConverter<
         return "account";
     }
 
+    /*
+    * id, account_number, name, category, status, currency, balance, description order by account_number
+    */
     public List<Account> loadAll() {
         QueryBuilder queryBuilder = getQueryBuilder("loadAll");
         return getDataReader().findRowDataList(queryBuilder, this);
+    }
+
+    /*
+   * account_number
+   */
+    public List<String> findAccountNumberList() {
+        QueryBuilder queryBuilder = getQueryBuilder("findAccountNumberList");
+        return getDataReader().findString(queryBuilder);
     }
 
     /**
@@ -51,20 +62,32 @@ public class AccountService extends AbstractService implements RowTypeConverter<
     }
 
     public void setAsDrafted(List<Account> accountList) {
-        updateStatus(Status.Verified, Status.Drafted, accountList);
+        updateStatus(Status.Confirmed, Status.Drafted, accountList);
     }
 
-    public void setAsVerified(List<Account> accountList) {
-        updateStatus(Status.Drafted, Status.Verified, accountList);
+    public void setAsConfirmed(List<Account> accountList) {
+        updateStatus(Status.Drafted, Status.Confirmed, accountList);
     }
 
     public void setAsClosed(List<Account> accountList) {
-        updateStatus(Status.Verified, Status.Closed, accountList);
-        updateStatus(Status.Linked, Status.Closed, accountList);
+        updateStatus(Status.Confirmed, Status.Closed, accountList);
     }
 
     public void insertAccount(List<Account> accountList) {
         QueryBuilder queryBuilder = getQueryBuilder("insertAccount");
+        Transaction transaction = createTransaction();
+        transaction.setBatchQuery(queryBuilder);
+        for (Account account : accountList) {
+            transaction.addBatch(getRowObjectMap(queryBuilder, account));
+        }
+        transaction.executeBatch();
+    }
+
+    /*
+    * account_number, name, category, currency, description find by account_number
+    */
+    public void updateAccount(List<Account> accountList) {
+        QueryBuilder queryBuilder = getQueryBuilder("updateAccount");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (Account account : accountList) {
@@ -81,7 +104,7 @@ public class AccountService extends AbstractService implements RowTypeConverter<
         QueryBuilder queryBuilder = getQueryBuilder("deleteAccount");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
-        for (Account account : accountList) {
+        for (Account account : filteredList) {
             transaction.addBatch(getRowObjectMap(queryBuilder, account));
         }
         transaction.executeBatch();
@@ -105,7 +128,14 @@ public class AccountService extends AbstractService implements RowTypeConverter<
     }
 
     /**
+     * insertAccount
      * id, account_number, name, category, status, currency, balance, description
+     * deleteAccount
+     * find by account_number
+     * updateStatus
+     * set status find by account_number
+     * updateAccount
+     * account_number, name, category, currency, description find by account_number
      */
     @Override
     public Map<Integer, Object> getRowObjectMap(QueryBuilder builder, Account type) {
@@ -113,7 +143,7 @@ public class AccountService extends AbstractService implements RowTypeConverter<
         if ("insertAccount".equals(builder.getQueryName())) {
             map.put(1, type.getAccountNumber());
             map.put(2, type.getName());
-            map.put(3, null);
+            map.put(3, type.getCategory());
             map.put(4, Status.Drafted.toString());
             map.put(5, type.getCurrency());
             map.put(6, BigDecimal.ZERO);
@@ -123,6 +153,13 @@ public class AccountService extends AbstractService implements RowTypeConverter<
         } else if ("updateStatus".equals(builder.getQueryName())) {
             map.put(1, type.getStatus().toString());
             map.put(2, type.getAccountNumber());
+        } else if ("updateAccount".equals(builder.getQueryName())) {
+            map.put(1, type.getAccountNumber());
+            map.put(2, type.getName());
+            map.put(3, type.getCategory());
+            map.put(4, type.getCurrency());
+            map.put(5, type.getDescription());
+            map.put(6, type.getAccountNumber());
         }
         return map;
     }

@@ -7,7 +7,7 @@ package excel.accounting.entity;
  * @since Oct, 2016
  */
 public enum Status {
-    Drafted("Drafted"), Verified("Verified"), Linked("Linked"), Closed("Closed");
+    Drafted("Drafted"), Confirmed("Confirmed"), Closed("Closed");
 
     private String title;
 

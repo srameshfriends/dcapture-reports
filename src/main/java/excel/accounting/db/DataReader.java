@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Data Reader
@@ -31,7 +32,7 @@ public class DataReader {
         return dataProcessor.getQueryBuilder(fileName, queryName);
     }
 
-    public Object findObject(QueryBuilder query) {
+    public Object findSingleObject(QueryBuilder query) {
         logger.debug(query.getQuery());
         Object value = null;
         try {
@@ -50,10 +51,39 @@ public class DataReader {
         return value;
     }
 
+    public List<String> findString(QueryBuilder builder) {
+        List<Object> objectList = findObject(builder);
+        return objectList.stream().map(object -> (String) object).collect(Collectors.toList());
+    }
+
+    public List<Integer> findInteger(QueryBuilder builder) {
+        List<Object> objectList = findObject(builder);
+        return objectList.stream().map(object -> (Integer) object).collect(Collectors.toList());
+    }
+
+    public List<Object> findObject(QueryBuilder builder) {
+        logger.debug(builder.getQuery());
+        List<Object> resultList = new ArrayList<>();
+        try {
+            Connection con = dataProcessor.getConnection();
+            Statement stmt = con.createStatement();
+            ResultSet rs = stmt.executeQuery(builder.getQuery());
+            while (rs.next()) {
+                resultList.add(rs.getObject(1));
+            }
+            close(rs, stmt, con);
+        } catch (SQLException ex) {
+            if (logger.isDebugEnabled()) {
+                ex.printStackTrace();
+            }
+        }
+        return resultList;
+    }
+
     public List<Object[]> findObjects(QueryBuilder builder) {
         logger.info(builder.getQuery());
+        List<Object[]> resultList = new ArrayList<>();
         try {
-            List<Object[]> resultList = new ArrayList<>();
             Connection con = dataProcessor.getConnection();
             Statement stmt = con.createStatement();
             ResultSet rs = stmt.executeQuery(builder.getQuery());
@@ -66,13 +96,12 @@ public class DataReader {
                 resultList.add(result);
             }
             close(rs, stmt, con);
-            return resultList;
         } catch (SQLException ex) {
             if (logger.isDebugEnabled()) {
                 ex.printStackTrace();
             }
         }
-        return null;
+        return resultList;
     }
 
     public <T> List<T> findRowDataList(QueryBuilder builder, RowTypeConverter<T> converter) {

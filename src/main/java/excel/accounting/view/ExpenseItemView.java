@@ -1,17 +1,17 @@
 package excel.accounting.view;
 
-import excel.accounting.entity.Account;
-import excel.accounting.ui.*;
+import excel.accounting.entity.ExpenseItem;
 import excel.accounting.poi.ReadExcelData;
 import excel.accounting.poi.WriteExcelData;
-import excel.accounting.service.AccountService;
+import excel.accounting.service.ExpenseItemService;
 import excel.accounting.shared.FileHelper;
+import excel.accounting.ui.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
@@ -22,48 +22,47 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * Account View
+ * Expense Item View
  *
  * @author Ramesh
  * @since Oct, 2016
  */
-public class AccountView extends AbstractView implements ViewHolder {
+public class ExpenseItemView extends AbstractView implements ViewHolder {
     private final String exportActionId = "exportAction", deleteActionId = "deleteAction";
     private final String exportSelectedActionId = "exportSelectedAction";
     private final String confirmedActionId = "confirmedAction";
     private final String closedActionId = "closedAction", draftedActionId = "draftedAction";
 
-    private ReadableTableView<Account> readableTableView;
-    private AccountService accountService;
+    private ReadableTableView<ExpenseItem> tableView;
+    private ExpenseItemService expenseItemService;
     private VBox basePanel;
 
     @Override
     public ViewConfig getViewConfig() {
-        return new ViewConfig(ViewGroup.Registers, "accountView", "Account");
+        return new ViewConfig(ViewGroup.Expense, "expenseItemView", "Expense Entries");
     }
 
     @Override
     public Node createControl() {
         ViewListener viewListener = new ViewListener();
-        accountService = (AccountService) getService("accountService");
-        readableTableView = new ReadableTableView<Account>().create();
-        readableTableView.addTextColumn("accountNumber", "Account Number").setPrefWidth(120);
-        readableTableView.addTextColumn("name", "Name").setPrefWidth(220);
-        readableTableView.addTextColumn("description", "Description").setPrefWidth(260);
-        readableTableView.addTextColumn("category", "Category").setMinWidth(120);
-        readableTableView.addTextColumn("currency", "Currency").setMinWidth(60);
-        readableTableView.addDecimalColumn("balance", "Account Balance").setMinWidth(160);
-        readableTableView.addTextColumn("status", "Status").setMinWidth(80);
-        readableTableView.addSelectionChangeListener(viewListener);
-        readableTableView.setContextMenuHandler(viewListener);
-        readableTableView.addContextMenuItem(draftedActionId, "Update As Drafted");
-        readableTableView.addContextMenuItem(confirmedActionId, "Update As Confirmed");
-        readableTableView.addContextMenuItem(closedActionId, "Update As Closed");
-        readableTableView.addContextMenuItem(exportSelectedActionId, "Export Accounts");
-        readableTableView.addContextMenuItem(deleteActionId, "Delete Accounts");
+        expenseItemService = (ExpenseItemService) getService("expenseItemService");
+        tableView = new ReadableTableView<ExpenseItem>().create();
+        tableView.addTextColumn("id", "Id").setPrefWidth(60);
+        tableView.addTextColumn("expenseDate", "Expense Date").setPrefWidth(100);
+        tableView.addTextColumn("description", "Description").setPrefWidth(380);
+        tableView.addTextColumn("currency", "Currency").setMinWidth(80);
+        tableView.addTextColumn("amount", "Amount").setMinWidth(100);
+        tableView.addTextColumn("status", "Status").setMinWidth(100);
+        tableView.addSelectionChangeListener(viewListener);
+        tableView.setContextMenuHandler(viewListener);
+        tableView.addContextMenuItem(draftedActionId, "Update As Drafted");
+        tableView.addContextMenuItem(confirmedActionId, "Update As Confirmed");
+        tableView.addContextMenuItem(closedActionId, "Update As Closed");
+        tableView.addContextMenuItem(exportSelectedActionId, "Export Expense Items");
+        tableView.addContextMenuItem(deleteActionId, "Delete Expense Items");
         //
         basePanel = new VBox();
-        basePanel.getChildren().addAll(createToolbar(), readableTableView.getTableView());
+        basePanel.getChildren().addAll(createToolbar(), tableView.getTableView());
         return basePanel;
     }
 
@@ -108,31 +107,32 @@ public class AccountView extends AbstractView implements ViewHolder {
     }
 
     private void statusChangedEvent(String actionId) {
-        if (!confirmDialog("Update Status", "Are you really wish to change selected accounts Status?")) {
+        if (!confirmDialog("Update Expense Item Status",
+                "Are you really wish to change selected income category Status?")) {
             return;
         }
         if (confirmedActionId.equals(actionId)) {
-            accountService.setAsConfirmed(readableTableView.getSelectedItems());
+            expenseItemService.setAsConfirmed(tableView.getSelectedItems());
         } else if (draftedActionId.equals(actionId)) {
-            accountService.setAsDrafted(readableTableView.getSelectedItems());
+            expenseItemService.setAsDrafted(tableView.getSelectedItems());
         } else if (closedActionId.equals(actionId)) {
-            accountService.setAsClosed(readableTableView.getSelectedItems());
+            expenseItemService.setAsClosed(tableView.getSelectedItems());
         }
         loadRecords();
     }
 
     private void deleteEvent() {
-        accountService.deleteAccount(readableTableView.getSelectedItems());
+        expenseItemService.deleteExpenseItem(tableView.getSelectedItems());
         loadRecords();
     }
 
     private void loadRecords() {
-        List<Account> accountList = accountService.loadAll();
-        if (accountList == null || accountList.isEmpty()) {
+        List<ExpenseItem> categoryList = expenseItemService.loadAll();
+        if (categoryList == null || categoryList.isEmpty()) {
             return;
         }
-        ObservableList<Account> observableList = FXCollections.observableArrayList(accountList);
-        readableTableView.setItems(observableList);
+        ObservableList<ExpenseItem> observableList = FXCollections.observableArrayList(categoryList);
+        tableView.setItems(observableList);
     }
 
     private void importFromExcelEvent() {
@@ -140,53 +140,49 @@ public class AccountView extends AbstractView implements ViewHolder {
         if (file == null) {
             return;
         }
-        ReadExcelData<Account> readExcelData = new ReadExcelData<>("", file, accountService);
-        List<Account> rowDataList = readExcelData.readRowData(accountService.getColumnNames().length, true);
-        if (rowDataList.isEmpty()) {
+        ReadExcelData<ExpenseItem> readExcelData = new ReadExcelData<>("", file, expenseItemService);
+        List<ExpenseItem> dataList = readExcelData.readRowData(expenseItemService.getColumnNames().length, true);
+        if (dataList.isEmpty()) {
             return;
         }
-        List<String> existingNumberList = accountService.findAccountNumberList();
-        List<Account> updateList = new ArrayList<>();
-        List<Account> insertList = new ArrayList<>();
-        for (Account account : rowDataList) {
-            if (existingNumberList.contains(account.getAccountNumber())) {
-                updateList.add(account);
+        List<Integer> existingIdList = expenseItemService.findIdList();
+        List<ExpenseItem> updateList = new ArrayList<>();
+        List<ExpenseItem> insertList = new ArrayList<>();
+        for (ExpenseItem expenseItem : dataList) {
+            if (existingIdList.contains(expenseItem.getId())) {
+                updateList.add(expenseItem);
             } else {
-                insertList.add(account);
+                insertList.add(expenseItem);
             }
         }
         if (!updateList.isEmpty()) {
-            accountService.updateAccount(updateList);
+            expenseItemService.updateExpenseItem(updateList);
         }
         if (!insertList.isEmpty()) {
-            accountService.insertAccount(insertList);
+            expenseItemService.insertExpenseItem(insertList);
         }
         loadRecords();
     }
 
-    /*
-    id, account_number, name, category, status, currency, balance, description
-    */
     private void exportToExcelEvent(final String actionId) {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyMMddHHmm");
         String fileName = simpleDateFormat.format(new Date());
-        fileName = "accounts" + fileName + ".xls";
+        fileName = "expense-item" + fileName + ".xls";
         File file = FileHelper.showSaveFileDialogExcel(fileName, getPrimaryStage());
         if (file == null) {
             return;
         }
-        WriteExcelData<Account> writeExcelData = new WriteExcelData<>(actionId, file, accountService);
+        WriteExcelData<ExpenseItem> writeExcelData = new WriteExcelData<>(actionId, file, expenseItemService);
         if (exportSelectedActionId.equals(actionId)) {
-            List<Account> selected = readableTableView.getSelectedItems();
+            List<ExpenseItem> selected = tableView.getSelectedItems();
             writeExcelData.writeRowData(selected);
         } else {
-            writeExcelData.writeRowData(accountService.loadAll());
+            writeExcelData.writeRowData(expenseItemService.loadAll());
         }
-
     }
 
     private void onRowSelectionChanged(boolean isRowSelected) {
-        readableTableView.setDisable(!isRowSelected, exportSelectedActionId, draftedActionId, confirmedActionId,
+        tableView.setDisable(!isRowSelected, exportSelectedActionId, draftedActionId, confirmedActionId,
                 closedActionId);
     }
 

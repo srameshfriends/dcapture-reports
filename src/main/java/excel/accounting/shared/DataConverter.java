@@ -1,8 +1,8 @@
 package excel.accounting.shared;
 
-import excel.accounting.entity.AccountType;
 import excel.accounting.entity.Status;
 import org.apache.log4j.Logger;
+import org.apache.poi.hssf.usermodel.HSSFDateUtil;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 
@@ -16,15 +16,11 @@ import java.util.Date;
  */
 public class DataConverter {
     private static final Logger logger = Logger.getLogger(DataConverter.class);
-    private static DateFormat defaultDateFormat = new SimpleDateFormat("yyyy-mm-dd");
+    private static DateFormat defaultDateFormat = new SimpleDateFormat("dd-mm-yyyy");
 
     public static int getInteger(Cell cell) {
         Double decimal = getDouble(cell);
         return decimal.intValue();
-    }
-
-    public static AccountType getAccountType(Object accountType) {
-        return accountType == null ? null : getEnum(AccountType.class, accountType.toString());
     }
 
     public static Status getStatus(Object status) {
@@ -44,7 +40,7 @@ public class DataConverter {
         return cell.getStringCellValue();
     }
 
-    public static double getDouble(Cell cell) {
+    private static double getDouble(Cell cell) {
         double decimal;
         if (CellType.NUMERIC.equals(cell.getCellTypeEnum())) {
             decimal = cell.getNumericCellValue();
@@ -55,15 +51,18 @@ public class DataConverter {
     }
 
     public static BigDecimal getBigDecimal(Cell cell) {
-        return new BigDecimal(getDouble(cell));
+        return getBigDecimal(cell, 4);
+    }
+
+    private static BigDecimal getBigDecimal(Cell cell, int precision) {
+        BigDecimal bigDecimal = new BigDecimal(getDouble(cell));
+        return bigDecimal.setScale(precision, BigDecimal.ROUND_HALF_UP);
     }
 
     public static Date getDate(Cell cell) {
-        return getDate(cell, defaultDateFormat);
-    }
-
-    private static Date getDate(Cell cell, DateFormat dateFormat) {
-        if (CellType.NUMERIC.equals(cell.getCellTypeEnum())) {
+        if (HSSFDateUtil.isCellDateFormatted(cell)) {
+            return cell.getDateCellValue();
+        } else if (CellType.NUMERIC.equals(cell.getCellTypeEnum())) {
             Double decimal = cell.getNumericCellValue();
             long dateTime = decimal.longValue();
             return dateTime == 0 ? null : new Date(dateTime);
@@ -71,7 +70,7 @@ public class DataConverter {
             try {
                 String value = cell.getStringCellValue();
                 if (value != null) {
-                    return dateFormat.parse(value);
+                    return defaultDateFormat.parse(value);
                 }
             } catch (Exception ex) {
                 ex.getMessage();
@@ -80,7 +79,7 @@ public class DataConverter {
         return null;
     }
 
-    public static double parseDouble(String value) {
+    private static double parseDouble(String value) {
         try {
             return Double.parseDouble(value);
         } catch (Exception ex) {

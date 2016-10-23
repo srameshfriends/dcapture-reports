@@ -1,6 +1,7 @@
 package excel.accounting.ui;
 
 import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javafx.scene.control.*;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -118,5 +119,14 @@ public class ReadableTableView<T> {
 
     public TableView<T> getTableView() {
         return tableView;
+    }
+
+    public void setItems(ObservableList<T> list) {
+        removeAll();
+        tableView.getItems().addAll(list);
+    }
+
+    private void removeAll() {
+        tableView.getItems().removeAll(tableView.getItems());
     }
 }

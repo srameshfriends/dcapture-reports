@@ -4,10 +4,8 @@ import org.apache.log4j.Logger;
 
 import java.math.BigDecimal;
 import java.sql.*;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.sql.Date;
+import java.util.*;
 
 /**
  * Transaction
@@ -153,6 +151,8 @@ public class Transaction {
                 statement.setBigDecimal(entry.getKey(), (BigDecimal) parameter);
             } else if (parameter instanceof Boolean) {
                 statement.setBoolean(entry.getKey(), (Boolean) parameter);
+            } else if (parameter instanceof java.util.Date) {
+                statement.setDate(entry.getKey(), toSqlDate((java.util.Date) parameter));
             } else {
                 DataType dataType = (DataType) parameter;
                 if (DataType.DateType.equals(dataType)) {
@@ -202,6 +202,10 @@ public class Transaction {
                 ex.printStackTrace();
             }
         }
+    }
+
+    private java.sql.Date toSqlDate(java.util.Date sqlDate) {
+        return new java.sql.Date(sqlDate.getTime());
     }
 }
 
