@@ -58,7 +58,7 @@ public class ExpenseCategoryService extends AbstractService implements
         QueryBuilder queryBuilder = getQueryBuilder("updateStatus");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
-        for (ExpenseCategory category : categoryList) {
+        for (ExpenseCategory category : filteredList) {
             transaction.addBatch(getRowObjectMap(queryBuilder, category));
         }
         transaction.executeBatch();

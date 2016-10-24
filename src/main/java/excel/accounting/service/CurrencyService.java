@@ -57,7 +57,7 @@ public class CurrencyService extends AbstractService implements RowTypeConverter
         QueryBuilder queryBuilder = getQueryBuilder("updateStatus");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
-        for (Currency currency : currencyList) {
+        for (Currency currency : filteredList) {
             transaction.addBatch(getRowObjectMap(queryBuilder, currency));
         }
         transaction.executeBatch();

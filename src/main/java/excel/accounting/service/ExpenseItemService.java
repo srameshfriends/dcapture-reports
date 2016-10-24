@@ -60,7 +60,7 @@ public class ExpenseItemService extends AbstractService implements
         QueryBuilder queryBuilder = getQueryBuilder("updateStatus");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
-        for (ExpenseItem item : itemList) {
+        for (ExpenseItem item : filteredList) {
             transaction.addBatch(getRowObjectMap(queryBuilder, item));
         }
         transaction.executeBatch();

@@ -58,7 +58,7 @@ public class IncomeCategoryService extends AbstractService implements
         QueryBuilder queryBuilder = getQueryBuilder("updateStatus");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
-        for (IncomeCategory category : categoryList) {
+        for (IncomeCategory category : filteredList) {
             transaction.addBatch(getRowObjectMap(queryBuilder, category));
         }
         transaction.executeBatch();

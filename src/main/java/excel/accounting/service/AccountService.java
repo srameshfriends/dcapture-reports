@@ -55,7 +55,7 @@ public class AccountService extends AbstractService implements RowTypeConverter<
         QueryBuilder queryBuilder = getQueryBuilder("updateStatus");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
-        for (Account account : accountList) {
+        for (Account account : filteredList) {
             transaction.addBatch(getRowObjectMap(queryBuilder, account));
         }
         transaction.executeBatch();

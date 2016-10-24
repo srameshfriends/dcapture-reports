@@ -23,6 +23,8 @@ abstract class Registry {
         // Expense
         manager.addView(new ExpenseCategoryView());
         manager.addView(new ExpenseItemView());
+        // Management
+        manager.addView(new BankTransactionView());
     }
 
     static void registerService(ApplicationControl control) {
@@ -32,5 +34,6 @@ abstract class Registry {
         control.addService("incomeItemService", new IncomeItemService());
         control.addService("expenseCategoryService", new ExpenseCategoryService());
         control.addService("expenseItemService", new ExpenseItemService());
+        control.addService("bankTransactionService", new BankTransactionService());
     }
 }

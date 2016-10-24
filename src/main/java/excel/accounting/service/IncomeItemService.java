@@ -60,7 +60,7 @@ public class IncomeItemService extends AbstractService implements
         QueryBuilder queryBuilder = getQueryBuilder("updateStatus");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
-        for (IncomeItem item : itemList) {
+        for (IncomeItem item : filteredList) {
             transaction.addBatch(getRowObjectMap(queryBuilder, item));
         }
         transaction.executeBatch();
