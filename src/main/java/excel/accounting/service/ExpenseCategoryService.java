@@ -28,9 +28,6 @@ public class ExpenseCategoryService extends AbstractService implements
         return "expense-category";
     }
 
-    /*
-    * id, code, name, status, currency, debit_account, credit_account, description order by code
-    */
     public List<ExpenseCategory> loadAll() {
         QueryBuilder queryBuilder = getQueryBuilder("loadAll");
         return getDataReader().findRowDataList(queryBuilder, this);
@@ -86,9 +83,6 @@ public class ExpenseCategoryService extends AbstractService implements
         transaction.executeBatch();
     }
 
-    /*
-    * code, name, category, currency, description find by account_number
-    */
     public void updateExpenseCategory(List<ExpenseCategory> categoryList) {
         QueryBuilder queryBuilder = getQueryBuilder("updateExpenseCategory");
         Transaction transaction = createTransaction();
@@ -114,7 +108,7 @@ public class ExpenseCategoryService extends AbstractService implements
     }
 
     /**
-     * id, code, name, status, currency, debit_account, credit_account description
+     * id, code, name, status, currency, expense_account description
      */
     @Override
     public ExpenseCategory getRowType(QueryBuilder builder, Object[] objectArray) {
@@ -124,21 +118,20 @@ public class ExpenseCategoryService extends AbstractService implements
         category.setName((String) objectArray[2]);
         category.setStatus(DataConverter.getStatus(objectArray[3]));
         category.setCurrency((String) objectArray[4]);
-        category.setDebitAccount((String) objectArray[5]);
-        category.setCreditAccount((String) objectArray[6]);
-        category.setDescription((String) objectArray[7]);
+        category.setExpenseAccount((String) objectArray[5]);
+        category.setDescription((String) objectArray[6]);
         return category;
     }
 
     /**
      * insertExpenseCategory
-     * id, code, name, status, currency, debit_account, credit_account description
+     * id, code, name, status, currency, expense_account description
      * deleteExpenseCategory
      * find by code
      * updateStatus
      * set status find by code
      * updateExpenseCategory
-     * code, name, currency, debit_account, credit_account description
+     * code, name, currency, expense_account description
      */
     @Override
     public Map<Integer, Object> getRowObjectMap(QueryBuilder builder, ExpenseCategory type) {
@@ -148,9 +141,8 @@ public class ExpenseCategoryService extends AbstractService implements
             map.put(2, type.getName());
             map.put(3, Status.Drafted.toString());
             map.put(4, type.getCurrency());
-            map.put(5, type.getDebitAccount());
-            map.put(6, type.getCreditAccount());
-            map.put(7, type.getDescription());
+            map.put(5, type.getExpenseAccount());
+            map.put(6, type.getDescription());
         } else if ("deleteExpenseCategory".equals(builder.getQueryName())) {
             map.put(1, type.getCode());
         } else if ("updateStatus".equals(builder.getQueryName())) {
@@ -160,25 +152,23 @@ public class ExpenseCategoryService extends AbstractService implements
             map.put(1, type.getCode());
             map.put(2, type.getName());
             map.put(3, type.getCurrency());
-            map.put(4, type.getDebitAccount());
-            map.put(5, type.getCreditAccount());
-            map.put(6, type.getDescription());
-            map.put(7, type.getCode());
+            map.put(4, type.getExpenseAccount());
+            map.put(5, type.getDescription());
+            map.put(6, type.getCode());
         }
         return map;
     }
 
     /**
-     * code, name, status, currency, debit account, credit account, description
+     * code, name, status, currency, expense account, description
      */
     @Override
     public String[] getColumnNames() {
-        return new String[]{"Category Code", "Name", "Status", "Currency", "Debit Account", "Credit Account",
-                "Description"};
+        return new String[]{"Category Code", "Name", "Status", "Currency", "Expense Account", "Description"};
     }
 
     /**
-     * code, name, status, currency, debit_account, credit_account, description
+     * code, name, status, currency, expense_account, description
      */
     @Override
     public ExpenseCategory getExcelType(String type, Cell[] array) {
@@ -187,25 +177,23 @@ public class ExpenseCategoryService extends AbstractService implements
         category.setName(DataConverter.getString(array[1]));
         category.setStatus(DataConverter.getStatus(array[2]));
         category.setCurrency(DataConverter.getString(array[3]));
-        category.setDebitAccount(DataConverter.getString(array[4]));
-        category.setCreditAccount(DataConverter.getString(array[5]));
-        category.setDescription(DataConverter.getString(array[6]));
+        category.setExpenseAccount(DataConverter.getString(array[4]));
+        category.setDescription(DataConverter.getString(array[5]));
         return category;
     }
 
     /**
-     * code, name, status, currency, debit_account, credit_account description
+     * code, name, status, currency, expense_account description
      */
     @Override
     public Object[] getExcelRow(String type, ExpenseCategory category) {
-        Object[] cellData = new Object[7];
+        Object[] cellData = new Object[6];
         cellData[0] = category.getCode();
         cellData[1] = category.getName();
         cellData[2] = category.getStatus().toString();
         cellData[3] = category.getCurrency();
-        cellData[4] = category.getDebitAccount();
-        cellData[5] = category.getCreditAccount();
-        cellData[6] = category.getDescription();
+        cellData[4] = category.getExpenseAccount();
+        cellData[5] = category.getDescription();
         return cellData;
     }
 

@@ -51,8 +51,7 @@ public class IncomeCategoryView extends AbstractView implements ViewHolder {
         tableView.addTextColumn("name", "Name").setPrefWidth(200);
         tableView.addTextColumn("description", "Description").setPrefWidth(280);
         tableView.addTextColumn("currency", "Currency").setMinWidth(60);
-        tableView.addTextColumn("creditAccount", "Credit Account").setMinWidth(180);
-        tableView.addTextColumn("debitAccount", "Debit Account").setMinWidth(180);
+        tableView.addTextColumn("incomeAccount", "Income Account").setMinWidth(210);
         tableView.addTextColumn("status", "Status").setMinWidth(80);
         tableView.addSelectionChangeListener(viewListener);
         tableView.setContextMenuHandler(viewListener);

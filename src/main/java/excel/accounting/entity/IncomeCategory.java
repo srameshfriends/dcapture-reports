@@ -9,7 +9,7 @@ import excel.accounting.model.EntityRow;
  * @since Oct, 2016
  */
 public class IncomeCategory extends EntityRow {
-    private String code, name, currency, creditAccount, debitAccount, description;
+    private String code, name, currency, incomeAccount, description;
     private Status status;
 
     public String getCode() {
@@ -36,20 +36,12 @@ public class IncomeCategory extends EntityRow {
         this.currency = currency;
     }
 
-    public String getCreditAccount() {
-        return creditAccount;
+    public String getIncomeAccount() {
+        return incomeAccount;
     }
 
-    public void setCreditAccount(String creditAccount) {
-        this.creditAccount = creditAccount;
-    }
-
-    public String getDebitAccount() {
-        return debitAccount;
-    }
-
-    public void setDebitAccount(String debitAccount) {
-        this.debitAccount = debitAccount;
+    public void setIncomeAccount(String incomeAccount) {
+        this.incomeAccount = incomeAccount;
     }
 
     public String getDescription() {
