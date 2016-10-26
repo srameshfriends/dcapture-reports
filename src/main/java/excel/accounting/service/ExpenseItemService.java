@@ -30,25 +30,16 @@ public class ExpenseItemService extends AbstractService implements
         return "expense-item";
     }
 
-    /*
-    * id, expense_date, description, currency, amount, status
-    */
     public List<ExpenseItem> loadAll() {
         QueryBuilder queryBuilder = getQueryBuilder("loadAll");
         return getDataReader().findRowDataList(queryBuilder, this);
     }
 
-    /*
-    * find all id list
-    */
     public List<Integer> findIdList() {
         QueryBuilder queryBuilder = getQueryBuilder("findIdList");
         return getDataReader().findInteger(queryBuilder);
     }
 
-    /**
-     * status, code
-     */
     private void updateStatus(Status requiredStatus, Status changedStatus, List<ExpenseItem> itemList) {
         List<ExpenseItem> filteredList = filteredByStatus(requiredStatus, itemList);
         if (filteredList.isEmpty()) {
@@ -88,9 +79,6 @@ public class ExpenseItemService extends AbstractService implements
         transaction.executeBatch();
     }
 
-    /*
-    * expense_date, description, currency, amount
-    */
     public void updateExpenseItem(List<ExpenseItem> itemList) {
         QueryBuilder queryBuilder = getQueryBuilder("updateExpenseItem");
         Transaction transaction = createTransaction();
