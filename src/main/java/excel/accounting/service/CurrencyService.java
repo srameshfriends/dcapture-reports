@@ -27,25 +27,16 @@ public class CurrencyService extends AbstractService implements RowTypeConverter
         return "currency";
     }
 
-    /*
-    * id, currency_number, name, category, status, currency, balance, description order by currency_number
-    */
     public List<Currency> loadAll() {
         QueryBuilder queryBuilder = getQueryBuilder("loadAll");
         return getDataReader().findRowDataList(queryBuilder, this);
     }
 
-    /*
-   * code
-   */
     public List<String> findCodeList() {
         QueryBuilder queryBuilder = getQueryBuilder("findCodeList");
         return getDataReader().findString(queryBuilder);
     }
 
-    /**
-     * status, currency_number
-     */
     private void updateStatus(Status requiredStatus, Status changedStatus, List<Currency> currencyList) {
         List<Currency> filteredList = filteredByStatus(requiredStatus, currencyList);
         if (filteredList.isEmpty()) {
@@ -85,9 +76,6 @@ public class CurrencyService extends AbstractService implements RowTypeConverter
         transaction.executeBatch();
     }
 
-    /*
-    * currency_number, name, category, currency, description find by currency_number
-    */
     public void updateCurrency(List<Currency> currencyList) {
         QueryBuilder queryBuilder = getQueryBuilder("updateCurrency");
         Transaction transaction = createTransaction();
@@ -106,7 +94,7 @@ public class CurrencyService extends AbstractService implements RowTypeConverter
         QueryBuilder queryBuilder = getQueryBuilder("deleteCurrency");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
-        for (Currency currency : currencyList) {
+        for (Currency currency : filteredList) {
             transaction.addBatch(getRowObjectMap(queryBuilder, currency));
         }
         transaction.executeBatch();

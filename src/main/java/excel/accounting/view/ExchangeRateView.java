@@ -39,7 +39,7 @@ public class ExchangeRateView extends AbstractView implements ViewHolder {
 
     @Override
     public ViewConfig getViewConfig() {
-        return new ViewConfig(ViewGroup.Management, "exchangeRateView", "Exchange Rates");
+        return new ViewConfig(ViewGroup.Management, "exchangeRateView", "Exchange Rate");
     }
 
     @Override

@@ -125,11 +125,11 @@ public class CurrencyView extends AbstractView implements ViewHolder {
     }
 
     private void loadRecords() {
-        List<Currency> accountList = currencyService.loadAll();
-        if (accountList == null || accountList.isEmpty()) {
+        List<Currency> currencyList = currencyService.loadAll();
+        if (currencyList == null || currencyList.isEmpty()) {
             return;
         }
-        ObservableList<Currency> observableList = FXCollections.observableArrayList(accountList);
+        ObservableList<Currency> observableList = FXCollections.observableArrayList(currencyList);
         readableTableView.setItems(observableList);
     }
 
@@ -162,9 +162,6 @@ public class CurrencyView extends AbstractView implements ViewHolder {
         loadRecords();
     }
 
-    /*
-    id, account_number, name, category, status, currency, balance, description
-    */
     private void exportToExcelEvent(final String actionId) {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyMMddHHmm");
         String fileName = simpleDateFormat.format(new Date());
