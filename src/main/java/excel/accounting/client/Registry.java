@@ -23,6 +23,8 @@ abstract class Registry {
         // Expense
         manager.addView(new ExpenseCategoryView());
         manager.addView(new ExpenseItemView());
+        // Assets
+        manager.addView(new AssetView());
         // Management
         manager.addView(new BankTransactionView());
         manager.addView(new ExchangeRateView());
@@ -37,5 +39,6 @@ abstract class Registry {
         control.addService("expenseItemService", new ExpenseItemService());
         control.addService("bankTransactionService", new BankTransactionService());
         control.addService("exchangeRateService", new ExchangeRateService());
+        control.addService("assetService", new AssetService());
     }
 }
