@@ -65,10 +65,6 @@ public class ExpenseItemService extends AbstractService implements
         updateStatus(Status.Drafted, Status.Confirmed, itemList);
     }
 
-    public void setAsClosed(List<ExpenseItem> itemList) {
-        updateStatus(Status.Confirmed, Status.Closed, itemList);
-    }
-
     public void insertExpenseItem(List<ExpenseItem> itemList) {
         QueryBuilder queryBuilder = getQueryBuilder("insertExpenseItem");
         Transaction transaction = createTransaction();
@@ -104,39 +100,41 @@ public class ExpenseItemService extends AbstractService implements
     }
 
     /**
-     * id, expense_date, description, currency, amount, status
+     * id, expense_date, reference_number, description, currency, amount, status
      */
     @Override
     public ExpenseItem getRowType(QueryBuilder builder, Object[] objectArray) {
         ExpenseItem item = new ExpenseItem();
         item.setId((Integer) objectArray[0]);
         item.setExpenseDate((Date) objectArray[1]);
-        item.setDescription((String) objectArray[2]);
-        item.setCurrency((String) objectArray[3]);
-        item.setAmount((BigDecimal) objectArray[4]);
-        item.setStatus(DataConverter.getStatus(objectArray[5]));
+        item.setReferenceNumber((String) objectArray[2]);
+        item.setDescription((String) objectArray[3]);
+        item.setCurrency((String) objectArray[4]);
+        item.setAmount((BigDecimal) objectArray[5]);
+        item.setStatus(DataConverter.getStatus(objectArray[6]));
         return item;
     }
 
     /**
      * insertExpenseItem
-     * expense_date, description, currency, amount, status
+     * expense_date, reference_number, description, currency, amount, status
      * deleteExpenseItem
      * find by id
      * updateStatus
      * set status find by id
      * updateExpenseItem
-     * expense_date, description, currency, amount By Id
+     * expense_date, reference_number, description, currency, amount By Id
      */
     @Override
     public Map<Integer, Object> getRowObjectMap(QueryBuilder builder, ExpenseItem type) {
         Map<Integer, Object> map = new HashMap<>();
         if ("insertExpenseItem".equals(builder.getQueryName())) {
             map.put(1, type.getExpenseDate());
-            map.put(2, type.getDescription());
-            map.put(3, type.getCurrency());
-            map.put(4, type.getAmount());
-            map.put(5, Status.Drafted.toString());
+            map.put(2, type.getReferenceNumber());
+            map.put(3, type.getDescription());
+            map.put(4, type.getCurrency());
+            map.put(5, type.getAmount());
+            map.put(6, Status.Drafted.toString());
         } else if ("deleteExpenseItem".equals(builder.getQueryName())) {
             map.put(1, type.getId());
         } else if ("updateStatus".equals(builder.getQueryName())) {
@@ -144,49 +142,52 @@ public class ExpenseItemService extends AbstractService implements
             map.put(2, type.getId());
         } else if ("updateExpenseItem".equals(builder.getQueryName())) {
             map.put(1, type.getExpenseDate());
-            map.put(2, type.getDescription());
-            map.put(3, type.getCurrency());
-            map.put(4, type.getAmount());
-            map.put(5, type.getId());
+            map.put(2, type.getReferenceNumber());
+            map.put(3, type.getDescription());
+            map.put(4, type.getCurrency());
+            map.put(5, type.getAmount());
+            map.put(6, type.getId());
         }
         return map;
     }
 
     /**
-     * id, expense_date, description, currency, amount, status
+     * id, expense_date, reference_number, description, currency, amount, status
      */
     @Override
     public String[] getColumnNames() {
-        return new String[]{"id", "Expense Date", "Description", "Currency", "Account", "Status"};
+        return new String[]{"id", "Expense Date", "Reference Number","Description", "Currency", "Amount", "Status"};
     }
 
     /**
-     * id, expense_date, description, currency, amount, status
+     * id, expense_date, reference_number, description, currency, amount, status
      */
     @Override
     public ExpenseItem getExcelType(String type, Cell[] array) {
         ExpenseItem item = new ExpenseItem();
         item.setId(DataConverter.getInteger(array[0]));
         item.setExpenseDate(DataConverter.getDate(array[1]));
-        item.setDescription(DataConverter.getString(array[2]));
-        item.setCurrency(DataConverter.getString(array[3]));
-        item.setAmount(DataConverter.getBigDecimal(array[4]));
-        item.setStatus(DataConverter.getStatus(array[5]));
+        item.setReferenceNumber(DataConverter.getString(array[2]));
+        item.setDescription(DataConverter.getString(array[3]));
+        item.setCurrency(DataConverter.getString(array[4]));
+        item.setAmount(DataConverter.getBigDecimal(array[5]));
+        item.setStatus(DataConverter.getStatus(array[6]));
         return item;
     }
 
     /**
-     * id, expense_date, description, currency, amount, status
+     * id, expense_date, reference_number, description, currency, amount, status
      */
     @Override
     public Object[] getExcelRow(String type, ExpenseItem item) {
-        Object[] cellData = new Object[6];
+        Object[] cellData = new Object[7];
         cellData[0] = item.getId();
         cellData[1] = item.getExpenseDate();
-        cellData[2] = item.getDescription();
-        cellData[3] = item.getCurrency();
-        cellData[4] = item.getAmount();
-        cellData[5] = item.getStatus().toString();
+        cellData[2] = item.getReferenceNumber();
+        cellData[3] = item.getDescription();
+        cellData[4] = item.getCurrency();
+        cellData[5] = item.getAmount();
+        cellData[6] = item.getStatus().toString();
         return cellData;
     }
 

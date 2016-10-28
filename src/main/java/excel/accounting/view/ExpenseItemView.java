@@ -30,8 +30,7 @@ import java.util.List;
 public class ExpenseItemView extends AbstractView implements ViewHolder {
     private final String exportActionId = "exportAction", deleteActionId = "deleteAction";
     private final String exportSelectedActionId = "exportSelectedAction";
-    private final String confirmedActionId = "confirmedAction";
-    private final String closedActionId = "closedAction", draftedActionId = "draftedAction";
+    private final String draftedActionId = "draftedAction", confirmedActionId = "confirmedAction";
 
     private ReadableTableView<ExpenseItem> tableView;
     private ExpenseItemService expenseItemService;
@@ -49,6 +48,7 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
         tableView = new ReadableTableView<ExpenseItem>().create();
         tableView.addTextColumn("id", "Id").setPrefWidth(60);
         tableView.addTextColumn("expenseDate", "Expense Date").setPrefWidth(100);
+        tableView.addTextColumn("referenceNumber", "Reference Num").setPrefWidth(160);
         tableView.addTextColumn("description", "Description").setPrefWidth(380);
         tableView.addTextColumn("currency", "Currency").setMinWidth(80);
         tableView.addTextColumn("amount", "Amount").setMinWidth(100);
@@ -57,7 +57,6 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
         tableView.setContextMenuHandler(viewListener);
         tableView.addContextMenuItem(draftedActionId, "Update As Drafted");
         tableView.addContextMenuItem(confirmedActionId, "Update As Confirmed");
-        tableView.addContextMenuItem(closedActionId, "Update As Closed");
         tableView.addContextMenuItem(exportSelectedActionId, "Export Expense Items");
         tableView.addContextMenuItem(deleteActionId, "Delete Expense Items");
         //
@@ -115,8 +114,6 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
             expenseItemService.setAsConfirmed(tableView.getSelectedItems());
         } else if (draftedActionId.equals(actionId)) {
             expenseItemService.setAsDrafted(tableView.getSelectedItems());
-        } else if (closedActionId.equals(actionId)) {
-            expenseItemService.setAsClosed(tableView.getSelectedItems());
         }
         loadRecords();
     }
@@ -182,8 +179,7 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
     }
 
     private void onRowSelectionChanged(boolean isRowSelected) {
-        tableView.setDisable(!isRowSelected, exportSelectedActionId, draftedActionId, confirmedActionId,
-                closedActionId);
+        tableView.setDisable(!isRowSelected, exportSelectedActionId, draftedActionId, confirmedActionId);
     }
 
     private void performActionEvent(final String actionId) {
@@ -197,7 +193,6 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
                 break;
             case confirmedActionId:
             case draftedActionId:
-            case closedActionId:
                 statusChangedEvent(actionId);
                 break;
         }

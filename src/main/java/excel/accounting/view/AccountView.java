@@ -50,7 +50,7 @@ public class AccountView extends AbstractView implements ViewHolder {
         readableTableView.addTextColumn("accountNumber", "Account Number").setPrefWidth(120);
         readableTableView.addTextColumn("name", "Name").setPrefWidth(220);
         readableTableView.addTextColumn("description", "Description").setPrefWidth(260);
-        readableTableView.addTextColumn("category", "Category").setMinWidth(120);
+        readableTableView.addEnumColumn("accountType", "Account Type").setMinWidth(120);
         readableTableView.addTextColumn("currency", "Currency").setMinWidth(60);
         readableTableView.addDecimalColumn("balance", "Account Balance").setMinWidth(160);
         readableTableView.addTextColumn("status", "Status").setMinWidth(80);

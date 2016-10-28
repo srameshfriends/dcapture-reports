@@ -1,5 +1,6 @@
 package excel.accounting.shared;
 
+import excel.accounting.entity.AccountType;
 import excel.accounting.entity.Status;
 import org.apache.log4j.Logger;
 import org.apache.poi.hssf.usermodel.HSSFDateUtil;
@@ -25,6 +26,10 @@ public class DataConverter {
 
     public static Status getStatus(Object status) {
         return status == null ? Status.Drafted : getEnum(Status.class, status.toString());
+    }
+
+    public static AccountType getAccountType(Object accountType) {
+        return accountType == null ? AccountType.IncomeExpense : getEnum(AccountType.class, accountType.toString());
     }
 
     private static <E extends Enum<E>> E getEnum(Class<E> enumClass, String name) {

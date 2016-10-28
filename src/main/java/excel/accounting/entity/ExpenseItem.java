@@ -13,7 +13,7 @@ import java.util.Date;
  */
 public class ExpenseItem extends EntityRow {
     private Date expenseDate;
-    private String description, currency;
+    private String referenceNumber, description, currency;
     private BigDecimal amount;
     private Status status;
 
@@ -23,6 +23,14 @@ public class ExpenseItem extends EntityRow {
 
     public void setExpenseDate(Date expenseDate) {
         this.expenseDate = expenseDate;
+    }
+
+    public String getReferenceNumber() {
+        return referenceNumber;
+    }
+
+    public void setReferenceNumber(String referenceNumber) {
+        this.referenceNumber = referenceNumber;
     }
 
     public String getDescription() {

@@ -2,12 +2,11 @@ package excel.accounting.db;
 
 import org.apache.log4j.Logger;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.math.BigDecimal;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -85,8 +84,9 @@ public class DataReader {
         List<Object[]> resultList = new ArrayList<>();
         try {
             Connection con = dataProcessor.getConnection();
-            Statement stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery(builder.getQuery());
+            PreparedStatement statement = con.prepareStatement(builder.getQuery());
+            addParameter(statement, builder.getParameters());
+            ResultSet rs = statement.executeQuery();
             int columnCount = rs.getMetaData().getColumnCount();
             while (rs.next()) {
                 Object[] result = new Object[columnCount];
@@ -95,7 +95,7 @@ public class DataReader {
                 }
                 resultList.add(result);
             }
-            close(rs, stmt, con);
+            close(rs, statement, con);
         } catch (SQLException ex) {
             if (logger.isDebugEnabled()) {
                 ex.printStackTrace();
@@ -114,6 +114,46 @@ public class DataReader {
             }
         }
         return dataList;
+    }
+
+    private void addParameter(PreparedStatement statement, Map<Integer, Object> parameterMap) throws SQLException {
+        for (Map.Entry<Integer, Object> entry : parameterMap.entrySet()) {
+            Object parameter = entry.getValue();
+            if (parameter == null) {
+                statement.setString(entry.getKey(), null);
+            } else if (parameter instanceof String) {
+                statement.setString(entry.getKey(), (String) parameter);
+            } else if (parameter instanceof Integer) {
+                statement.setInt(entry.getKey(), (Integer) parameter);
+            } else if (parameter instanceof BigDecimal) {
+                statement.setBigDecimal(entry.getKey(), (BigDecimal) parameter);
+            } else if (parameter instanceof Boolean) {
+                statement.setBoolean(entry.getKey(), (Boolean) parameter);
+            } else if (parameter instanceof java.util.Date) {
+                statement.setDate(entry.getKey(), toSqlDate((java.util.Date) parameter));
+            } else if (parameter instanceof DataType) {
+                DataType dataType = (DataType) parameter;
+                if (DataType.DateType.equals(dataType)) {
+                    statement.setDate(entry.getKey(), null);
+                } else if (DataType.IntegerType.equals(dataType)) {
+                    statement.setInt(entry.getKey(), 0);
+                } else if (DataType.DoubleType.equals(dataType)) {
+                    statement.setDouble(entry.getKey(), 0);
+                } else if (DataType.BigDecimalType.equals(dataType)) {
+                    statement.setBigDecimal(entry.getKey(), BigDecimal.ZERO);
+                } else if (DataType.StringType.equals(dataType)) {
+                    statement.setString(entry.getKey(), null);
+                } else if (DataType.BooleanType.equals(dataType)) {
+                    statement.setBoolean(entry.getKey(), false);
+                }
+            } else {
+                statement.setString(entry.getKey(), parameter.toString());
+            }
+        }
+    }
+
+    private java.sql.Date toSqlDate(java.util.Date sqlDate) {
+        return new java.sql.Date(sqlDate.getTime());
     }
 
     private void close(ResultSet resultSet, Statement statement, Connection connection) {

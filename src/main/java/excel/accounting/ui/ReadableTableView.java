@@ -6,7 +6,6 @@ import javafx.scene.control.*;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.cell.PropertyValueFactory;
 
-import java.awt.*;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
@@ -107,6 +106,10 @@ public class ReadableTableView<T> {
         column.setCellValueFactory(new PropertyValueFactory<>(name));
         tableView.getColumns().add(column);
         return column;
+    }
+
+    public void setSelectionMode(SelectionMode selectionMode) {
+        tableView.getSelectionModel().setSelectionMode(selectionMode);
     }
 
     public List<T> getSelectedItems() {

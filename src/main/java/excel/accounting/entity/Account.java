@@ -8,9 +8,10 @@ import java.math.BigDecimal;
  * Account
  */
 public class Account extends EntityRow {
-    private String accountNumber, name, category, currency, description;
+    private String accountNumber, name, currency, description;
     private BigDecimal balance;
     private Status status;
+    private AccountType accountType;
 
     public String getAccountNumber() {
         return accountNumber;
@@ -60,11 +61,11 @@ public class Account extends EntityRow {
         this.description = description;
     }
 
-    public String getCategory() {
-        return category;
+    public AccountType getAccountType() {
+        return accountType;
     }
 
-    public void setCategory(String category) {
-        this.category = category;
+    public void setAccountType(AccountType accountType) {
+        this.accountType = accountType;
     }
 }

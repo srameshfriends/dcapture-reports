@@ -1,7 +1,6 @@
 package excel.accounting.db;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import java.util.*;
 
@@ -13,26 +12,30 @@ public class QueryBuilder {
     private StringBuilder selectBuilder, joinBuilder, whereBuilder, orderByBuilder;
     private String limitQuery;
     private Map<Integer, Object> parameters;
+    private Map<String, String> replaceMap;
 
     QueryBuilder(String queryName, String queryTemplate) {
         this.queryName = queryName;
         this.queryTemplate = queryTemplate;
         parameters = new HashMap<>();
+        replaceMap = new HashMap<>();
     }
 
     public String getQueryName() {
         return queryName;
     }
 
-    public String getQueryTemplate() {
+    private String getQueryTemplate() {
         return queryTemplate;
     }
 
-    private void appendSelect(String txt) {
+    private void appendSelect(String... fields) {
         if (selectBuilder == null) {
             selectBuilder = new StringBuilder();
         }
-        selectBuilder.append(txt);
+        for(String fld : fields) {
+            selectBuilder.append(fld).append(",");
+        }
     }
 
     private void appendJoin(String txt) {
@@ -54,6 +57,22 @@ public class QueryBuilder {
             whereBuilder = new StringBuilder();
         }
         whereBuilder.append(txt);
+    }
+
+    public QueryBuilder addInClauseQuery(String replaceName, InClauseQuery inClauseQuery) {
+        replaceMap.put(replaceName, inClauseQuery.toString());
+        inClauseQuery.getParameterList().forEach(this::addParameter);
+        return QueryBuilder.this;
+    }
+
+    public QueryBuilder addSearchTextQuery(String replaceName, SearchTextQuery searchTextQuery) {
+        if (searchTextQuery != null) {
+            replaceMap.put(replaceName, searchTextQuery.toString());
+            searchTextQuery.getParameterList().forEach(this::addParameter);
+        } else {
+            replaceMap.put(replaceName, "");
+        }
+        return QueryBuilder.this;
     }
 
     public QueryBuilder select(String query) {
@@ -81,23 +100,32 @@ public class QueryBuilder {
         return QueryBuilder.this;
     }
 
-    public Map<Integer, Object> getParameters() {
+    public QueryBuilder addParameter(Object parameter) {
+        add(parameters.size() + 1, parameter);
+        return QueryBuilder.this;
+    }
+
+    Map<Integer, Object> getParameters() {
         return parameters;
     }
 
     public String getQuery() {
         String query = getQueryTemplate();
         if (query.contains("$select") && selectBuilder != null) {
-            query = StringUtils.replace(query, "$select", selectBuilder.toString());
+            String temp = StringUtils.removeEnd(selectBuilder.toString(), ",");
+            query = StringUtils.replace(query, "$select", temp);
         }
         if (query.contains("$where") && whereBuilder != null) {
             query = StringUtils.replace(query, "$where", whereBuilder.toString());
         }
         if (query.contains("$join") && joinBuilder != null) {
-            query = StringUtils.replace(query, "$where", joinBuilder.toString());
+            query = StringUtils.replace(query, "$join", joinBuilder.toString());
         }
         if (query.contains("$orderby") && orderByBuilder != null) {
             query = StringUtils.replace(query, "$orderby", orderByBuilder.toString());
+        }
+        for (Map.Entry<String, String> entry : replaceMap.entrySet()) {
+            query = StringUtils.replace(query, entry.getKey().toLowerCase(), entry.getValue());
         }
         if (limitQuery != null) {
             query = query.concat(limitQuery);
