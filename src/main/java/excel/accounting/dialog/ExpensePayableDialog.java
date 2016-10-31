@@ -7,11 +7,7 @@ import excel.accounting.ui.ReadableTableView;
 import excel.accounting.ui.SearchTextField;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
-import javafx.geometry.Pos;
 import javafx.scene.Parent;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.layout.HBox;
@@ -35,6 +31,16 @@ public class ExpensePayableDialog extends AbstractDialog {
     @Override
     protected String getTitle() {
         return "Expense Payment Dialog";
+    }
+
+    @Override
+    protected void onActionEvent(final String actionId) {
+        if ("actionOkay".equals(actionId)) {
+            onCloseEvent();
+        } else if ("actionCancel".equals(actionId)) {
+            setCancelled(true);
+            hide();
+        }
     }
 
     private void loadExpenseAccounts() {
@@ -125,28 +131,10 @@ public class ExpensePayableDialog extends AbstractDialog {
     protected Parent create() {
         accountService = (AccountService) getApplicationControl().getService("accountService");
         messageLabel = new Label();
-        HBox tablePanel = new HBox();
-        tablePanel.getChildren().addAll(createExpenseControl(), createBankCashControl());
-        //
-        Button okayBtn = createButton("actionOkay", "Okay", new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-                onCloseEvent();
-            }
-        });
-        Button cancelBtn = createButton("actionCancel", "Cancel", new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-                setCancelled(true);
-                hide();
-            }
-        });
-        HBox actionPanel = new HBox();
-        actionPanel.getChildren().add(messageLabel);
-        actionPanel.setAlignment(Pos.CENTER_RIGHT);
-        actionPanel.getChildren().addAll(okayBtn, cancelBtn);
-        VBox basePanel = new VBox();
-        basePanel.getChildren().addAll(tablePanel, actionPanel);
+        HBox basePanel = new HBox();
+        basePanel.getChildren().addAll(createExpenseControl(), createBankCashControl());
+        addAction("actionOkay", "Okay");
+        addAction("actionCancel", "Cancel");
         return basePanel;
     }
 }

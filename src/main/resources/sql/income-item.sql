@@ -3,15 +3,13 @@
 --createIncomeItem
 CREATE TABLE IF NOT EXISTS entity.income_item (id INTEGER auto_increment, income_date DATE,
 description VARCHAR(512), currency VARCHAR(8), amount DECIMAL, status VARCHAR(32),
-income_category VARCHAR(8), income_account VARCHAR(8), bank_account VARCHAR(8), PRIMARY KEY (id));
+income_category VARCHAR(8), income_account VARCHAR(8), PRIMARY KEY (id));
 --foreignKeyCurrency
 ALTER TABLE entity.income_item ADD FOREIGN KEY (currency) REFERENCES entity.currency(code);
 --foreignKeyIncomeCategory
 ALTER TABLE entity.income_item ADD FOREIGN KEY (income_category) REFERENCES entity.income_category(code);
 --foreignKeyIncomeAccount
 ALTER TABLE entity.income_item ADD FOREIGN KEY (income_account) REFERENCES entity.account(account_number);
---foreignKeyIncomeAccount
-ALTER TABLE entity.income_item ADD FOREIGN KEY (bank_account) REFERENCES entity.account(account_number);
 --loadAll
 SELECT id, income_date, description, currency, amount, status FROM entity.income_item ORDER BY income_date;
 --findIdList

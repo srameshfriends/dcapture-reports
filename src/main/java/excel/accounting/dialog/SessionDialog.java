@@ -4,16 +4,11 @@ import excel.accounting.db.QueryBuilder;
 import excel.accounting.db.Transaction;
 import excel.accounting.shared.DataConverter;
 import excel.accounting.ui.ActionHandler;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
 import java.util.HashMap;
@@ -26,10 +21,9 @@ import java.util.Map;
  * @author Ramesh
  * @since Oct, 2016
  */
-public class SessionDialog extends AbstractDialog implements EventHandler<ActionEvent> {
+public class SessionDialog extends AbstractDialog {
     private RadioButton[] userSelectionBox;
     private PasswordField passwordField;
-    private Button cancelBtn, okBtn;
     private Map<String, String[]> userMap;
     private ToggleGroup toggleGroup;
     private Label messageLabel;
@@ -106,18 +100,6 @@ public class SessionDialog extends AbstractDialog implements EventHandler<Action
         }
         toggleGroup.selectedToggleProperty().addListener((ov, oldToggle, newToggle) -> handleSwitchUserEvent());
         userSelectionBox[0].setSelected(true);
-
-        //
-        okBtn = new Button("Okay");
-        okBtn.setOnAction(this);
-        cancelBtn = new Button("Cancel");
-        cancelBtn.setOnAction(this);
-        cancelBtn.setAlignment(Pos.CENTER_RIGHT);
-        //
-        HBox actionBox = new HBox();
-        actionBox.setSpacing(24);
-        actionBox.getChildren().addAll(okBtn, cancelBtn);
-        HBox.setHgrow(cancelBtn, Priority.ALWAYS);
         //
         GridPane gridPane = new GridPane();
         gridPane.setVgap(24);
@@ -126,11 +108,12 @@ public class SessionDialog extends AbstractDialog implements EventHandler<Action
             gridPane.add(userSelectionBox[index], 0, (index + 1));
         }
         gridPane.add(passwordField, 0, 4);
-        gridPane.add(actionBox, 0, 5);
-        //
         VBox basePanel = new VBox();
         basePanel.setPadding(new Insets(24));
         basePanel.getChildren().add(gridPane);
+        //
+        addAction("actionOkay", "Okay");
+        addAction("actionCancel", "Cancel");
         return basePanel;
     }
 
@@ -156,10 +139,10 @@ public class SessionDialog extends AbstractDialog implements EventHandler<Action
     }
 
     @Override
-    public void handle(ActionEvent event) {
-        if (okBtn == event.getSource()) {
+    protected void onActionEvent(final String actionId) {
+        if ("actionOkay".equals(actionId)) {
             onSignInEvent();
-        } else if (cancelBtn == event.getSource()) {
+        } else if ("actionCancel".equals(actionId)) {
             hide();
         }
     }

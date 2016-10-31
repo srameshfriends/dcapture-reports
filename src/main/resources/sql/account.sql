@@ -20,8 +20,12 @@ DELETE FROM entity.account WHERE account_number = ?;
 UPDATE entity.account SET name = ?, account_type = ?, currency = ?, description = ? WHERE account_number = ?;
 --updateStatus
 UPDATE entity.account SET status = ? WHERE account_number = ?;
---
+--updateCurrency
+UPDATE entity.account SET currency = ? WHERE account_number = ?;
 --findAccountsByType
 SELECT account_number, name, account_type, status, currency, balance, description FROM entity.account
  WHERE account_type IN ($account_type) $searchText ORDER BY account_number;
+--searchAccount
+SELECT account_number, name, account_type, status, currency, balance, description FROM entity.account
+ WHERE status IN ($status) AND account_type IN ($accountType) $searchText;
 --

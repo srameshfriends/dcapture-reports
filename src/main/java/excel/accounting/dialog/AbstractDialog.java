@@ -2,12 +2,17 @@ package excel.accounting.dialog;
 
 import excel.accounting.db.*;
 import excel.accounting.shared.ApplicationControl;
+import excel.accounting.ui.StyleBuilder;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Insets;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.TitledPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
@@ -18,24 +23,33 @@ import javafx.stage.StageStyle;
  * @author Ramesh
  * @since Oct, 2016
  */
-public abstract class AbstractDialog {
+public abstract class AbstractDialog implements EventHandler<ActionEvent> {
     private ApplicationControl applicationControl;
     private DataReader dataReader;
     private Stage dialogStage;
     private boolean cancelled;
+    private HBox actionBar;
 
     public void initialize(ApplicationControl control, Stage primaryStage) {
         this.applicationControl = control;
         dataReader = new DataReader(applicationControl.getDataProcessor());
+
         dialogStage = new Stage();
         dialogStage.initModality(Modality.WINDOW_MODAL);
         dialogStage.initOwner(primaryStage);
         dialogStage.initStyle(StageStyle.UNDECORATED);
-        Parent parent = create();
-        parent.setStyle("-fx-border-color: #777");
-        TitledPane titledPane = new TitledPane(getTitle(), parent);
-        titledPane.setCollapsible(false);
-        dialogStage.setScene(new Scene(titledPane));
+        Label titleLabel = new Label(getTitle());
+        actionBar = new HBox();
+        actionBar.setSpacing(24);
+        actionBar.setPadding(new Insets(18));
+        //
+        VBox basePanel = new VBox();
+        StyleBuilder styleBuilder = new StyleBuilder();
+        styleBuilder.padding(8);
+        styleBuilder.border(8, 1, "solid");
+        basePanel.setStyle(styleBuilder.toString());
+        basePanel.getChildren().addAll(titleLabel, create(), actionBar);
+        dialogStage.setScene(new Scene(basePanel));
     }
 
     protected DataReader getDataReader() {
@@ -50,7 +64,7 @@ public abstract class AbstractDialog {
         return applicationControl.getDataProcessor().getQueryBuilder(sqlFileName, queryName);
     }
 
-    public void setCancelled(boolean cancelled) {
+    void setCancelled(boolean cancelled) {
         this.cancelled = cancelled;
     }
 
@@ -58,7 +72,7 @@ public abstract class AbstractDialog {
         return cancelled;
     }
 
-    protected ApplicationControl getApplicationControl() {
+    ApplicationControl getApplicationControl() {
         return applicationControl;
     }
 
@@ -76,14 +90,23 @@ public abstract class AbstractDialog {
         dialogStage.showAndWait();
     }
 
-    public void hide() {
+    void hide() {
         dialogStage.hide();
     }
 
-    protected Button createButton(String actionId, String title, EventHandler<ActionEvent> handler) {
+    protected abstract void onActionEvent(String actionId);
+
+    @Override
+    public final void handle(ActionEvent event) {
+        Button button = (Button) event.getSource();
+        onActionEvent(button.getId());
+    }
+
+    Button addAction(String actionId, String title) {
         Button button = new Button(title);
         button.setId(actionId);
-        button.setOnAction(handler);
+        button.setOnAction(this);
+        actionBar.getChildren().add(button);
         return button;
     }
 

@@ -1,7 +1,11 @@
 package excel.accounting.view;
 
+import excel.accounting.dialog.AccountDialog;
+import excel.accounting.dialog.CurrencyDialog;
 import excel.accounting.dialog.ExpensePayableDialog;
 import excel.accounting.entity.Account;
+import excel.accounting.entity.AccountType;
+import excel.accounting.entity.Currency;
 import excel.accounting.entity.ExpenseItem;
 import excel.accounting.poi.ReadExcelData;
 import excel.accounting.poi.WriteExcelData;
@@ -22,6 +26,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Expense Item View
@@ -33,7 +38,8 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
     private final String exportActionId = "exportAction", deleteActionId = "deleteAction";
     private final String exportSelectedActionId = "exportSelectedAction";
     private final String draftedActionId = "draftedAction", confirmedActionId = "confirmedAction";
-    private final String updatePaymentActionId = "updatePaymentAction";
+    private final String updateCurrencyActionId = "updateCurrencyAction";
+    private final String updateAccountActionId = "updateAccountAction";
 
     private ReadableTableView<ExpenseItem> tableView;
     private ExpenseItemService expenseItemService;
@@ -49,20 +55,22 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
         ViewListener viewListener = new ViewListener();
         expenseItemService = (ExpenseItemService) getService("expenseItemService");
         tableView = new ReadableTableView<ExpenseItem>().create();
-        tableView.addTextColumn("id", "Id").setPrefWidth(60);
+        tableView.addTextColumn("expenseCode", "Item Code").setPrefWidth(90);
         tableView.addTextColumn("expenseDate", "Expense Date").setPrefWidth(100);
         tableView.addTextColumn("referenceNumber", "Reference Num").setPrefWidth(160);
         tableView.addTextColumn("description", "Description").setPrefWidth(380);
         tableView.addTextColumn("currency", "Currency").setMinWidth(80);
-        tableView.addTextColumn("amount", "Amount").setMinWidth(100);
+        tableView.addTextColumn("amount", "Amount").setMinWidth(140);
+        tableView.addTextColumn("expenseAccount", "Expense Account").setMinWidth(120);
         tableView.addTextColumn("status", "Status").setMinWidth(100);
         tableView.addSelectionChangeListener(viewListener);
         tableView.setContextMenuHandler(viewListener);
-        tableView.addContextMenuItem(draftedActionId, "Update As Drafted");
-        tableView.addContextMenuItem(confirmedActionId, "Update As Confirmed");
+        tableView.addContextMenuItem(draftedActionId, "Set As Drafted");
+        tableView.addContextMenuItem(confirmedActionId, "Set As Confirmed");
         tableView.addContextMenuItem(exportSelectedActionId, "Export Expense Items");
         tableView.addContextMenuItem(deleteActionId, "Delete Expense Items");
-        tableView.addContextMenuItem(updatePaymentActionId, "Update Payment");
+        tableView.addContextMenuItem(updateCurrencyActionId, "Update Currency");
+        tableView.addContextMenuItem(updateAccountActionId, "Update Expense Account");
         //
         basePanel = new VBox();
         basePanel.getChildren().addAll(createToolbar(), tableView.getTableView());
@@ -146,22 +154,30 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
         if (dataList.isEmpty()) {
             return;
         }
-        List<Integer> existingIdList = expenseItemService.findIdList();
-        List<ExpenseItem> updateList = new ArrayList<>();
-        List<ExpenseItem> insertList = new ArrayList<>();
-        for (ExpenseItem expenseItem : dataList) {
-            if (existingIdList.contains(expenseItem.getId())) {
-                updateList.add(expenseItem);
+        List<ExpenseItem> validList = new ArrayList<>();
+        for(ExpenseItem expenseItem : dataList) {
+            if(expenseItemService.isValidInsert(expenseItem)) {
+                validList.add(expenseItem);
             } else {
-                insertList.add(expenseItem);
+                System.out.println("Not Valid");
             }
         }
-        if (!updateList.isEmpty()) {
-            expenseItemService.updateExpenseItem(updateList);
+        if (validList.isEmpty()) {
+            showErrorMessage("Valid Expense items not found");
+            return;
         }
-        if (!insertList.isEmpty()) {
-            expenseItemService.insertExpenseItem(insertList);
+        List<String> existingCodeList = expenseItemService.findExpenseCodeList();
+        dataList = new ArrayList<>();
+        for (ExpenseItem expenseItem : validList) {
+            if (!existingCodeList.contains(expenseItem.getExpenseCode())) {
+                dataList.add(expenseItem);
+            }
         }
+        if (dataList.isEmpty()) {
+            showErrorMessage("Valid expense items are already exists");
+            return;
+        }
+        expenseItemService.insertExpenseItem(dataList);
         loadRecords();
     }
 
@@ -182,17 +198,32 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
         }
     }
 
-    private void updatePaymentEvent() {
-        ExpensePayableDialog payableDialog = new ExpensePayableDialog();
-        payableDialog.initialize(getApplicationControl(), getPrimaryStage());
-        payableDialog.showAndWait();
-        if(payableDialog.isCancelled()) {
-           return;
-        }
-        Account expenseAccount = payableDialog.getExpenseAccount();
-        Account incomeAccount = payableDialog.getIncomeAccount();
+    private void updateCurrency() {
         List<ExpenseItem> expenseItemList = tableView.getSelectedItems();
-        expenseItemService.assignAccounts(expenseAccount, incomeAccount, expenseItemList);
+        if (expenseItemList.isEmpty()) {
+            return;
+        }
+        CurrencyDialog currencyDialog = new CurrencyDialog(getApplicationControl(), getPrimaryStage());
+        currencyDialog.showAndWait();
+        if (currencyDialog.isCancelled() || currencyDialog.getSelected() == null) {
+            return;
+        }
+        expenseItemService.updateCurrency(currencyDialog.getSelected(), expenseItemList);
+        loadRecords();
+    }
+
+    private void updateExpenseAccount() {
+        List<ExpenseItem> expenseItemList = tableView.getSelectedItems();
+        if (expenseItemList.isEmpty()) {
+            return;
+        }
+        AccountType[] accTypes = new AccountType[]{AccountType.Expense, AccountType.IncomeExpense};
+        AccountDialog accountDialog = new AccountDialog(getApplicationControl(), getPrimaryStage(), accTypes);
+        accountDialog.showAndWait();
+        if (accountDialog.isCancelled() || accountDialog.getSelected() == null) {
+            return;
+        }
+        expenseItemService.updateExpenseAccount(accountDialog.getSelected(), expenseItemList);
         loadRecords();
     }
 
@@ -213,8 +244,11 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
             case draftedActionId:
                 statusChangedEvent(actionId);
                 break;
-            case updatePaymentActionId:
-                updatePaymentEvent();
+            case updateCurrencyActionId:
+                updateCurrency();
+                break;
+            case updateAccountActionId:
+                updateExpenseAccount();
                 break;
         }
     }

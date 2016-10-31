@@ -12,7 +12,8 @@ import java.util.Date;
 public class IncomeItem {
     private int id;
     private Date incomeDate;
-    private String description, currency;
+    private String description, currency, incomeCategory, incomeAccount;;
+
     private BigDecimal amount;
     private Status status;
 
@@ -62,5 +63,21 @@ public class IncomeItem {
 
     public void setStatus(Status status) {
         this.status = status;
+    }
+
+    public String getIncomeCategory() {
+        return incomeCategory;
+    }
+
+    public void setIncomeCategory(String incomeCategory) {
+        this.incomeCategory = incomeCategory;
+    }
+
+    public String getIncomeAccount() {
+        return incomeAccount;
+    }
+
+    public void setIncomeAccount(String incomeAccount) {
+        this.incomeAccount = incomeAccount;
     }
 }

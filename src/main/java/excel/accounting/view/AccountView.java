@@ -1,6 +1,6 @@
 package excel.accounting.view;
 
-import excel.accounting.dialog.CurrencyLinkDialog;
+import excel.accounting.dialog.CurrencyDialog;
 import excel.accounting.entity.Account;
 import excel.accounting.ui.*;
 import excel.accounting.poi.ReadExcelData;
@@ -31,10 +31,10 @@ import java.util.List;
 public class AccountView extends AbstractView implements ViewHolder {
     private final String exportActionId = "exportAction", deleteActionId = "deleteAction";
     private final String exportSelectedActionId = "exportSelectedAction";
-    private final String confirmedActionId = "confirmedAction";
-    private final String closedActionId = "closedAction", draftedActionId = "draftedAction";
+    private final String draftedActionId = "draftedAction", confirmedActionId = "confirmedAction";
+    private final String closedActionId = "closedAction", updateCurrencyActionId = "updateCurrencyAction";
 
-    private ReadableTableView<Account> readableTableView;
+    private ReadableTableView<Account> tableView;
     private AccountService accountService;
     private VBox basePanel;
 
@@ -47,24 +47,25 @@ public class AccountView extends AbstractView implements ViewHolder {
     public Node createControl() {
         ViewListener viewListener = new ViewListener();
         accountService = (AccountService) getService("accountService");
-        readableTableView = new ReadableTableView<Account>().create();
-        readableTableView.addTextColumn("accountNumber", "Account Number").setPrefWidth(120);
-        readableTableView.addTextColumn("name", "Name").setPrefWidth(220);
-        readableTableView.addTextColumn("description", "Description").setPrefWidth(260);
-        readableTableView.addEnumColumn("accountType", "Account Type").setMinWidth(120);
-        readableTableView.addTextColumn("currency", "Currency").setMinWidth(60);
-        readableTableView.addDecimalColumn("balance", "Account Balance").setMinWidth(160);
-        readableTableView.addTextColumn("status", "Status").setMinWidth(80);
-        readableTableView.addSelectionChangeListener(viewListener);
-        readableTableView.setContextMenuHandler(viewListener);
-        readableTableView.addContextMenuItem(draftedActionId, "Update As Drafted");
-        readableTableView.addContextMenuItem(confirmedActionId, "Update As Confirmed");
-        readableTableView.addContextMenuItem(closedActionId, "Update As Closed");
-        readableTableView.addContextMenuItem(exportSelectedActionId, "Export Accounts");
-        readableTableView.addContextMenuItem(deleteActionId, "Delete Accounts");
+        tableView = new ReadableTableView<Account>().create();
+        tableView.addTextColumn("accountNumber", "Account Number").setPrefWidth(120);
+        tableView.addTextColumn("name", "Name").setPrefWidth(220);
+        tableView.addTextColumn("description", "Description").setPrefWidth(260);
+        tableView.addEnumColumn("accountType", "Account Type").setMinWidth(120);
+        tableView.addTextColumn("currency", "Currency").setMinWidth(60);
+        tableView.addDecimalColumn("balance", "Account Balance").setMinWidth(160);
+        tableView.addTextColumn("status", "Status").setMinWidth(80);
+        tableView.addSelectionChangeListener(viewListener);
+        tableView.setContextMenuHandler(viewListener);
+        tableView.addContextMenuItem(draftedActionId, "Set As Drafted");
+        tableView.addContextMenuItem(confirmedActionId, "Set As Confirmed");
+        tableView.addContextMenuItem(closedActionId, "Set As Closed");
+        tableView.addContextMenuItem(updateCurrencyActionId, "Update Currency");
+        tableView.addContextMenuItem(exportSelectedActionId, "Export Accounts");
+        tableView.addContextMenuItem(deleteActionId, "Delete Accounts");
         //
         basePanel = new VBox();
-        basePanel.getChildren().addAll(createToolbar(), readableTableView.getTableView());
+        basePanel.getChildren().addAll(createToolbar(), tableView.getTableView());
         return basePanel;
     }
 
@@ -109,24 +110,29 @@ public class AccountView extends AbstractView implements ViewHolder {
     }
 
     private void statusChangedEvent(String actionId) {
-        if (!confirmDialog("Update Status", "Are you really wish to change selected accounts Status?")) {
+        String message = "Error : Unknown action id " + actionId;
+        if (confirmedActionId.equals(actionId)) {
+            message = "Are you really wish to change status as Confirmed?";
+        } else if (draftedActionId.equals(actionId)) {
+            message = "Are you really wish to change status as Drafted?";
+        } else if (closedActionId.equals(actionId)) {
+            message = "Are you really wish to change status as Closed?";
+        }
+        if (!confirmDialog("Status Update", message)) {
             return;
         }
         if (confirmedActionId.equals(actionId)) {
-            accountService.setAsConfirmed(readableTableView.getSelectedItems());
+            accountService.setAsConfirmed(tableView.getSelectedItems());
         } else if (draftedActionId.equals(actionId)) {
-            accountService.setAsDrafted(readableTableView.getSelectedItems());
+            accountService.setAsDrafted(tableView.getSelectedItems());
         } else if (closedActionId.equals(actionId)) {
-            CurrencyLinkDialog dialog = new CurrencyLinkDialog();
-            dialog.initialize(getApplicationControl(), getPrimaryStage());
-            dialog.show();
-           // accountService.setAsClosed(readableTableView.getSelectedItems());
+            accountService.setAsClosed(tableView.getSelectedItems());
         }
         loadRecords();
     }
 
     private void deleteEvent() {
-        accountService.deleteAccount(readableTableView.getSelectedItems());
+        accountService.deleteAccount(tableView.getSelectedItems());
         loadRecords();
     }
 
@@ -136,7 +142,20 @@ public class AccountView extends AbstractView implements ViewHolder {
             return;
         }
         ObservableList<Account> observableList = FXCollections.observableArrayList(accountList);
-        readableTableView.setItems(observableList);
+        tableView.setItems(observableList);
+    }
+
+    private void updateCurrency() {
+        CurrencyDialog dialog = new CurrencyDialog(getApplicationControl(), getPrimaryStage());
+        dialog.showAndWait();
+        if (dialog.isCancelled() || dialog.getSelected() == null) {
+            return;
+        }
+        List<Account> accountList = tableView.getSelectedItems();
+        if (accountList != null) {
+            accountService.updateCurrency(dialog.getSelected(), accountList);
+            loadRecords();
+        }
     }
 
     private void importFromExcelEvent() {
@@ -168,9 +187,6 @@ public class AccountView extends AbstractView implements ViewHolder {
         loadRecords();
     }
 
-    /*
-    id, account_number, name, category, status, currency, balance, description
-    */
     private void exportToExcelEvent(final String actionId) {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyMMddHHmm");
         String fileName = simpleDateFormat.format(new Date());
@@ -181,7 +197,7 @@ public class AccountView extends AbstractView implements ViewHolder {
         }
         WriteExcelData<Account> writeExcelData = new WriteExcelData<>(actionId, file, accountService);
         if (exportSelectedActionId.equals(actionId)) {
-            List<Account> selected = readableTableView.getSelectedItems();
+            List<Account> selected = tableView.getSelectedItems();
             writeExcelData.writeRowData(selected);
         } else {
             writeExcelData.writeRowData(accountService.loadAll());
@@ -190,7 +206,7 @@ public class AccountView extends AbstractView implements ViewHolder {
     }
 
     private void onRowSelectionChanged(boolean isRowSelected) {
-        readableTableView.setDisable(!isRowSelected, exportSelectedActionId, draftedActionId, confirmedActionId,
+        tableView.setDisable(!isRowSelected, exportSelectedActionId, draftedActionId, confirmedActionId,
                 closedActionId);
     }
 
@@ -207,6 +223,9 @@ public class AccountView extends AbstractView implements ViewHolder {
             case draftedActionId:
             case closedActionId:
                 statusChangedEvent(actionId);
+                break;
+            case updateCurrencyActionId:
+                updateCurrency();
                 break;
         }
     }

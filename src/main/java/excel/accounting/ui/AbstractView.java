@@ -91,4 +91,11 @@ public abstract class AbstractView implements ViewHolder {
         Optional<ButtonType> result = alert.showAndWait();
         return result.isPresent() && result.get() == ButtonType.OK;
     }
+
+    protected void showErrorMessage(String description) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setHeaderText("Application Error");
+        alert.setContentText(description);
+        alert.showAndWait();
+    }
 }

@@ -3,22 +3,38 @@ package excel.accounting.dialog;
 import excel.accounting.entity.Currency;
 import excel.accounting.entity.Status;
 import excel.accounting.service.CurrencyService;
+import excel.accounting.shared.ApplicationControl;
 import excel.accounting.ui.ReadableTableView;
 import excel.accounting.ui.SearchTextField;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Parent;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 
 import java.util.List;
 
 /**
- * Currency Link Dialog
+ * Currency Dialog
  */
-public class CurrencyLinkDialog extends AbstractDialog {
+public class CurrencyDialog extends AbstractDialog {
     private ReadableTableView<Currency> tableView;
     private SearchTextField searchTextField;
     private CurrencyService currencyService;
+
+    public CurrencyDialog(ApplicationControl control, Stage primaryStage) {
+        initialize(control, primaryStage);
+    }
+
+    @Override
+    protected void onActionEvent(final String actionId) {
+        if ("actionOkay".equals(actionId)) {
+            hide();
+        } else if ("actionCancel".equals(actionId)) {
+            setCancelled(true);
+            hide();
+        }
+    }
 
     @Override
     protected void onOpenEvent() {
@@ -31,6 +47,10 @@ public class CurrencyLinkDialog extends AbstractDialog {
         tableView.setItems(observableList);
     }
 
+    public Currency getSelected() {
+        return tableView.getSelectedItem();
+    }
+
     @Override
     protected Parent create() {
         currencyService = (CurrencyService) getService("currencyService");
@@ -39,14 +59,17 @@ public class CurrencyLinkDialog extends AbstractDialog {
         tableView = new ReadableTableView<Currency>().create();
         tableView.addTextColumn("code", "Currency").setPrefWidth(120);
         tableView.addTextColumn("name", "Name").setPrefWidth(260);
-        VBox vBox = new VBox();
-        vBox.setSpacing(24);
-        vBox.getChildren().addAll(searchTextField, tableView.getTableView());
-        return vBox;
+        //
+        VBox basePanel = new VBox();
+        basePanel.setSpacing(24);
+        basePanel.getChildren().addAll(searchTextField, tableView.getTableView());
+        addAction("actionOkay", "Okay");
+        addAction("actionCancel", "Cancel");
+        return basePanel;
     }
 
     @Override
     protected String getTitle() {
-        return "Currency Selection Dialog";
+        return "Currency Dialog";
     }
 }

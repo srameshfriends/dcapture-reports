@@ -10,18 +10,17 @@ import java.util.Date;
  * @since Oct, 2016
  */
 public class ExpenseItem {
-    private int id;
     private Date expenseDate;
-    private String referenceNumber, description, currency, expenseCategory, expenseAccount, incomeAccount;
+    private String expenseCode, referenceNumber, description, currency, expenseCategory, expenseAccount;
     private BigDecimal amount;
     private Status status;
 
-    public int getId() {
-        return id;
+    public String getExpenseCode() {
+        return expenseCode;
     }
 
-    public void setId(int id) {
-        this.id = id;
+    public void setExpenseCode(String expenseCode) {
+        this.expenseCode = expenseCode;
     }
 
     public Date getExpenseDate() {
@@ -86,13 +85,5 @@ public class ExpenseItem {
 
     public void setExpenseAccount(String expenseAccount) {
         this.expenseAccount = expenseAccount;
-    }
-
-    public String getIncomeAccount() {
-        return incomeAccount;
-    }
-
-    public void setIncomeAccount(String incomeAccount) {
-        this.incomeAccount = incomeAccount;
     }
 }

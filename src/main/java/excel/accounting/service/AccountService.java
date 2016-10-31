@@ -24,6 +24,26 @@ public class AccountService extends AbstractService implements RowTypeConverter<
         return "account";
     }
 
+    private boolean isValidAccount(Account account) {
+        return !(account.getAccountNumber() == null || account.getCurrency() == null ||
+                account.getAccountType() == null || account.getName() == null);
+    }
+
+    public List<Account> searchAccount(String searchText, Status status, AccountType... accountTypes) {
+        QueryBuilder queryBuilder = getQueryBuilder("searchAccount");
+        InClauseQuery statusQuery = new InClauseQuery(status);
+        queryBuilder.addInClauseQuery("$status", statusQuery);
+        InClauseQuery accountTypeQuery = new InClauseQuery(accountTypes);
+        queryBuilder.addInClauseQuery("$accountType", accountTypeQuery);
+        SearchTextQuery searchTextQuery = null;
+        if (SearchTextQuery.isValid(searchText)) {
+            searchTextQuery = new SearchTextQuery(searchText);
+            searchTextQuery.add("code", "name");
+        }
+        queryBuilder.addSearchTextQuery("$searchText", searchTextQuery);
+        return getDataReader().findRowDataList(queryBuilder, this);
+    }
+
     private CurrencyService getCurrencyService() {
         if (currencyService == null) {
             currencyService = (CurrencyService) getService("currencyService");
@@ -77,12 +97,48 @@ public class AccountService extends AbstractService implements RowTypeConverter<
         transaction.executeBatch();
     }
 
+    public void updateCurrency(Currency currency, List<Account> accountList) {
+        List<Account> filteredList = filteredByStatus(Status.Drafted, accountList);
+        if (filteredList.isEmpty()) {
+            return;
+        }
+        final String currencyCode = currency == null ? null : currency.getCode();
+        for (Account account : filteredList) {
+            account.setCurrency(currencyCode);
+        }
+        QueryBuilder queryBuilder = getQueryBuilder("updateCurrency");
+        Transaction transaction = createTransaction();
+        transaction.setBatchQuery(queryBuilder);
+        for (Account account : filteredList) {
+            transaction.addBatch(getRowObjectMap(queryBuilder, account));
+        }
+        transaction.executeBatch();
+    }
+
     public void setAsDrafted(List<Account> accountList) {
         updateStatus(Status.Confirmed, Status.Drafted, accountList);
     }
 
     public void setAsConfirmed(List<Account> accountList) {
-        updateStatus(Status.Drafted, Status.Confirmed, accountList);
+        List<Account> filteredList = filteredByStatus(Status.Drafted, accountList);
+        if (filteredList.isEmpty()) {
+            return;
+        }
+        List<Account> validList = new ArrayList<>();
+        filteredList.stream().filter(this::isValidAccount).forEach(account -> {
+            account.setStatus(Status.Confirmed);
+            validList.add(account);
+        });
+        if(validList.isEmpty()) {
+            return;
+        }
+        QueryBuilder queryBuilder = getQueryBuilder("updateStatus");
+        Transaction transaction = createTransaction();
+        transaction.setBatchQuery(queryBuilder);
+        for (Account account : validList) {
+            transaction.addBatch(getRowObjectMap(queryBuilder, account));
+        }
+        transaction.executeBatch();
     }
 
     public void setAsClosed(List<Account> accountList) {
@@ -97,10 +153,10 @@ public class AccountService extends AbstractService implements RowTypeConverter<
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (Account account : accountList) {
-            if(account.getAccountType() != null && !accountTypeList.contains(account.getAccountType())) {
+            if (account.getAccountType() != null && !accountTypeList.contains(account.getAccountType())) {
                 account.setAccountType(null);
             }
-            if(account.getCurrency() != null && !currencyList.contains(account.getCurrency())) {
+            if (account.getCurrency() != null && !currencyList.contains(account.getCurrency())) {
                 account.setCurrency(null);
             }
             transaction.addBatch(getRowObjectMap(queryBuilder, account));
@@ -155,6 +211,8 @@ public class AccountService extends AbstractService implements RowTypeConverter<
      * find by account_number
      * updateStatus
      * set status find by account_number
+     * updateCurrency
+     * set currency find by account_number
      * updateAccount
      * account_number, name, account_type, currency, description find by account_number
      */
@@ -173,6 +231,9 @@ public class AccountService extends AbstractService implements RowTypeConverter<
             map.put(1, type.getAccountNumber());
         } else if ("updateStatus".equals(builder.getQueryName())) {
             map.put(1, type.getStatus().toString());
+            map.put(2, type.getAccountNumber());
+        } else if ("updateCurrency".equals(builder.getQueryName())) {
+            map.put(1, type.getCurrency());
             map.put(2, type.getAccountNumber());
         } else if ("updateAccount".equals(builder.getQueryName())) {
             map.put(1, type.getAccountNumber());
