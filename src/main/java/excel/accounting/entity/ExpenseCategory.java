@@ -1,14 +1,12 @@
 package excel.accounting.entity;
 
-import excel.accounting.model.EntityRow;
-
 /**
  * Expense Category
  *
  * @author Ramesh
  * @since Oct, 2016
  */
-public class ExpenseCategory extends EntityRow {
+public class ExpenseCategory {
     private String code, name, currency, expenseAccount, description;
     private Status status;
 

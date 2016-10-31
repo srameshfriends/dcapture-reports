@@ -104,6 +104,31 @@ public class DataReader {
         return resultList;
     }
 
+    public List<String[]> findStrings(QueryBuilder builder) {
+        logger.info(builder.getQuery());
+        List<String[]> resultList = new ArrayList<>();
+        try {
+            Connection con = dataProcessor.getConnection();
+            PreparedStatement statement = con.prepareStatement(builder.getQuery());
+            addParameter(statement, builder.getParameters());
+            ResultSet rs = statement.executeQuery();
+            int columnCount = rs.getMetaData().getColumnCount();
+            while (rs.next()) {
+                String[] result = new String[columnCount];
+                for (int col = 0; col < columnCount; col++) {
+                    result[col] = rs.getString(col + 1);
+                }
+                resultList.add(result);
+            }
+            close(rs, statement, con);
+        } catch (SQLException ex) {
+            if (logger.isDebugEnabled()) {
+                ex.printStackTrace();
+            }
+        }
+        return resultList;
+    }
+
     public <T> List<T> findRowDataList(QueryBuilder builder, RowTypeConverter<T> converter) {
         List<T> dataList = new ArrayList<>();
         List<Object[]> objList = findObjects(builder);

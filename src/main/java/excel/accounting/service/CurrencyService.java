@@ -1,8 +1,6 @@
 package excel.accounting.service;
 
-import excel.accounting.db.QueryBuilder;
-import excel.accounting.db.RowTypeConverter;
-import excel.accounting.db.Transaction;
+import excel.accounting.db.*;
 import excel.accounting.entity.Currency;
 import excel.accounting.entity.Status;
 import excel.accounting.poi.ExcelTypeConverter;
@@ -25,6 +23,19 @@ public class CurrencyService extends AbstractService implements RowTypeConverter
     @Override
     protected String getSqlFileName() {
         return "currency";
+    }
+
+    public List<Currency> searchCurrency(String searchText, Status status) {
+        InClauseQuery inClauseQuery = new InClauseQuery(status.toString());
+        QueryBuilder queryBuilder = getQueryBuilder("searchCurrency");
+        queryBuilder.addInClauseQuery("$status", inClauseQuery);
+        SearchTextQuery searchTextQuery = null;
+        if (SearchTextQuery.isValid(searchText)) {
+            searchTextQuery = new SearchTextQuery(searchText);
+            searchTextQuery.add("code", "name");
+        }
+        queryBuilder.addSearchTextQuery("$searchText", searchTextQuery);
+        return getDataReader().findRowDataList(queryBuilder, this);
     }
 
     public List<Currency> loadAll() {
@@ -101,29 +112,28 @@ public class CurrencyService extends AbstractService implements RowTypeConverter
     }
 
     /**
-     * id, code, name, status, decimal_precision, symbol
+     * code, name, status, decimal_precision, symbol
      */
     @Override
     public Currency getRowType(QueryBuilder builder, Object[] objectArray) {
         Currency currency = new Currency();
-        currency.setId((Integer) objectArray[0]);
-        currency.setCode((String) objectArray[1]);
-        currency.setName((String) objectArray[2]);
-        currency.setStatus(DataConverter.getStatus(objectArray[3]));
-        currency.setDecimalPrecision((Integer) objectArray[4]);
-        currency.setSymbol((String) objectArray[5]);
+        currency.setCode((String) objectArray[0]);
+        currency.setName((String) objectArray[1]);
+        currency.setDecimalPrecision((Integer) objectArray[2]);
+        currency.setSymbol((String) objectArray[3]);
+        currency.setStatus(DataConverter.getStatus(objectArray[4]));
         return currency;
     }
 
     /**
      * insertCurrency
-     * code, name, status, decimal_precision, symbol
+     * code, name, decimal_precision, symbol, status
      * deleteCurrency
      * find by code
      * updateStatus
      * set status find by code
      * updateCurrency
-     * code, name, decimal_precision, symbol find by code
+     * name, decimal_precision, symbol find by code
      */
     @Override
     public Map<Integer, Object> getRowObjectMap(QueryBuilder builder, Currency type) {
@@ -131,57 +141,56 @@ public class CurrencyService extends AbstractService implements RowTypeConverter
         if ("insertCurrency".equals(builder.getQueryName())) {
             map.put(1, type.getCode());
             map.put(2, type.getName());
-            map.put(3, Status.Drafted.toString());
-            map.put(4, type.getDecimalPrecision());
-            map.put(5, type.getSymbol());
+            map.put(3, type.getDecimalPrecision());
+            map.put(4, type.getSymbol());
+            map.put(5, Status.Drafted.toString());
         } else if ("deleteCurrency".equals(builder.getQueryName())) {
             map.put(1, type.getCode());
         } else if ("updateStatus".equals(builder.getQueryName())) {
             map.put(1, type.getStatus().toString());
             map.put(2, type.getCode());
         } else if ("updateCurrency".equals(builder.getQueryName())) {
-            map.put(1, type.getCode());
-            map.put(2, type.getName());
-            map.put(3, type.getDecimalPrecision());
-            map.put(4, type.getSymbol());
-            map.put(5, type.getCode());
+            map.put(1, type.getName());
+            map.put(2, type.getDecimalPrecision());
+            map.put(3, type.getSymbol());
+            map.put(4, type.getCode());
         }
         return map;
     }
 
     /**
-     * code, name, status, decimal_precision, symbol
+     * code, name, decimal_precision, symbol, status
      */
     @Override
     public String[] getColumnNames() {
-        return new String[]{"Code", "Name", "Status", "Precision", "Symbol"};
+        return new String[]{"Code", "Name", "Precision", "Symbol", "Status"};
     }
 
     /**
-     * code, name, status, precision, symbol
+     * code, name, precision, symbol, status
      */
     @Override
     public Currency getExcelType(String type, Cell[] array) {
         Currency currency = new Currency();
         currency.setCode(DataConverter.getString(array[0]));
         currency.setName(DataConverter.getString(array[1]));
-        currency.setStatus(DataConverter.getStatus(array[2]));
-        currency.setDecimalPrecision(DataConverter.getInteger(array[3]));
-        currency.setSymbol(DataConverter.getString(array[4]));
+        currency.setDecimalPrecision(DataConverter.getInteger(array[2]));
+        currency.setSymbol(DataConverter.getString(array[3]));
+        currency.setStatus(DataConverter.getStatus(array[4]));
         return currency;
     }
 
     /**
-     * code, name, status, precision, symbol
+     * code, name, precision, symbol, status
      */
     @Override
     public Object[] getExcelRow(String type, Currency currency) {
         Object[] cellData = new Object[5];
         cellData[0] = currency.getCode();
         cellData[1] = currency.getName();
-        cellData[2] = currency.getStatus().toString();
-        cellData[3] = currency.getDecimalPrecision();
-        cellData[4] = currency.getSymbol();
+        cellData[2] = currency.getDecimalPrecision();
+        cellData[3] = currency.getSymbol();
+        cellData[4] = currency.getStatus().toString();
         return cellData;
     }
 

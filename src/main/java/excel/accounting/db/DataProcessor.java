@@ -25,6 +25,7 @@ public class DataProcessor {
         namedQueryMap = new HashMap<>();
         addNamedQueries();
         executeTableForwardQuery();
+        executeReferenceForwardQuery();
     }
 
     private String getSchema() {
@@ -53,8 +54,23 @@ public class DataProcessor {
         statement.executeUpdate("CREATE SCHEMA IF NOT EXISTS " + getSchema() + ";");
         for (Map<String, String> queryMap : namedQueryMap.values()) {
             for (String query : queryMap.values()) {
-                if (query.startsWith("create table")) {
+                if (query.startsWith("create table ")) {
                     logger.debug("Table : " + query);
+                    statement.executeUpdate(query);
+                }
+            }
+        }
+        statement.close();
+        connection.close();
+    }
+
+    private void executeReferenceForwardQuery() throws Exception {
+        Connection connection = getConnection();
+        Statement statement = connection.createStatement();
+        for (Map<String, String> queryMap : namedQueryMap.values()) {
+            for (String query : queryMap.values()) {
+                if (query.startsWith("alter table ")) {
+                    logger.debug("Reference Constraint : " + query);
                     statement.executeUpdate(query);
                 }
             }

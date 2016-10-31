@@ -33,7 +33,7 @@ public class CurrencyView extends AbstractView implements ViewHolder {
     private final String confirmedActionId = "confirmedAction";
     private final String closedActionId = "closedAction", draftedActionId = "draftedAction";
 
-    private ReadableTableView<Currency> readableTableView;
+    private ReadableTableView<Currency> tableView;
     private CurrencyService currencyService;
     private VBox basePanel;
 
@@ -46,22 +46,22 @@ public class CurrencyView extends AbstractView implements ViewHolder {
     public Node createControl() {
         ViewListener viewListener = new ViewListener();
         currencyService = (CurrencyService) getService("currencyService");
-        readableTableView = new ReadableTableView<Currency>().create();
-        readableTableView.addTextColumn("code", "Currency").setPrefWidth(120);
-        readableTableView.addTextColumn("name", "Name").setPrefWidth(260);
-        readableTableView.addTextColumn("symbol", "Symbol").setPrefWidth(100);
-        readableTableView.addTextColumn("decimalPrecision", "Precision").setMinWidth(120);
-        readableTableView.addTextColumn("status", "Status").setMinWidth(120);
-        readableTableView.addSelectionChangeListener(viewListener);
-        readableTableView.setContextMenuHandler(viewListener);
-        readableTableView.addContextMenuItem(draftedActionId, "Update As Drafted");
-        readableTableView.addContextMenuItem(confirmedActionId, "Update As Confirmed");
-        readableTableView.addContextMenuItem(closedActionId, "Update As Closed");
-        readableTableView.addContextMenuItem(exportSelectedActionId, "Export Currency");
-        readableTableView.addContextMenuItem(deleteActionId, "Delete Currency");
+        tableView = new ReadableTableView<Currency>().create();
+        tableView.addTextColumn("code", "Currency").setPrefWidth(120);
+        tableView.addTextColumn("name", "Name").setPrefWidth(260);
+        tableView.addTextColumn("symbol", "Symbol").setPrefWidth(100);
+        tableView.addTextColumn("decimalPrecision", "Precision").setMinWidth(120);
+        tableView.addTextColumn("status", "Status").setMinWidth(120);
+        tableView.addSelectionChangeListener(viewListener);
+        tableView.setContextMenuHandler(viewListener);
+        tableView.addContextMenuItem(draftedActionId, "Update As Drafted");
+        tableView.addContextMenuItem(confirmedActionId, "Update As Confirmed");
+        tableView.addContextMenuItem(closedActionId, "Update As Closed");
+        tableView.addContextMenuItem(exportSelectedActionId, "Export Currency");
+        tableView.addContextMenuItem(deleteActionId, "Delete Currency");
         //
         basePanel = new VBox();
-        basePanel.getChildren().addAll(createToolbar(), readableTableView.getTableView());
+        basePanel.getChildren().addAll(createToolbar(), tableView.getTableView());
         return basePanel;
     }
 
@@ -110,17 +110,17 @@ public class CurrencyView extends AbstractView implements ViewHolder {
             return;
         }
         if (confirmedActionId.equals(actionId)) {
-            currencyService.setAsConfirmed(readableTableView.getSelectedItems());
+            currencyService.setAsConfirmed(tableView.getSelectedItems());
         } else if (draftedActionId.equals(actionId)) {
-            currencyService.setAsDrafted(readableTableView.getSelectedItems());
+            currencyService.setAsDrafted(tableView.getSelectedItems());
         } else if (closedActionId.equals(actionId)) {
-            currencyService.setAsClosed(readableTableView.getSelectedItems());
+            currencyService.setAsClosed(tableView.getSelectedItems());
         }
         loadRecords();
     }
 
     private void deleteEvent() {
-        currencyService.deleteCurrency(readableTableView.getSelectedItems());
+        currencyService.deleteCurrency(tableView.getSelectedItems());
         loadRecords();
     }
 
@@ -130,7 +130,7 @@ public class CurrencyView extends AbstractView implements ViewHolder {
             return;
         }
         ObservableList<Currency> observableList = FXCollections.observableArrayList(currencyList);
-        readableTableView.setItems(observableList);
+        tableView.setItems(observableList);
     }
 
     private void importFromExcelEvent() {
@@ -172,7 +172,7 @@ public class CurrencyView extends AbstractView implements ViewHolder {
         }
         WriteExcelData<Currency> writeExcelData = new WriteExcelData<>(actionId, file, currencyService);
         if (exportSelectedActionId.equals(actionId)) {
-            List<Currency> selected = readableTableView.getSelectedItems();
+            List<Currency> selected = tableView.getSelectedItems();
             writeExcelData.writeRowData(selected);
         } else {
             writeExcelData.writeRowData(currencyService.loadAll());
@@ -180,7 +180,7 @@ public class CurrencyView extends AbstractView implements ViewHolder {
     }
 
     private void onRowSelectionChanged(boolean isRowSelected) {
-        readableTableView.setDisable(!isRowSelected, exportSelectedActionId, draftedActionId, confirmedActionId,
+        tableView.setDisable(!isRowSelected, exportSelectedActionId, draftedActionId, confirmedActionId,
                 closedActionId);
     }
 

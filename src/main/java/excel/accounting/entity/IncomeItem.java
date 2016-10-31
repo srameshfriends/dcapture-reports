@@ -1,7 +1,5 @@
 package excel.accounting.entity;
 
-import excel.accounting.model.EntityRow;
-
 import java.math.BigDecimal;
 import java.util.Date;
 
@@ -11,11 +9,20 @@ import java.util.Date;
  * @author Ramesh
  * @since Oct, 2016
  */
-public class IncomeItem extends EntityRow {
+public class IncomeItem {
+    private int id;
     private Date incomeDate;
     private String description, currency;
     private BigDecimal amount;
     private Status status;
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
 
     public Date getIncomeDate() {
         return incomeDate;

@@ -1,18 +1,20 @@
 --
 --
 --createTable
-CREATE TABLE IF NOT EXISTS entity.currency (id INTEGER auto_increment, code VARCHAR(8),
- name VARCHAR(128), status VARCHAR(32), decimal_precision INTEGER, symbol VARCHAR(8), PRIMARY KEY (id));
+CREATE TABLE IF NOT EXISTS entity.currency (code VARCHAR(8),
+ name VARCHAR(128), decimal_precision INTEGER, symbol VARCHAR(8), status VARCHAR(32), PRIMARY KEY (code));
 --loadAll
-SELECT id, code, name, status, decimal_precision, symbol FROM entity.currency;
+SELECT code, name, decimal_precision, symbol, status FROM entity.currency;
 --findCodeList
 SELECT code FROM entity.currency;
 --insertCurrency
-INSERT INTO entity.currency (code, name, status, decimal_precision, symbol) VALUES(?,?,?,?,?);
+INSERT INTO entity.currency (code, name, decimal_precision, symbol, status) VALUES(?,?,?,?,?);
 --deleteCurrency
 DELETE FROM entity.currency WHERE code = ?;
 --updateCurrency
-UPDATE entity.currency SET code = ?, name = ?, decimal_precision = ?, symbol = ? WHERE code = ?;
+UPDATE entity.currency SET name = ?, decimal_precision = ?, symbol = ? WHERE code = ?;
 --updateStatus
 UPDATE entity.currency SET status = ? WHERE code = ?;
+--searchCurrency
+SELECT code, name, decimal_precision, symbol, status FROM entity.currency WHERE status IN ($status) $searchText;
 --

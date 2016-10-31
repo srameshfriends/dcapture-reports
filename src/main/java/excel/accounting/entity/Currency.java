@@ -1,16 +1,12 @@
 package excel.accounting.entity;
 
-import excel.accounting.model.EntityRow;
-
-import java.math.BigDecimal;
-
 /**
  * Currency
  *
  * @author Ramesh
  * @since Oct, 2016
  */
-public class Currency extends EntityRow {
+public class Currency {
     private String code, name, symbol;
     private Status status;
     private int decimalPrecision;

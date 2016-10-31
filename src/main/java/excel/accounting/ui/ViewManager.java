@@ -1,5 +1,6 @@
 package excel.accounting.ui;
 
+import excel.accounting.dialog.SessionDialog;
 import excel.accounting.shared.ApplicationControl;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -24,7 +25,7 @@ import java.util.Map;
 /**
  * ViewController
  */
-public class ViewManager {
+public class ViewManager implements ActionHandler {
     private final int height = 768, menuWidth = 240, headerSpace = 44;
     private double contentWidth, contentHeight;
     private ApplicationControl applicationControl;
@@ -33,6 +34,7 @@ public class ViewManager {
     private SplitPane basePanel;
     private VBox menuPanel;
     private MenuGroupPanel registersPanel, expensePanel, incomePanel, assetsPanel, managementPanel;
+    private SessionDialog sessionDialog;
 
     private ViewHolder currentView;
     private Stage primaryStage;
@@ -46,7 +48,7 @@ public class ViewManager {
     }
 
     public void start(ApplicationControl control, Stage primaryStage) {
-        final int width = 1024, height = 768;
+        final int width = 1024;
         viewRegister = new HashMap<>();
         nodeRegister = new HashMap<>();
         this.applicationControl = control;
@@ -55,6 +57,9 @@ public class ViewManager {
         this.primaryStage.setHeight(height);
         this.primaryStage.widthProperty().addListener((arg0, arg1, arg2) -> onWidthChanged((Double) arg2));
         this.primaryStage.heightProperty().addListener((arg0, arg1, arg2) -> onHeightChanged((Double) arg2));
+        sessionDialog = new SessionDialog();
+        sessionDialog.initialize(control, primaryStage);
+        sessionDialog.setViewHandler(this);
         //
         basePanel = new SplitPane();
         createMenuPanel();
@@ -125,7 +130,16 @@ public class ViewManager {
         return null;
     }
 
+    @Override
+    public void onActionEvent(String actionId) {
+        showView(actionId);
+    }
+
     private void showView(String name) {
+        /*if (!applicationControl.isAuthenticated()) {
+            sessionDialog.show(name);
+            return;
+        }*/
         ViewConfig viewConfig = getViewConfig(name);
         if (viewConfig == null) {
             throw new NullPointerException("View config not found " + name);

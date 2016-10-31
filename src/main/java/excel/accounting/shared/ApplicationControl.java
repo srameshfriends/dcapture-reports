@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import excel.accounting.db.DataProcessor;
 import excel.accounting.db.HasDataProcessor;
 import excel.accounting.model.ApplicationConfig;
-import org.apache.xmlbeans.impl.common.ConcurrentReaderHashMap;
+import excel.accounting.service.AbstractService;
 
 import java.io.FileReader;
 import java.nio.file.Path;
@@ -18,6 +18,7 @@ public class ApplicationControl {
     private static ApplicationControl applicationControl;
     private ApplicationConfig applicationConfig;
     private DataProcessor dataProcessor;
+    private String userName, userCode;
     private Map<String, Object> serviceMap;
 
     private ApplicationControl() {
@@ -42,6 +43,15 @@ public class ApplicationControl {
         return applicationControl;
     }
 
+    public boolean isAuthenticated() {
+        return userCode != null;
+    }
+
+    public void setAuthenticated(String code, String name) {
+        userCode = code;
+        userName = name;
+    }
+
     public ApplicationConfig getApplicationConfig() {
         return applicationConfig;
     }
@@ -63,8 +73,8 @@ public class ApplicationControl {
     }
 
     public void addService(String name, Object service) {
-        if (service instanceof HasDataProcessor) {
-            ((HasDataProcessor) service).setDataProcessor(getDataProcessor());
+        if (service instanceof HasAppsControl) {
+            ((HasAppsControl) service).setApplicationControl(this);
         }
         serviceMap.put(name, service);
     }

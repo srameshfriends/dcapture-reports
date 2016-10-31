@@ -3,25 +3,38 @@ package excel.accounting.service;
 import excel.accounting.db.*;
 import excel.accounting.entity.Account;
 import excel.accounting.entity.AccountType;
+import excel.accounting.entity.Currency;
 import excel.accounting.entity.Status;
 import excel.accounting.poi.ExcelTypeConverter;
 import excel.accounting.shared.DataConverter;
 import org.apache.poi.ss.usermodel.Cell;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * Account Service
  */
 public class AccountService extends AbstractService implements RowTypeConverter<Account>, ExcelTypeConverter<Account> {
+    private CurrencyService currencyService;
 
     @Override
     protected String getSqlFileName() {
         return "account";
+    }
+
+    private CurrencyService getCurrencyService() {
+        if (currencyService == null) {
+            currencyService = (CurrencyService) getService("currencyService");
+        }
+        return currencyService;
+    }
+
+    public List<AccountType> getAccountTypeList() {
+        List<AccountType> accountTypeList = new ArrayList<>();
+        Collections.addAll(accountTypeList, AccountType.values());
+        return accountTypeList;
     }
 
     public List<Account> loadAll() {
@@ -77,10 +90,19 @@ public class AccountService extends AbstractService implements RowTypeConverter<
     }
 
     public void insertAccount(List<Account> accountList) {
+        List<String> currencyList = getCurrencyService().findCodeList();
+        List<AccountType> accountTypeList = getAccountTypeList();
+        //
         QueryBuilder queryBuilder = getQueryBuilder("insertAccount");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (Account account : accountList) {
+            if(account.getAccountType() != null && !accountTypeList.contains(account.getAccountType())) {
+                account.setAccountType(null);
+            }
+            if(account.getCurrency() != null && !currencyList.contains(account.getCurrency())) {
+                account.setCurrency(null);
+            }
             transaction.addBatch(getRowObjectMap(queryBuilder, account));
         }
         transaction.executeBatch();
@@ -111,25 +133,24 @@ public class AccountService extends AbstractService implements RowTypeConverter<
     }
 
     /**
-     * id, account_number, name, account_type, status, currency, balance, description
+     * account_number, name, account_type, status, currency, balance, description
      */
     @Override
     public Account getRowType(QueryBuilder builder, Object[] objectArray) {
         Account account = new Account();
-        account.setId((Integer) objectArray[0]);
-        account.setAccountNumber((String) objectArray[1]);
-        account.setName((String) objectArray[2]);
-        account.setAccountType(DataConverter.getAccountType(objectArray[3]));
-        account.setStatus(DataConverter.getStatus(objectArray[4]));
-        account.setCurrency((String) objectArray[5]);
-        account.setBalance((BigDecimal) objectArray[6]);
-        account.setDescription((String) objectArray[7]);
+        account.setAccountNumber((String) objectArray[0]);
+        account.setName((String) objectArray[1]);
+        account.setAccountType(DataConverter.getAccountType(objectArray[2]));
+        account.setStatus(DataConverter.getStatus(objectArray[3]));
+        account.setCurrency((String) objectArray[4]);
+        account.setBalance((BigDecimal) objectArray[5]);
+        account.setDescription((String) objectArray[6]);
         return account;
     }
 
     /**
      * insertAccount
-     * id, account_number, name, account_type, status, currency, balance, description
+     * account_number, name, account_type, status, currency, balance, description
      * deleteAccount
      * find by account_number
      * updateStatus
@@ -169,12 +190,11 @@ public class AccountService extends AbstractService implements RowTypeConverter<
      */
     @Override
     public String[] getColumnNames() {
-        return new String[]{"Account Number", "Name", "Account Type", "Status", "Currency", "Account Balance",
-                "Description"};
+        return new String[]{"Account Number", "Name", "Account Type", "Status", "Currency", "Description"};
     }
 
     /**
-     * account_number, name, account_type, status, currency, balance, description
+     * account_number, name, account_type, status, currency, description
      */
     @Override
     public Account getExcelType(String type, Cell[] array) {
@@ -184,8 +204,7 @@ public class AccountService extends AbstractService implements RowTypeConverter<
         account.setAccountType(DataConverter.getAccountType(array[2]));
         account.setStatus(DataConverter.getStatus(array[3]));
         account.setCurrency(DataConverter.getString(array[4]));
-        account.setBalance(DataConverter.getBigDecimal(array[5]));
-        account.setDescription(DataConverter.getString(array[6]));
+        account.setDescription(DataConverter.getString(array[5]));
         return account;
     }
 
@@ -200,8 +219,7 @@ public class AccountService extends AbstractService implements RowTypeConverter<
         cellData[2] = account.getAccountType().toString();
         cellData[3] = account.getStatus().toString();
         cellData[4] = account.getCurrency();
-        cellData[5] = account.getBalance();
-        cellData[6] = account.getDescription();
+        cellData[5] = account.getDescription();
         return cellData;
     }
 

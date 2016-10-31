@@ -7,5 +7,5 @@ package excel.accounting.ui;
  * @since Oct, 2016
  */
 public enum ViewGroup {
-    Registers, Expense, Income, Assets, Management
+    Registers, Expense, Income, Assets, Management, Hidden
 }

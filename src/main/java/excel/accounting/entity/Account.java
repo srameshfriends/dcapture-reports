@@ -1,13 +1,11 @@
 package excel.accounting.entity;
 
-import excel.accounting.model.EntityRow;
-
 import java.math.BigDecimal;
 
 /**
  * Account
  */
-public class Account extends EntityRow {
+public class Account {
     private String accountNumber, name, currency, description;
     private BigDecimal balance;
     private Status status;

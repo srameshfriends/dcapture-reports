@@ -1,7 +1,5 @@
 package excel.accounting.entity;
 
-import excel.accounting.model.EntityRow;
-
 import java.math.BigDecimal;
 import java.util.Date;
 
@@ -11,11 +9,20 @@ import java.util.Date;
  * @author Ramesh
  * @since Oct, 2016
  */
-public class ExpenseItem extends EntityRow {
+public class ExpenseItem {
+    private int id;
     private Date expenseDate;
-    private String referenceNumber, description, currency;
+    private String referenceNumber, description, currency, expenseCategory, expenseAccount, incomeAccount;
     private BigDecimal amount;
     private Status status;
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
 
     public Date getExpenseDate() {
         return expenseDate;
@@ -63,5 +70,29 @@ public class ExpenseItem extends EntityRow {
 
     public void setStatus(Status status) {
         this.status = status;
+    }
+
+    public String getExpenseCategory() {
+        return expenseCategory;
+    }
+
+    public void setExpenseCategory(String expenseCategory) {
+        this.expenseCategory = expenseCategory;
+    }
+
+    public String getExpenseAccount() {
+        return expenseAccount;
+    }
+
+    public void setExpenseAccount(String expenseAccount) {
+        this.expenseAccount = expenseAccount;
+    }
+
+    public String getIncomeAccount() {
+        return incomeAccount;
+    }
+
+    public void setIncomeAccount(String incomeAccount) {
+        this.incomeAccount = incomeAccount;
     }
 }

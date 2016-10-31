@@ -1,5 +1,6 @@
 package excel.accounting.view;
 
+import excel.accounting.dialog.CurrencyLinkDialog;
 import excel.accounting.entity.Account;
 import excel.accounting.ui.*;
 import excel.accounting.poi.ReadExcelData;
@@ -116,7 +117,10 @@ public class AccountView extends AbstractView implements ViewHolder {
         } else if (draftedActionId.equals(actionId)) {
             accountService.setAsDrafted(readableTableView.getSelectedItems());
         } else if (closedActionId.equals(actionId)) {
-            accountService.setAsClosed(readableTableView.getSelectedItems());
+            CurrencyLinkDialog dialog = new CurrencyLinkDialog();
+            dialog.initialize(getApplicationControl(), getPrimaryStage());
+            dialog.show();
+           // accountService.setAsClosed(readableTableView.getSelectedItems());
         }
         loadRecords();
     }

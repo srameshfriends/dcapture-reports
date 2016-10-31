@@ -108,24 +108,23 @@ public class ExpenseCategoryService extends AbstractService implements
     }
 
     /**
-     * id, code, name, status, currency, expense_account description
+     * code, name, status, currency, expense_account description
      */
     @Override
     public ExpenseCategory getRowType(QueryBuilder builder, Object[] objectArray) {
         ExpenseCategory category = new ExpenseCategory();
-        category.setId((Integer) objectArray[0]);
-        category.setCode((String) objectArray[1]);
-        category.setName((String) objectArray[2]);
-        category.setStatus(DataConverter.getStatus(objectArray[3]));
-        category.setCurrency((String) objectArray[4]);
-        category.setExpenseAccount((String) objectArray[5]);
-        category.setDescription((String) objectArray[6]);
+        category.setCode((String) objectArray[0]);
+        category.setName((String) objectArray[1]);
+        category.setStatus(DataConverter.getStatus(objectArray[2]));
+        category.setCurrency((String) objectArray[3]);
+        category.setExpenseAccount((String) objectArray[4]);
+        category.setDescription((String) objectArray[5]);
         return category;
     }
 
     /**
      * insertExpenseCategory
-     * id, code, name, status, currency, expense_account description
+     * code, name, status, currency, expense_account description
      * deleteExpenseCategory
      * find by code
      * updateStatus

@@ -1,22 +1,18 @@
 --
 --
 --createIncomeCategory
-CREATE TABLE IF NOT EXISTS entity.income_category (id INTEGER auto_increment, code VARCHAR(64),
-name VARCHAR(128), status VARCHAR(32), currency VARCHAR(8), income_account VARCHAR(64),
-description VARCHAR(512), PRIMARY KEY (id));
+CREATE TABLE IF NOT EXISTS entity.income_category (code VARCHAR(8),
+name VARCHAR(128), description VARCHAR(512), status VARCHAR(32), PRIMARY KEY (code));
 --loadAll
-SELECT id, code, name, status, currency, income_account, description FROM entity.income_category
- ORDER BY code;
+SELECT code, name, description, status FROM entity.income_category ORDER BY code;
 --findCodeList
 SELECT code FROM entity.income_category;
 --insertIncomeCategory
-INSERT INTO entity.income_category (code, name, status, currency, income_account, description)
-VALUES(?,?,?,?,?,?,?);
+INSERT INTO entity.income_category (code, name, description, status) VALUES(?,?,?,?);
 --deleteIncomeCategory
 DELETE FROM entity.income_category WHERE code = ?;
 --updateIncomeCategory
-UPDATE entity.income_category SET code = ?, name = ?, currency = ?, income_account = ?, description = ?
- WHERE code = ?;
+UPDATE entity.income_category SET name = ?, description = ? WHERE code = ?;
 --updateStatus
 UPDATE entity.income_category SET status = ? WHERE code = ?;
 --

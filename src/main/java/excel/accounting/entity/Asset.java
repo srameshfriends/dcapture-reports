@@ -1,7 +1,5 @@
 package excel.accounting.entity;
 
-import excel.accounting.model.EntityRow;
-
 import java.math.BigDecimal;
 import java.util.Date;
 
@@ -11,7 +9,7 @@ import java.util.Date;
  * @author Ramesh
  * @since Oct, 2016
  */
-public class Asset extends EntityRow {
+public class Asset {
     private String code, name, description, assetType, currency, referenceNumber, category;
     private Date startDate, endDate;
     private BigDecimal cost, units;

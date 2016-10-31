@@ -103,25 +103,24 @@ public class AssetService extends AbstractService implements RowTypeConverter<As
     }
 
     /**
-     * id, code, name, description, asset_type, start_date, end_date, currency, cost, status, units, reference_number,
+     * code, name, description, asset_type, start_date, end_date, currency, cost, status, units, reference_number,
      * category
      */
     @Override
     public Asset getRowType(QueryBuilder builder, Object[] objects) {
         Asset asset = new Asset();
-        asset.setId((Integer) objects[0]);
-        asset.setCode((String) objects[1]);
-        asset.setName((String) objects[2]);
-        asset.setDescription((String) objects[3]);
-        asset.setAssetType((String) objects[4]);
-        asset.setStartDate((Date) objects[5]);
-        asset.setEndDate((Date) objects[6]);
-        asset.setCurrency((String) objects[7]);
-        asset.setCost((BigDecimal) objects[8]);
-        asset.setStatus(DataConverter.getStatus(objects[9]));
-        asset.setUnits((BigDecimal) objects[10]);
-        asset.setReferenceNumber((String) objects[11]);
-        asset.setCategory((String) objects[12]);
+        asset.setCode((String) objects[0]);
+        asset.setName((String) objects[1]);
+        asset.setDescription((String) objects[2]);
+        asset.setAssetType((String) objects[3]);
+        asset.setStartDate((Date) objects[4]);
+        asset.setEndDate((Date) objects[5]);
+        asset.setCurrency((String) objects[6]);
+        asset.setCost((BigDecimal) objects[7]);
+        asset.setStatus(DataConverter.getStatus(objects[8]));
+        asset.setUnits((BigDecimal) objects[9]);
+        asset.setReferenceNumber((String) objects[10]);
+        asset.setCategory((String) objects[11]);
         return asset;
     }
 

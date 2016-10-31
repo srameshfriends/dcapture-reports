@@ -1,7 +1,5 @@
 package excel.accounting.entity;
 
-import excel.accounting.model.EntityRow;
-
 import java.math.BigDecimal;
 import java.util.Date;
 
@@ -11,12 +9,21 @@ import java.util.Date;
  * @author Ramesh
  * @since Oct, 2016
  */
-public class ExchangeRate extends EntityRow {
+public class ExchangeRate {
+    private int id;
     private String fetchFrom, currency, exchangeCurrency;
     private Date asOfDate;
     private Status status;
     private int unit;
     private BigDecimal sellingRate, buyingRate;
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
 
     public String getFetchFrom() {
         return fetchFrom;

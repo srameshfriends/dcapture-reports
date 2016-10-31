@@ -4,6 +4,10 @@
 CREATE TABLE IF NOT EXISTS entity.exchange_rate (id INTEGER auto_increment, fetch_from VARCHAR(64), asof_date DATE,
 currency VARCHAR(8), exchange_currency VARCHAR(8), unit INTEGER, selling_rate DECIMAL, buying_rate DECIMAL,
 status VARCHAR(32), PRIMARY KEY (id));
+--foreignKeyCurrency
+ALTER TABLE entity.exchange_rate ADD FOREIGN KEY (currency) REFERENCES entity.currency(code);
+--foreignKeyExchangeCurrency
+ALTER TABLE entity.exchange_rate ADD FOREIGN KEY (exchange_currency) REFERENCES entity.currency(code);
 --loadAll
 SELECT id, fetch_from, asof_date, currency, exchange_currency, unit, selling_rate, buying_rate, status
  FROM entity.exchange_rate ORDER BY asof_date, exchange_currency;

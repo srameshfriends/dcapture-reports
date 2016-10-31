@@ -108,24 +108,23 @@ public class IncomeCategoryService extends AbstractService implements
     }
 
     /**
-     * id, code, name, status, currency, income_account, description
+     * code, name, status, currency, income_account, description
      */
     @Override
     public IncomeCategory getRowType(QueryBuilder builder, Object[] objectArray) {
         IncomeCategory category = new IncomeCategory();
-        category.setId((Integer) objectArray[0]);
-        category.setCode((String) objectArray[1]);
-        category.setName((String) objectArray[2]);
-        category.setStatus(DataConverter.getStatus(objectArray[3]));
-        category.setCurrency((String) objectArray[4]);
-        category.setIncomeAccount((String) objectArray[5]);
-        category.setDescription((String) objectArray[6]);
+        category.setCode((String) objectArray[0]);
+        category.setName((String) objectArray[1]);
+        category.setStatus(DataConverter.getStatus(objectArray[2]));
+        category.setCurrency((String) objectArray[3]);
+        category.setIncomeAccount((String) objectArray[4]);
+        category.setDescription((String) objectArray[5]);
         return category;
     }
 
     /**
      * insertIncomeCategory
-     * id, code, name, status, currency, income_account, description
+     * code, name, status, currency, income_account, description
      * deleteIncomeCategory
      * find by code
      * updateStatus

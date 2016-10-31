@@ -1,8 +1,6 @@
 package excel.accounting.ui;
 
-import excel.accounting.db.DataProcessor;
 import excel.accounting.shared.ApplicationControl;
-import excel.accounting.ui.ViewHolder;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.control.Alert;
@@ -10,12 +8,9 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.stage.Stage;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
 
 /**
  * Abstract View
@@ -70,8 +65,8 @@ public abstract class AbstractView implements ViewHolder {
         return primaryStage;
     }
 
-    protected DataProcessor getDataProcessor() {
-        return applicationControl.getDataProcessor();
+    protected ApplicationControl getApplicationControl() {
+        return applicationControl;
     }
 
     protected Object getService(String name) {

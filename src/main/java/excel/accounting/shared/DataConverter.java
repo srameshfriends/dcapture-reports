@@ -10,6 +10,7 @@ import org.apache.poi.ss.usermodel.CellType;
 import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Base64;
 import java.util.Date;
 
 /**
@@ -91,5 +92,27 @@ public class DataConverter {
             ex.getMessage();
         }
         return 0;
+    }
+
+    public static String encode(String text) {
+        try {
+            Base64.Encoder encoder = Base64.getEncoder();
+            byte[] encodedBytes = encoder.encode(text.getBytes());
+            return new String(encodedBytes);
+        } catch (Exception ex) {
+            /// ignore exception
+        }
+        return null;
+    }
+
+    public static String decode(String text) {
+        try {
+            Base64.Decoder decoder = Base64.getDecoder();
+            byte[] decodeBytes = decoder.decode(text.getBytes());
+            return new String(decodeBytes);
+        } catch (Exception ex) {
+            /// ignore exception
+        }
+        return null;
     }
 }

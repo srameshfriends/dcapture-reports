@@ -1,14 +1,12 @@
 package excel.accounting.entity;
 
-import excel.accounting.model.EntityRow;
-
 /**
  * Income Category
  *
  * @author Ramesh
  * @since Oct, 2016
  */
-public class IncomeCategory extends EntityRow {
+public class IncomeCategory {
     private String code, name, currency, incomeAccount, description;
     private Status status;
 
