@@ -5,6 +5,7 @@ import excel.accounting.db.DataProcessor;
 import excel.accounting.db.HasDataProcessor;
 import excel.accounting.model.ApplicationConfig;
 import excel.accounting.service.AbstractService;
+import javafx.scene.control.TextArea;
 
 import java.io.FileReader;
 import java.nio.file.Path;
@@ -20,6 +21,7 @@ public class ApplicationControl {
     private DataProcessor dataProcessor;
     private String userName, userCode;
     private Map<String, Object> serviceMap;
+    private TextArea messagePanel;
 
     private ApplicationControl() {
     }
@@ -50,6 +52,27 @@ public class ApplicationControl {
     public void setAuthenticated(String code, String name) {
         userCode = code;
         userName = name;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setMessagePanel(TextArea textArea) {
+        messagePanel = textArea;
+    }
+
+    public void setMessage(String message) {
+        messagePanel.setText(message);
+    }
+
+    public void appendMessage(String message) {
+        if (messagePanel.getText().length() == 0) {
+            messagePanel.setText(message);
+        } else {
+            messagePanel.selectEnd();
+            messagePanel.insertText(messagePanel.getText().length(), " \n " + message);
+        }
     }
 
     public ApplicationConfig getApplicationConfig() {

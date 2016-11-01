@@ -32,6 +32,14 @@ public class StyleBuilder {
         builder.append("-fx-padding:").append(value).append("px;\n");
     }
 
+    public void fontSize(int size) {
+        builder.append("-fx-font-size:").append(size).append("pt;\n");
+    }
+
+    public void color(String colorCode) {
+        builder.append("-fx-text-fill:").append(colorCode).append(";\n");
+    }
+
     @Override
     public String toString() {
         return builder.toString();

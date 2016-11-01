@@ -32,20 +32,16 @@ public class Transaction {
         return connection;
     }
 
-    public void execute(QueryBuilder builder) {
+    public void execute(QueryBuilder builder) throws SQLException {
         if (batchStatement != null) {
             throw new RuntimeException("Batch transaction is enabled, should not be use execute");
         }
         if (statementMap == null) {
             statementMap = new HashMap<>();
         }
-        try {
-            PreparedStatement statement = getConnection().prepareStatement(builder.getQuery());
-            addParameter(statement, builder.getParameters());
-            statementMap.put(builder, statement);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        PreparedStatement statement = getConnection().prepareStatement(builder.getQuery());
+        addParameter(statement, builder.getParameters());
+        statementMap.put(builder, statement);
     }
 
     public void setBatchQuery(QueryBuilder builder) {

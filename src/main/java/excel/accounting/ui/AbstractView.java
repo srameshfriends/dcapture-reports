@@ -31,6 +31,14 @@ public abstract class AbstractView implements ViewHolder {
         this.primaryStage = primaryStage;
     }
 
+    protected void setMessage(String message) {
+        applicationControl.setMessage(message);
+    }
+
+    protected void appendMessage(String message) {
+        applicationControl.appendMessage(message);
+    }
+
     private Map<String, Button> getActionBtnMap() {
         if (actionBtnMap == null) {
             actionBtnMap = new HashMap<>();

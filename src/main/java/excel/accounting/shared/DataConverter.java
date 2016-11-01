@@ -30,7 +30,8 @@ public class DataConverter {
     }
 
     public static AccountType getAccountType(Object accountType) {
-        return accountType == null ? AccountType.IncomeExpense : getEnum(AccountType.class, accountType.toString());
+        AccountType enumType = accountType == null ? null : getEnum(AccountType.class, accountType.toString());
+        return enumType == null ? AccountType.IncomeExpense : enumType;
     }
 
     private static <E extends Enum<E>> E getEnum(Class<E> enumClass, String name) {

@@ -185,6 +185,7 @@ public class CurrencyView extends AbstractView implements ViewHolder {
     }
 
     private void performActionEvent(final String actionId) {
+        setMessage("");
         switch (actionId) {
             case deleteActionId:
                 deleteEvent();

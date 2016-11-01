@@ -20,6 +20,14 @@ public abstract class AbstractService implements HasAppsControl, HasDataProcesso
         dataReader = new DataReader(applicationControl.getDataProcessor());
     }
 
+    protected void setMessage(String message) {
+        applicationControl.setMessage(message);
+    }
+
+    protected void appendMessage(String message) {
+        applicationControl.appendMessage(message);
+    }
+
     @Override
     public DataReader getDataReader() {
         return dataReader;

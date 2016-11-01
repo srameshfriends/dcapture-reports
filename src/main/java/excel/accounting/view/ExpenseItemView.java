@@ -220,7 +220,7 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
         AccountType[] accTypes = new AccountType[]{AccountType.Expense, AccountType.IncomeExpense};
         AccountDialog accountDialog = new AccountDialog(getApplicationControl(), getPrimaryStage(), accTypes);
         accountDialog.showAndWait();
-        if (accountDialog.isCancelled() || accountDialog.getSelected() == null) {
+        if (accountDialog.isCancelled()) {
             return;
         }
         expenseItemService.updateExpenseAccount(accountDialog.getSelected(), expenseItemList);

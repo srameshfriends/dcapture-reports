@@ -52,6 +52,14 @@ public abstract class AbstractDialog implements EventHandler<ActionEvent> {
         dialogStage.setScene(new Scene(basePanel));
     }
 
+    protected void setMessage(String message) {
+        applicationControl.setMessage(message);
+    }
+
+    protected void appendMessage(String message) {
+        applicationControl.appendMessage(message);
+    }
+
     protected DataReader getDataReader() {
         return dataReader;
     }

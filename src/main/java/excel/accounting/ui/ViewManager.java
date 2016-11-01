@@ -2,22 +2,17 @@ package excel.accounting.ui;
 
 import excel.accounting.dialog.SessionDialog;
 import excel.accounting.shared.ApplicationControl;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.geometry.Rectangle2D;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.stage.Screen;
 import javafx.stage.Stage;
-import javafx.stage.Window;
+import org.apache.log4j.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,12 +21,16 @@ import java.util.Map;
  * ViewController
  */
 public class ViewManager implements ActionHandler {
+    private static final Logger logger = Logger.getLogger(ViewManager.class);
     private final int height = 768, menuWidth = 240, headerSpace = 44;
     private double contentWidth, contentHeight;
     private ApplicationControl applicationControl;
     private Map<ViewConfig, ViewHolder> viewRegister;
     private Map<String, Node> nodeRegister;
     private SplitPane basePanel;
+    private BorderPane contentPane;
+    private Label titleLabel;
+    private TextArea messagePanel;
     private VBox menuPanel;
     private MenuGroupPanel registersPanel, expensePanel, incomePanel, assetsPanel, managementPanel;
     private SessionDialog sessionDialog;
@@ -61,9 +60,26 @@ public class ViewManager implements ActionHandler {
         sessionDialog.initialize(control, primaryStage);
         sessionDialog.setViewHandler(this);
         //
+        StyleBuilder titleStyle = new StyleBuilder();
+        titleStyle.fontSize(14);
+        titleStyle.color("#0000ff");
+        titleStyle.padding(2);
+        //
+        titleLabel = new Label();
+        titleLabel.setStyle(titleStyle.toString());
+        titleLabel.setMinHeight(30);
+        titleLabel.setMaxHeight(30);
+        messagePanel = createLogArea();
+        applicationControl.setMessagePanel(messagePanel);
+        //
+        contentPane = new BorderPane();
+        contentPane.setTop(titleLabel);
+        contentPane.setCenter(new Label("Welcome to Excel Accounting"));
+        contentPane.setBottom(messagePanel);
+        //
         basePanel = new SplitPane();
         createMenuPanel();
-        basePanel.getItems().addAll(menuPanel, new Label("Welcome to Excel Accounting"));
+        basePanel.getItems().addAll(menuPanel, contentPane);
         Scene scene = new Scene(new Group(basePanel), width, height);
         scene.setFill(Color.GHOSTWHITE);
         //
@@ -72,6 +88,18 @@ public class ViewManager implements ActionHandler {
         primaryStage.show();
         onWidthChanged(width);
         onHeightChanged(height);
+    }
+
+    private TextArea createLogArea() {
+        StyleBuilder messageStyle = new StyleBuilder();
+        messageStyle.fontSize(12);
+        messageStyle.color("#ff0000");
+        messageStyle.padding(2);
+        TextArea textArea = new TextArea();
+        textArea.setStyle(messageStyle.toString());
+        textArea.setMaxHeight(30);
+        textArea.setEditable(false);
+        return textArea;
     }
 
     private void onWidthChanged(double width) {
@@ -140,6 +168,7 @@ public class ViewManager implements ActionHandler {
             sessionDialog.show(name);
             return;
         }*/
+        applicationControl.setMessage("");
         ViewConfig viewConfig = getViewConfig(name);
         if (viewConfig == null) {
             throw new NullPointerException("View config not found " + name);
@@ -158,8 +187,9 @@ public class ViewManager implements ActionHandler {
         if (currentView != null && !currentView.canCloseView()) {
             return;
         }
-        basePanel.getItems().remove(1);
-        basePanel.getItems().add(node);
+        String userName = applicationControl.getUserName() == null ? "" : applicationControl.getUserName();
+        titleLabel.setText(viewConfig.getTitle() + " \t \t " + userName);
+        contentPane.setCenter(node);
         currentView = holder;
         holder.openView(contentWidth, contentHeight);
     }

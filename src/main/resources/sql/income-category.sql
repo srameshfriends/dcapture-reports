@@ -15,4 +15,6 @@ DELETE FROM entity.income_category WHERE code = ?;
 UPDATE entity.income_category SET name = ?, description = ? WHERE code = ?;
 --updateStatus
 UPDATE entity.income_category SET status = ? WHERE code = ?;
+--searchIncomeCategory
+SELECT code, name, description, status FROM entity.income_category WHERE status IN ($status) $searchText;
 --

@@ -100,6 +100,7 @@ public class CurrencyService extends AbstractService implements RowTypeConverter
     public void deleteCurrency(List<Currency> currencyList) {
         List<Currency> filteredList = filteredByStatus(Status.Drafted, currencyList);
         if (filteredList.isEmpty()) {
+            setMessage("Error : Only drafted currency allowed to delete");
             return;
         }
         QueryBuilder queryBuilder = getQueryBuilder("deleteCurrency");

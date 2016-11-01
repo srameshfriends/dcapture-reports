@@ -1,8 +1,6 @@
 package excel.accounting.service;
 
-import excel.accounting.db.QueryBuilder;
-import excel.accounting.db.RowTypeConverter;
-import excel.accounting.db.Transaction;
+import excel.accounting.db.*;
 import excel.accounting.entity.ExpenseCategory;
 import excel.accounting.entity.Status;
 import excel.accounting.poi.ExcelTypeConverter;
@@ -33,17 +31,24 @@ public class ExpenseCategoryService extends AbstractService implements
         return getDataReader().findRowDataList(queryBuilder, this);
     }
 
-    /*
-    * code
-    */
+    public List<ExpenseCategory> searchExpenseCategory(String searchText, Status... statuses) {
+        InClauseQuery inClauseQuery = new InClauseQuery(statuses);
+        QueryBuilder queryBuilder = getQueryBuilder("searchExpenseCategory");
+        queryBuilder.addInClauseQuery("$status", inClauseQuery);
+        SearchTextQuery searchTextQuery = null;
+        if (SearchTextQuery.isValid(searchText)) {
+            searchTextQuery = new SearchTextQuery(searchText);
+            searchTextQuery.add("code", "name");
+        }
+        queryBuilder.addSearchTextQuery("$searchText", searchTextQuery);
+        return getDataReader().findRowDataList(queryBuilder, this);
+    }
+
     public List<String> findCodeList() {
         QueryBuilder queryBuilder = getQueryBuilder("findCodeList");
         return getDataReader().findString(queryBuilder);
     }
 
-    /**
-     * status, code
-     */
     private void updateStatus(Status requiredStatus, Status changedStatus, List<ExpenseCategory> categoryList) {
         List<ExpenseCategory> filteredList = filteredByStatus(requiredStatus, categoryList);
         if (filteredList.isEmpty()) {
