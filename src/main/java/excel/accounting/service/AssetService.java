@@ -1,16 +1,15 @@
 package excel.accounting.service;
 
 import excel.accounting.db.QueryBuilder;
-import excel.accounting.db.RowTypeConverter;
+import excel.accounting.db.EntityToRowColumns;
 import excel.accounting.db.Transaction;
 import excel.accounting.entity.Asset;
 import excel.accounting.entity.Status;
 import excel.accounting.poi.ExcelTypeConverter;
+import excel.accounting.dao.AssetDao;
 import excel.accounting.shared.DataConverter;
 import org.apache.poi.ss.usermodel.Cell;
 
-import java.math.BigDecimal;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +21,15 @@ import java.util.stream.Collectors;
  * @author Ramesh
  * @since Oct, 2016
  */
-public class AssetService extends AbstractService implements RowTypeConverter<Asset>, ExcelTypeConverter<Asset> {
+public class AssetService extends AbstractService implements EntityToRowColumns<Asset>, ExcelTypeConverter<Asset> {
+    private AssetDao assetDao;
+
+    public AssetDao getAssetDao() {
+        if (assetDao == null) {
+            assetDao = (AssetDao) getDao("assetDao");
+        }
+        return assetDao;
+    }
 
     @Override
     protected String getSqlFileName() {
@@ -31,7 +38,7 @@ public class AssetService extends AbstractService implements RowTypeConverter<As
 
     public List<Asset> loadAll() {
         QueryBuilder queryBuilder = getQueryBuilder("loadAll");
-        return getDataReader().findRowDataList(queryBuilder, this);
+        return getDataReader().findRowDataList(queryBuilder, getAssetDao());
     }
 
     public List<String> findCodeList() {
@@ -51,7 +58,7 @@ public class AssetService extends AbstractService implements RowTypeConverter<As
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (Asset asset : filteredList) {
-            transaction.addBatch(getRowObjectMap(queryBuilder, asset));
+            transaction.addBatch(getColumnsMap("updateStatus", asset));
         }
         transaction.executeBatch();
     }
@@ -73,7 +80,7 @@ public class AssetService extends AbstractService implements RowTypeConverter<As
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (Asset asset : assetList) {
-            transaction.addBatch(getRowObjectMap(queryBuilder, asset));
+            transaction.addBatch(getColumnsMap("insertAsset", asset));
         }
         transaction.executeBatch();
     }
@@ -83,7 +90,7 @@ public class AssetService extends AbstractService implements RowTypeConverter<As
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (Asset asset : assetList) {
-            transaction.addBatch(getRowObjectMap(queryBuilder, asset));
+            transaction.addBatch(getColumnsMap("updateAsset", asset));
         }
         transaction.executeBatch();
     }
@@ -97,31 +104,9 @@ public class AssetService extends AbstractService implements RowTypeConverter<As
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (Asset asset : filteredList) {
-            transaction.addBatch(getRowObjectMap(queryBuilder, asset));
+            transaction.addBatch(getColumnsMap("deleteAsset", asset));
         }
         transaction.executeBatch();
-    }
-
-    /**
-     * code, name, description, asset_type, start_date, end_date, currency, cost, status, units, reference_number,
-     * category
-     */
-    @Override
-    public Asset getRowType(QueryBuilder builder, Object[] objects) {
-        Asset asset = new Asset();
-        asset.setCode((String) objects[0]);
-        asset.setName((String) objects[1]);
-        asset.setDescription((String) objects[2]);
-        asset.setAssetType((String) objects[3]);
-        asset.setStartDate((Date) objects[4]);
-        asset.setEndDate((Date) objects[5]);
-        asset.setCurrency((String) objects[6]);
-        asset.setCost((BigDecimal) objects[7]);
-        asset.setStatus(DataConverter.getStatus(objects[8]));
-        asset.setUnits((BigDecimal) objects[9]);
-        asset.setReferenceNumber((String) objects[10]);
-        asset.setCategory((String) objects[11]);
-        return asset;
     }
 
     /**
@@ -137,9 +122,9 @@ public class AssetService extends AbstractService implements RowTypeConverter<As
      * category
      */
     @Override
-    public Map<Integer, Object> getRowObjectMap(QueryBuilder builder, Asset type) {
+    public Map<Integer, Object> getColumnsMap(final String queryName, Asset type) {
         Map<Integer, Object> map = new HashMap<>();
-        if ("insertAsset".equals(builder.getQueryName())) {
+        if ("insertAsset".equals(queryName)) {
             map.put(1, type.getCode());
             map.put(2, type.getName());
             map.put(3, type.getDescription());
@@ -152,9 +137,9 @@ public class AssetService extends AbstractService implements RowTypeConverter<As
             map.put(10, type.getUnits());
             map.put(11, type.getReferenceNumber());
             map.put(12, type.getCategory());
-        } else if ("deleteAsset".equals(builder.getQueryName())) {
+        } else if ("deleteAsset".equals(queryName)) {
             map.put(1, type.getCode());
-        } else if ("updateAsset".equals(builder.getQueryName())) {
+        } else if ("updateAsset".equals(queryName)) {
             map.put(1, type.getCode());
             map.put(2, type.getName());
             map.put(3, type.getDescription());
@@ -168,7 +153,7 @@ public class AssetService extends AbstractService implements RowTypeConverter<As
             map.put(11, type.getReferenceNumber());
             map.put(12, type.getCategory());
             map.put(13, type.getCode());
-        } else if ("updateStatus".equals(builder.getQueryName())) {
+        } else if ("updateStatus".equals(queryName)) {
             map.put(1, type.getStatus().toString());
             map.put(2, type.getCode());
         }

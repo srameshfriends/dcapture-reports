@@ -8,25 +8,29 @@ import java.util.*;
  * Query Parameter
  */
 public class QueryBuilder {
-    private final String queryName, queryTemplate;
     private StringBuilder selectBuilder, joinBuilder, whereBuilder, orderByBuilder;
-    private String limitQuery;
+    private String queryName, queryTemplate, limitQuery;
     private Map<Integer, Object> parameters;
     private Map<String, String> replaceMap;
 
-    QueryBuilder(String queryName, String queryTemplate) {
-        this.queryName = queryName;
-        this.queryTemplate = queryTemplate;
+    public QueryBuilder() {
         parameters = new HashMap<>();
         replaceMap = new HashMap<>();
+        queryName = "";
+    }
+
+    QueryBuilder(String name, String queryTemplate) {
+        this();
+        queryName = name;
+        setQueryTemplate(queryTemplate);
+    }
+
+    public void setQueryTemplate(String queryTemplate) {
+        this.queryTemplate = queryTemplate;
     }
 
     public String getQueryName() {
         return queryName;
-    }
-
-    private String getQueryTemplate() {
-        return queryTemplate;
     }
 
     private void appendSelect(String... fields) {
@@ -110,7 +114,7 @@ public class QueryBuilder {
     }
 
     public String getQuery() {
-        String query = getQueryTemplate();
+        String query = queryTemplate;
         if (query.contains("$select") && selectBuilder != null) {
             String temp = StringUtils.removeEnd(selectBuilder.toString(), ",");
             query = StringUtils.replace(query, "$select", temp);

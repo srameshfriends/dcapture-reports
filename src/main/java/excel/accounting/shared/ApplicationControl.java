@@ -2,9 +2,9 @@ package excel.accounting.shared;
 
 import com.google.gson.Gson;
 import excel.accounting.db.DataProcessor;
-import excel.accounting.db.HasDataProcessor;
+import excel.accounting.db.AbstractDao;
+import excel.accounting.db.TableReferenceFactory;
 import excel.accounting.model.ApplicationConfig;
-import excel.accounting.service.AbstractService;
 import javafx.scene.control.TextArea;
 
 import java.io.FileReader;
@@ -21,7 +21,9 @@ public class ApplicationControl {
     private DataProcessor dataProcessor;
     private String userName, userCode;
     private Map<String, Object> serviceMap;
+    private Map<String, AbstractDao> relationMap;
     private TextArea messagePanel;
+    private TableReferenceFactory foreignKeyConstraint;
 
     private ApplicationControl() {
     }
@@ -31,9 +33,11 @@ public class ApplicationControl {
         if (configPath == null) {
             throw new NullPointerException("Application config json is missing");
         }
+        foreignKeyConstraint = TableReferenceFactory.instance();
         Gson gson = new Gson();
         applicationConfig = gson.fromJson(new FileReader(configPath.toFile()), ApplicationConfig.class);
         serviceMap = new HashMap<>();
+        relationMap = new HashMap<>();
         startDatabase();
     }
 
@@ -102,8 +106,17 @@ public class ApplicationControl {
         serviceMap.put(name, service);
     }
 
+    public void addDao(String name, AbstractDao relation) {
+        relation.setApplicationControl(this);
+        relationMap.put(name, relation);
+    }
+
     public Object getService(String serviceName) {
         return serviceMap.get(serviceName);
+    }
+
+    public Object getDao(String relationName) {
+        return relationMap.get(relationName);
     }
 
     public void close() {

@@ -4,6 +4,7 @@ import excel.accounting.db.*;
 import excel.accounting.entity.ExpenseCategory;
 import excel.accounting.entity.Status;
 import excel.accounting.poi.ExcelTypeConverter;
+import excel.accounting.dao.ExpenseCategoryDao;
 import excel.accounting.shared.DataConverter;
 import org.apache.poi.ss.usermodel.Cell;
 
@@ -19,7 +20,15 @@ import java.util.stream.Collectors;
  * @since Oct 2016
  */
 public class ExpenseCategoryService extends AbstractService implements
-        RowTypeConverter<ExpenseCategory>, ExcelTypeConverter<ExpenseCategory> {
+        EntityToRowColumns<ExpenseCategory>, ExcelTypeConverter<ExpenseCategory> {
+    private ExpenseCategoryDao expenseCategoryDao;
+
+    public ExpenseCategoryDao getExpenseCategoryDao() {
+        if (expenseCategoryDao == null) {
+            expenseCategoryDao = (ExpenseCategoryDao) getDao("expenseCategoryDao");
+        }
+        return expenseCategoryDao;
+    }
 
     @Override
     protected String getSqlFileName() {
@@ -28,7 +37,7 @@ public class ExpenseCategoryService extends AbstractService implements
 
     public List<ExpenseCategory> loadAll() {
         QueryBuilder queryBuilder = getQueryBuilder("loadAll");
-        return getDataReader().findRowDataList(queryBuilder, this);
+        return getDataReader().findRowDataList(queryBuilder, getExpenseCategoryDao());
     }
 
     public List<ExpenseCategory> searchExpenseCategory(String searchText, Status... statuses) {
@@ -41,7 +50,7 @@ public class ExpenseCategoryService extends AbstractService implements
             searchTextQuery.add("code", "name");
         }
         queryBuilder.addSearchTextQuery("$searchText", searchTextQuery);
-        return getDataReader().findRowDataList(queryBuilder, this);
+        return getDataReader().findRowDataList(queryBuilder, getExpenseCategoryDao());
     }
 
     public List<String> findCodeList() {
@@ -61,7 +70,7 @@ public class ExpenseCategoryService extends AbstractService implements
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (ExpenseCategory category : filteredList) {
-            transaction.addBatch(getRowObjectMap(queryBuilder, category));
+            transaction.addBatch(getColumnsMap("updateStatus", category));
         }
         transaction.executeBatch();
     }
@@ -83,7 +92,7 @@ public class ExpenseCategoryService extends AbstractService implements
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (ExpenseCategory category : categoryList) {
-            transaction.addBatch(getRowObjectMap(queryBuilder, category));
+            transaction.addBatch(getColumnsMap("insertExpenseCategory", category));
         }
         transaction.executeBatch();
     }
@@ -93,7 +102,7 @@ public class ExpenseCategoryService extends AbstractService implements
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (ExpenseCategory category : categoryList) {
-            transaction.addBatch(getRowObjectMap(queryBuilder, category));
+            transaction.addBatch(getColumnsMap("updateExpenseCategory", category));
         }
         transaction.executeBatch();
     }
@@ -107,24 +116,9 @@ public class ExpenseCategoryService extends AbstractService implements
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (ExpenseCategory category : filteredList) {
-            transaction.addBatch(getRowObjectMap(queryBuilder, category));
+            transaction.addBatch(getColumnsMap("deleteExpenseCategory", category));
         }
         transaction.executeBatch();
-    }
-
-    /**
-     * code, name, status, currency, expense_account description
-     */
-    @Override
-    public ExpenseCategory getRowType(QueryBuilder builder, Object[] objectArray) {
-        ExpenseCategory category = new ExpenseCategory();
-        category.setCode((String) objectArray[0]);
-        category.setName((String) objectArray[1]);
-        category.setStatus(DataConverter.getStatus(objectArray[2]));
-        category.setCurrency((String) objectArray[3]);
-        category.setExpenseAccount((String) objectArray[4]);
-        category.setDescription((String) objectArray[5]);
-        return category;
     }
 
     /**
@@ -138,21 +132,21 @@ public class ExpenseCategoryService extends AbstractService implements
      * code, name, currency, expense_account description
      */
     @Override
-    public Map<Integer, Object> getRowObjectMap(QueryBuilder builder, ExpenseCategory type) {
+    public Map<Integer, Object> getColumnsMap(final String queryName, ExpenseCategory type) {
         Map<Integer, Object> map = new HashMap<>();
-        if ("insertExpenseCategory".equals(builder.getQueryName())) {
+        if ("insertExpenseCategory".equals(queryName)) {
             map.put(1, type.getCode());
             map.put(2, type.getName());
             map.put(3, Status.Drafted.toString());
             map.put(4, type.getCurrency());
             map.put(5, type.getExpenseAccount());
             map.put(6, type.getDescription());
-        } else if ("deleteExpenseCategory".equals(builder.getQueryName())) {
+        } else if ("deleteExpenseCategory".equals(queryName)) {
             map.put(1, type.getCode());
-        } else if ("updateStatus".equals(builder.getQueryName())) {
+        } else if ("updateStatus".equals(queryName)) {
             map.put(1, type.getStatus().toString());
             map.put(2, type.getCode());
-        } else if ("updateExpenseCategory".equals(builder.getQueryName())) {
+        } else if ("updateExpenseCategory".equals(queryName)) {
             map.put(1, type.getCode());
             map.put(2, type.getName());
             map.put(3, type.getCurrency());

@@ -6,6 +6,7 @@ import excel.accounting.entity.AccountType;
 import excel.accounting.entity.Currency;
 import excel.accounting.entity.Status;
 import excel.accounting.poi.ExcelTypeConverter;
+import excel.accounting.dao.AccountDao;
 import excel.accounting.shared.DataConverter;
 import org.apache.poi.ss.usermodel.Cell;
 
@@ -16,8 +17,10 @@ import java.util.stream.Collectors;
 /**
  * Account Service
  */
-public class AccountService extends AbstractService implements RowTypeConverter<Account>, ExcelTypeConverter<Account> {
+public class AccountService extends AbstractService implements ExcelTypeConverter<Account>,
+        EntityToRowColumns<Account> {
     private CurrencyService currencyService;
+    private AccountDao accountDao;
 
     @Override
     protected String getSqlFileName() {
@@ -41,7 +44,7 @@ public class AccountService extends AbstractService implements RowTypeConverter<
             searchTextQuery.add("code", "name");
         }
         queryBuilder.addSearchTextQuery("$searchText", searchTextQuery);
-        return getDataReader().findRowDataList(queryBuilder, this);
+        return getDataReader().findRowDataList(queryBuilder, getAccountDao());
     }
 
     private CurrencyService getCurrencyService() {
@@ -49,6 +52,13 @@ public class AccountService extends AbstractService implements RowTypeConverter<
             currencyService = (CurrencyService) getService("currencyService");
         }
         return currencyService;
+    }
+
+    public AccountDao getAccountDao() {
+        if(accountDao == null) {
+            accountDao = (AccountDao)getDao("accountDao");
+        }
+        return accountDao;
     }
 
     public List<AccountType> getAccountTypeList() {
@@ -59,7 +69,7 @@ public class AccountService extends AbstractService implements RowTypeConverter<
 
     public List<Account> loadAll() {
         QueryBuilder queryBuilder = getQueryBuilder("loadAll");
-        return getDataReader().findRowDataList(queryBuilder, this);
+        return getDataReader().findRowDataList(queryBuilder, getAccountDao());
     }
 
     public List<Account> findAccountsByType(String searchText, AccountType... accountTypeArray) {
@@ -72,7 +82,7 @@ public class AccountService extends AbstractService implements RowTypeConverter<
             searchTextQuery.add("account_number", "name", "description");
         }
         queryBuilder.addSearchTextQuery("$searchText", searchTextQuery);
-        return getDataReader().findRowDataList(queryBuilder, this);
+        return getDataReader().findRowDataList(queryBuilder, getAccountDao());
     }
 
     public List<String> findAccountNumberList() {
@@ -92,7 +102,7 @@ public class AccountService extends AbstractService implements RowTypeConverter<
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (Account account : filteredList) {
-            transaction.addBatch(getRowObjectMap(queryBuilder, account));
+            transaction.addBatch(getColumnsMap("updateStatus", account));
         }
         transaction.executeBatch();
     }
@@ -110,7 +120,7 @@ public class AccountService extends AbstractService implements RowTypeConverter<
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (Account account : filteredList) {
-            transaction.addBatch(getRowObjectMap(queryBuilder, account));
+            transaction.addBatch(getColumnsMap("updateCurrency", account));
         }
         transaction.executeBatch();
     }
@@ -136,7 +146,7 @@ public class AccountService extends AbstractService implements RowTypeConverter<
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (Account account : validList) {
-            transaction.addBatch(getRowObjectMap(queryBuilder, account));
+            transaction.addBatch(getColumnsMap("updateStatus", account));
         }
         transaction.executeBatch();
     }
@@ -159,7 +169,7 @@ public class AccountService extends AbstractService implements RowTypeConverter<
             if (account.getCurrency() != null && !currencyList.contains(account.getCurrency())) {
                 account.setCurrency(null);
             }
-            transaction.addBatch(getRowObjectMap(queryBuilder, account));
+            transaction.addBatch(getColumnsMap("insertAccount", account));
         }
         transaction.executeBatch();
     }
@@ -169,7 +179,7 @@ public class AccountService extends AbstractService implements RowTypeConverter<
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (Account account : accountList) {
-            transaction.addBatch(getRowObjectMap(queryBuilder, account));
+            transaction.addBatch(getColumnsMap("updateAccount", account));
         }
         transaction.executeBatch();
     }
@@ -183,25 +193,9 @@ public class AccountService extends AbstractService implements RowTypeConverter<
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (Account account : filteredList) {
-            transaction.addBatch(getRowObjectMap(queryBuilder, account));
+            transaction.addBatch(getColumnsMap("deleteAccount", account));
         }
         transaction.executeBatch();
-    }
-
-    /**
-     * account_number, name, account_type, status, currency, balance, description
-     */
-    @Override
-    public Account getRowType(QueryBuilder builder, Object[] objectArray) {
-        Account account = new Account();
-        account.setAccountNumber((String) objectArray[0]);
-        account.setName((String) objectArray[1]);
-        account.setAccountType(DataConverter.getAccountType(objectArray[2]));
-        account.setStatus(DataConverter.getStatus(objectArray[3]));
-        account.setCurrency((String) objectArray[4]);
-        account.setBalance((BigDecimal) objectArray[5]);
-        account.setDescription((String) objectArray[6]);
-        return account;
     }
 
     /**
@@ -217,31 +211,31 @@ public class AccountService extends AbstractService implements RowTypeConverter<
      * account_number, name, account_type, currency, description find by account_number
      */
     @Override
-    public Map<Integer, Object> getRowObjectMap(QueryBuilder builder, Account type) {
+    public Map<Integer, Object> getColumnsMap(final String queryName, Account account) {
         Map<Integer, Object> map = new HashMap<>();
-        if ("insertAccount".equals(builder.getQueryName())) {
-            map.put(1, type.getAccountNumber());
-            map.put(2, type.getName());
-            map.put(3, type.getAccountType().toString());
+        if ("insertAccount".equals(queryName)) {
+            map.put(1, account.getAccountNumber());
+            map.put(2, account.getName());
+            map.put(3, account.getAccountType().toString());
             map.put(4, Status.Drafted.toString());
-            map.put(5, type.getCurrency());
+            map.put(5, account.getCurrency());
             map.put(6, BigDecimal.ZERO);
-            map.put(7, type.getDescription());
-        } else if ("deleteAccount".equals(builder.getQueryName())) {
-            map.put(1, type.getAccountNumber());
-        } else if ("updateStatus".equals(builder.getQueryName())) {
-            map.put(1, type.getStatus().toString());
-            map.put(2, type.getAccountNumber());
-        } else if ("updateCurrency".equals(builder.getQueryName())) {
-            map.put(1, type.getCurrency());
-            map.put(2, type.getAccountNumber());
-        } else if ("updateAccount".equals(builder.getQueryName())) {
-            map.put(1, type.getAccountNumber());
-            map.put(2, type.getName());
-            map.put(3, type.getAccountType().toString());
-            map.put(4, type.getCurrency());
-            map.put(5, type.getDescription());
-            map.put(6, type.getAccountNumber());
+            map.put(7, account.getDescription());
+        } else if ("deleteAccount".equals(queryName)) {
+            map.put(1, account.getAccountNumber());
+        } else if ("updateStatus".equals(queryName)) {
+            map.put(1, account.getStatus().toString());
+            map.put(2, account.getAccountNumber());
+        } else if ("updateCurrency".equals(queryName)) {
+            map.put(1, account.getCurrency());
+            map.put(2, account.getAccountNumber());
+        } else if ("updateAccount".equals(queryName)) {
+            map.put(1, account.getAccountNumber());
+            map.put(2, account.getName());
+            map.put(3, account.getAccountType().toString());
+            map.put(4, account.getCurrency());
+            map.put(5, account.getDescription());
+            map.put(6, account.getAccountNumber());
         }
         return map;
     }

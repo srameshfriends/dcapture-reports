@@ -1,16 +1,15 @@
 package excel.accounting.service;
 
 import excel.accounting.db.QueryBuilder;
-import excel.accounting.db.RowTypeConverter;
+import excel.accounting.db.EntityToRowColumns;
 import excel.accounting.db.Transaction;
 import excel.accounting.entity.ExchangeRate;
 import excel.accounting.entity.Status;
 import excel.accounting.poi.ExcelTypeConverter;
+import excel.accounting.dao.ExchangeRateDao;
 import excel.accounting.shared.DataConverter;
 import org.apache.poi.ss.usermodel.Cell;
 
-import java.math.BigDecimal;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +22,15 @@ import java.util.stream.Collectors;
  * @since Oct 2016
  */
 public class ExchangeRateService extends AbstractService implements
-        RowTypeConverter<ExchangeRate>, ExcelTypeConverter<ExchangeRate> {
+        EntityToRowColumns<ExchangeRate>, ExcelTypeConverter<ExchangeRate> {
+    private ExchangeRateDao exchangeRateRelation;
+
+    public ExchangeRateDao getExchangeRateDao() {
+        if (exchangeRateRelation == null) {
+            exchangeRateRelation = (ExchangeRateDao) getDao("exchangeRateDao");
+        }
+        return exchangeRateRelation;
+    }
 
     @Override
     protected String getSqlFileName() {
@@ -32,7 +39,7 @@ public class ExchangeRateService extends AbstractService implements
 
     public List<ExchangeRate> loadAll() {
         QueryBuilder queryBuilder = getQueryBuilder("loadAll");
-        return getDataReader().findRowDataList(queryBuilder, this);
+        return getDataReader().findRowDataList(queryBuilder, getExchangeRateDao());
     }
 
     public List<Integer> findIdList() {
@@ -52,7 +59,7 @@ public class ExchangeRateService extends AbstractService implements
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (ExchangeRate item : filteredList) {
-            transaction.addBatch(getRowObjectMap(queryBuilder, item));
+            transaction.addBatch(getColumnsMap("updateStatus", item));
         }
         transaction.executeBatch();
     }
@@ -74,7 +81,7 @@ public class ExchangeRateService extends AbstractService implements
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (ExchangeRate item : itemList) {
-            transaction.addBatch(getRowObjectMap(queryBuilder, item));
+            transaction.addBatch(getColumnsMap("insertExchangeRate", item));
         }
         transaction.executeBatch();
     }
@@ -87,7 +94,7 @@ public class ExchangeRateService extends AbstractService implements
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (ExchangeRate item : itemList) {
-            transaction.addBatch(getRowObjectMap(queryBuilder, item));
+            transaction.addBatch(getColumnsMap("updateExchangeRate", item));
         }
         transaction.executeBatch();
     }
@@ -101,27 +108,9 @@ public class ExchangeRateService extends AbstractService implements
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (ExchangeRate item : filteredList) {
-            transaction.addBatch(getRowObjectMap(queryBuilder, item));
+            transaction.addBatch(getColumnsMap("deleteExchangeRate", item));
         }
         transaction.executeBatch();
-    }
-
-    /**
-     * id, fetch_from, asof_date, currency, exchange_currency, unit, selling_rate, buying_rate, status
-     */
-    @Override
-    public ExchangeRate getRowType(QueryBuilder builder, Object[] objectArray) {
-        ExchangeRate item = new ExchangeRate();
-        item.setId((Integer) objectArray[0]);
-        item.setFetchFrom((String) objectArray[1]);
-        item.setAsOfDate((Date) objectArray[2]);
-        item.setCurrency((String) objectArray[3]);
-        item.setExchangeCurrency((String) objectArray[4]);
-        item.setUnit((Integer) objectArray[5]);
-        item.setSellingRate((BigDecimal) objectArray[6]);
-        item.setBuyingRate((BigDecimal) objectArray[7]);
-        item.setStatus(DataConverter.getStatus(objectArray[8]));
-        return item;
     }
 
     /**
@@ -135,9 +124,9 @@ public class ExchangeRateService extends AbstractService implements
      * fetch_from, asof_date, currency, exchange_currency, unit, selling_rate, buying_rate By Id
      */
     @Override
-    public Map<Integer, Object> getRowObjectMap(QueryBuilder builder, ExchangeRate type) {
+    public Map<Integer, Object> getColumnsMap(final String queryName, ExchangeRate type) {
         Map<Integer, Object> map = new HashMap<>();
-        if ("insertExchangeRate".equals(builder.getQueryName())) {
+        if ("insertExchangeRate".equals(queryName)) {
             map.put(1, type.getFetchFrom());
             map.put(2, type.getAsOfDate());
             map.put(3, type.getCurrency());
@@ -146,12 +135,12 @@ public class ExchangeRateService extends AbstractService implements
             map.put(6, type.getSellingRate());
             map.put(7, type.getBuyingRate());
             map.put(8, Status.Drafted.toString());
-        } else if ("deleteExchangeRate".equals(builder.getQueryName())) {
+        } else if ("deleteExchangeRate".equals(queryName)) {
             map.put(1, type.getId());
-        } else if ("updateStatus".equals(builder.getQueryName())) {
+        } else if ("updateStatus".equals(queryName)) {
             map.put(1, type.getStatus().toString());
             map.put(2, type.getId());
-        } else if ("updateExchangeRate".equals(builder.getQueryName())) {
+        } else if ("updateExchangeRate".equals(queryName)) {
             map.put(1, type.getFetchFrom());
             map.put(2, type.getAsOfDate());
             map.put(3, type.getCurrency());
@@ -165,11 +154,11 @@ public class ExchangeRateService extends AbstractService implements
     }
 
     /**
-     * id, fetch_from, asof_date, currency, exchange_currency, unit, selling_rate, buying_rate, status
+     * code, fetch_from, asof_date, currency, exchange_currency, unit, selling_rate, buying_rate, status
      */
     @Override
     public String[] getColumnNames() {
-        return new String[]{"Id", "Reference From", "Date", "Currency", "Exchange Currency", "Unit", "Selling Rate",
+        return new String[]{"Code", "Reference From", "Date", "Currency", "Exchange Currency", "Unit", "Selling Rate",
                 "Buying Rate", "Status"};
     }
 

@@ -2,6 +2,7 @@ package excel.accounting.db;
 
 import excel.accounting.model.ApplicationConfig;
 import excel.accounting.shared.FileHelper;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.h2.jdbcx.JdbcConnectionPool;
 import org.h2.tools.Server;
@@ -100,7 +101,8 @@ public class DataProcessor {
             if (sql.trim().startsWith("--")) {
                 query = builder.toString();
                 if (!name.isEmpty() && !query.isEmpty()) {
-                    queryTemplateMap.put(name, query.toLowerCase().trim());
+                    query = query.toLowerCase().trim();
+                    queryTemplateMap.put(name, StringUtils.normalizeSpace(query));
                 }
                 name = sql.trim().replace("--", "");
                 builder = new StringBuilder();

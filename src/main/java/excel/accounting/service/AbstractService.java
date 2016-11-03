@@ -51,4 +51,8 @@ public abstract class AbstractService implements HasAppsControl, HasDataProcesso
     protected Object getService(String name) {
         return applicationControl.getService(name);
     }
+
+    protected Object getDao(String name) {
+        return applicationControl.getDao(name);
+    }
 }

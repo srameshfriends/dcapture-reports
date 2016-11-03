@@ -1,16 +1,15 @@
 package excel.accounting.service;
 
 import excel.accounting.db.QueryBuilder;
-import excel.accounting.db.RowTypeConverter;
+import excel.accounting.db.EntityToRowColumns;
 import excel.accounting.db.Transaction;
 import excel.accounting.entity.*;
 import excel.accounting.poi.ExcelTypeConverter;
+import excel.accounting.dao.ExpenseItemDao;
 import excel.accounting.shared.DataConverter;
 import excel.accounting.shared.DataValidator;
 import org.apache.poi.ss.usermodel.Cell;
 
-import java.math.BigDecimal;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,8 +22,9 @@ import java.util.stream.Collectors;
  * @since Oct 2016
  */
 public class ExpenseItemService extends AbstractService implements
-        RowTypeConverter<ExpenseItem>, ExcelTypeConverter<ExpenseItem> {
+        EntityToRowColumns<ExpenseItem>, ExcelTypeConverter<ExpenseItem> {
     private CurrencyService currencyService;
+    private ExpenseItemDao expenseItemDao;
 
     @Override
     protected String getSqlFileName() {
@@ -38,6 +38,13 @@ public class ExpenseItemService extends AbstractService implements
         return currencyService;
     }
 
+    public ExpenseItemDao getExpenseItemDao() {
+        if (expenseItemDao == null) {
+            expenseItemDao = (ExpenseItemDao) getDao("expenseItemDao");
+        }
+        return expenseItemDao;
+    }
+
     public boolean isValidInsert(ExpenseItem expenseItem) {
         return !(expenseItem.getExpenseCode() == null || expenseItem.getExpenseDate() == null ||
                 expenseItem.getDescription() == null || !DataValidator.isMoreThenZero(expenseItem.getAmount()));
@@ -45,7 +52,7 @@ public class ExpenseItemService extends AbstractService implements
 
     public List<ExpenseItem> loadAll() {
         QueryBuilder queryBuilder = getQueryBuilder("loadAll");
-        return getDataReader().findRowDataList(queryBuilder, this);
+        return getDataReader().findRowDataList(queryBuilder, getExpenseItemDao());
     }
 
     public List<String> findExpenseCodeList() {
@@ -65,7 +72,7 @@ public class ExpenseItemService extends AbstractService implements
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (ExpenseItem item : filteredList) {
-            transaction.addBatch(getRowObjectMap(queryBuilder, item));
+            transaction.addBatch(getColumnsMap("updateStatus", item));
         }
         transaction.executeBatch();
     }
@@ -84,10 +91,10 @@ public class ExpenseItemService extends AbstractService implements
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (ExpenseItem item : itemList) {
-            if(!currencyCodeList.contains(item.getCurrency())) {
+            if (!currencyCodeList.contains(item.getCurrency())) {
                 item.setCurrency(null);
             }
-            transaction.addBatch(getRowObjectMap(queryBuilder, item));
+            transaction.addBatch(getColumnsMap("insertExpenseItem", item));
         }
         transaction.executeBatch();
     }
@@ -101,7 +108,7 @@ public class ExpenseItemService extends AbstractService implements
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (ExpenseItem item : filteredList) {
-            transaction.addBatch(getRowObjectMap(queryBuilder, item));
+            transaction.addBatch(getColumnsMap("deleteExpenseItem", item));
         }
         transaction.executeBatch();
     }
@@ -113,7 +120,7 @@ public class ExpenseItemService extends AbstractService implements
         transaction.setBatchQuery(queryBuilder);
         for (ExpenseItem expenseItem : expenseItemList) {
             expenseItem.setExpenseAccount(expenseAccountNumber);
-            transaction.addBatch(getRowObjectMap(queryBuilder, expenseItem));
+            transaction.addBatch(getColumnsMap("updateExpenseAccount", expenseItem));
         }
         transaction.executeBatch();
     }
@@ -125,7 +132,7 @@ public class ExpenseItemService extends AbstractService implements
         transaction.setBatchQuery(queryBuilder);
         for (ExpenseItem expenseItem : expenseItemList) {
             expenseItem.setCurrency(currencyCode);
-            transaction.addBatch(getRowObjectMap(queryBuilder, expenseItem));
+            transaction.addBatch(getColumnsMap("updateExpenseAccount", expenseItem));
         }
         transaction.executeBatch();
     }
@@ -137,27 +144,9 @@ public class ExpenseItemService extends AbstractService implements
         transaction.setBatchQuery(queryBuilder);
         for (ExpenseItem expenseItem : expenseItemList) {
             expenseItem.setExpenseCategory(categoryCode);
-            transaction.addBatch(getRowObjectMap(queryBuilder, expenseItem));
+            transaction.addBatch(getColumnsMap("updateExpenseCategory", expenseItem));
         }
         transaction.executeBatch();
-    }
-
-    /**
-     * id, expense_date, reference_number, description, currency, amount, status, expense_account
-     */
-    @Override
-    public ExpenseItem getRowType(QueryBuilder builder, Object[] objectArray) {
-        ExpenseItem item = new ExpenseItem();
-        item.setExpenseCode((String) objectArray[0]);
-        item.setExpenseDate((Date) objectArray[1]);
-        item.setReferenceNumber((String) objectArray[2]);
-        item.setDescription((String) objectArray[3]);
-        item.setCurrency((String) objectArray[4]);
-        item.setAmount((BigDecimal) objectArray[5]);
-        item.setStatus(DataConverter.getStatus(objectArray[6]));
-        item.setExpenseCategory((String) objectArray[7]);
-        item.setExpenseAccount((String) objectArray[8]);
-        return item;
     }
 
     /**
@@ -169,9 +158,9 @@ public class ExpenseItemService extends AbstractService implements
      * set status find by expense_code
      */
     @Override
-    public Map<Integer, Object> getRowObjectMap(QueryBuilder builder, ExpenseItem type) {
+    public Map<Integer, Object> getColumnsMap(final String queryName, ExpenseItem type) {
         Map<Integer, Object> map = new HashMap<>();
-        if ("insertExpenseItem".equals(builder.getQueryName())) {
+        if ("insertExpenseItem".equals(queryName)) {
             map.put(1, type.getExpenseCode());
             map.put(2, type.getExpenseDate());
             map.put(3, type.getReferenceNumber());
@@ -179,15 +168,15 @@ public class ExpenseItemService extends AbstractService implements
             map.put(5, type.getCurrency());
             map.put(6, type.getAmount());
             map.put(7, Status.Drafted.toString());
-        } else if ("deleteExpenseItem".equals(builder.getQueryName())) {
+        } else if ("deleteExpenseItem".equals(queryName)) {
             map.put(1, type.getExpenseCode());
-        } else if ("updateStatus".equals(builder.getQueryName())) {
+        } else if ("updateStatus".equals(queryName)) {
             map.put(1, type.getStatus().toString());
             map.put(2, type.getExpenseCode());
-        } else if ("updateExpenseAccount".equals(builder.getQueryName())) {
+        } else if ("updateExpenseAccount".equals(queryName)) {
             map.put(1, type.getExpenseAccount());
             map.put(2, type.getExpenseCode());
-        } else if ("updateExpenseCategory".equals(builder.getQueryName())) {
+        } else if ("updateExpenseCategory".equals(queryName)) {
             map.put(1, type.getExpenseCategory());
             map.put(2, type.getExpenseCode());
         }
@@ -195,7 +184,7 @@ public class ExpenseItemService extends AbstractService implements
     }
 
     /**
-     * id, expense_date, reference_number, description, currency, amount, status
+     * expense_code, expense_date, reference_number, description, currency, amount, status
      */
     @Override
     public String[] getColumnNames() {

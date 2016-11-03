@@ -129,11 +129,40 @@ public class DataReader {
         return resultList;
     }
 
-    public <T> List<T> findRowDataList(QueryBuilder builder, RowTypeConverter<T> converter) {
+    public Object[] findSingleRow(QueryBuilder builder) {
+        logger.info(builder.getQuery());
+        Object[] result = null;
+        try {
+            Connection con = dataProcessor.getConnection();
+            PreparedStatement statement = con.prepareStatement(builder.getQuery());
+            addParameter(statement, builder.getParameters());
+            ResultSet rs = statement.executeQuery();
+            int columnCount = rs.getMetaData().getColumnCount();
+            if (rs.next()) {
+                result = new Object[columnCount];
+                for (int col = 0; col < columnCount; col++) {
+                    result[col] = rs.getObject(col + 1);
+                }
+            }
+            close(rs, statement, con);
+        } catch (SQLException ex) {
+            if (logger.isDebugEnabled()) {
+                ex.printStackTrace();
+            }
+        }
+        return result;
+    }
+
+    public <T> T findSingleRow(QueryBuilder builder, RowColumnsToEntity<T> converter) {
+        Object[] objectArray = findSingleRow(builder);
+        return objectArray == null ? null : converter.getEntity(builder.getQueryName(), objectArray);
+    }
+
+    public <T> List<T> findRowDataList(QueryBuilder builder, RowColumnsToEntity<T> converter) {
         List<T> dataList = new ArrayList<>();
         List<Object[]> objList = findObjects(builder);
         for (Object[] obj : objList) {
-            T rowData = converter.getRowType(builder, obj);
+            T rowData = converter.getEntity(builder.getQueryName(), obj);
             if (rowData != null) {
                 dataList.add(rowData);
             }

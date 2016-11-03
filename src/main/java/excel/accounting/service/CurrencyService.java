@@ -4,6 +4,7 @@ import excel.accounting.db.*;
 import excel.accounting.entity.Currency;
 import excel.accounting.entity.Status;
 import excel.accounting.poi.ExcelTypeConverter;
+import excel.accounting.dao.CurrencyDao;
 import excel.accounting.shared.DataConverter;
 import org.apache.poi.ss.usermodel.Cell;
 
@@ -18,11 +19,20 @@ import java.util.stream.Collectors;
  * @author Ramesh
  * @since Oct, 2016
  */
-public class CurrencyService extends AbstractService implements RowTypeConverter<Currency>, ExcelTypeConverter<Currency> {
+public class CurrencyService extends AbstractService implements //
+        RowColumnsToEntity<Currency>, EntityToRowColumns<Currency>, ExcelTypeConverter<Currency> {
+    private CurrencyDao currencyDao;
 
     @Override
     protected String getSqlFileName() {
         return "currency";
+    }
+
+    public CurrencyDao getCurrencyDao() {
+        if(currencyDao == null) {
+            currencyDao = (CurrencyDao)getDao("currencyDao");
+        }
+        return currencyDao;
     }
 
     public List<Currency> searchCurrency(String searchText, Status status) {
@@ -35,7 +45,7 @@ public class CurrencyService extends AbstractService implements RowTypeConverter
             searchTextQuery.add("code", "name");
         }
         queryBuilder.addSearchTextQuery("$searchText", searchTextQuery);
-        return getDataReader().findRowDataList(queryBuilder, this);
+        return getDataReader().findRowDataList(queryBuilder, getCurrencyDao());
     }
 
     public List<Currency> loadAll() {
@@ -60,7 +70,7 @@ public class CurrencyService extends AbstractService implements RowTypeConverter
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (Currency currency : filteredList) {
-            transaction.addBatch(getRowObjectMap(queryBuilder, currency));
+            transaction.addBatch(getColumnsMap("updateStatus", currency));
         }
         transaction.executeBatch();
     }
@@ -82,7 +92,7 @@ public class CurrencyService extends AbstractService implements RowTypeConverter
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (Currency currency : currencyList) {
-            transaction.addBatch(getRowObjectMap(queryBuilder, currency));
+            transaction.addBatch(getColumnsMap("insertCurrency", currency));
         }
         transaction.executeBatch();
     }
@@ -92,7 +102,7 @@ public class CurrencyService extends AbstractService implements RowTypeConverter
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (Currency currency : currencyList) {
-            transaction.addBatch(getRowObjectMap(queryBuilder, currency));
+            transaction.addBatch(getColumnsMap("updateCurrency", currency));
         }
         transaction.executeBatch();
     }
@@ -107,7 +117,7 @@ public class CurrencyService extends AbstractService implements RowTypeConverter
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (Currency currency : filteredList) {
-            transaction.addBatch(getRowObjectMap(queryBuilder, currency));
+            transaction.addBatch(getColumnsMap("deleteCurrency", currency));
         }
         transaction.executeBatch();
     }
@@ -116,13 +126,13 @@ public class CurrencyService extends AbstractService implements RowTypeConverter
      * code, name, status, decimal_precision, symbol
      */
     @Override
-    public Currency getRowType(QueryBuilder builder, Object[] objectArray) {
+    public Currency getEntity(String queryName, Object[] columns) {
         Currency currency = new Currency();
-        currency.setCode((String) objectArray[0]);
-        currency.setName((String) objectArray[1]);
-        currency.setDecimalPrecision((Integer) objectArray[2]);
-        currency.setSymbol((String) objectArray[3]);
-        currency.setStatus(DataConverter.getStatus(objectArray[4]));
+        currency.setCode((String) columns[0]);
+        currency.setName((String) columns[1]);
+        currency.setDecimalPrecision((Integer) columns[2]);
+        currency.setSymbol((String) columns[3]);
+        currency.setStatus(DataConverter.getStatus(columns[4]));
         return currency;
     }
 
@@ -137,24 +147,24 @@ public class CurrencyService extends AbstractService implements RowTypeConverter
      * name, decimal_precision, symbol find by code
      */
     @Override
-    public Map<Integer, Object> getRowObjectMap(QueryBuilder builder, Currency type) {
+    public Map<Integer, Object> getColumnsMap(final String queryName, Currency entity) {
         Map<Integer, Object> map = new HashMap<>();
-        if ("insertCurrency".equals(builder.getQueryName())) {
-            map.put(1, type.getCode());
-            map.put(2, type.getName());
-            map.put(3, type.getDecimalPrecision());
-            map.put(4, type.getSymbol());
+        if ("insertCurrency".equals(queryName)) {
+            map.put(1, entity.getCode());
+            map.put(2, entity.getName());
+            map.put(3, entity.getDecimalPrecision());
+            map.put(4, entity.getSymbol());
             map.put(5, Status.Drafted.toString());
-        } else if ("deleteCurrency".equals(builder.getQueryName())) {
-            map.put(1, type.getCode());
-        } else if ("updateStatus".equals(builder.getQueryName())) {
-            map.put(1, type.getStatus().toString());
-            map.put(2, type.getCode());
-        } else if ("updateCurrency".equals(builder.getQueryName())) {
-            map.put(1, type.getName());
-            map.put(2, type.getDecimalPrecision());
-            map.put(3, type.getSymbol());
-            map.put(4, type.getCode());
+        } else if ("deleteCurrency".equals(queryName)) {
+            map.put(1, entity.getCode());
+        } else if ("updateStatus".equals(queryName)) {
+            map.put(1, entity.getStatus().toString());
+            map.put(2, entity.getCode());
+        } else if ("updateCurrency".equals(queryName)) {
+            map.put(1, entity.getName());
+            map.put(2, entity.getDecimalPrecision());
+            map.put(3, entity.getSymbol());
+            map.put(4, entity.getCode());
         }
         return map;
     }

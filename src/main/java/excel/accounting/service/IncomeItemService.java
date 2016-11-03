@@ -1,16 +1,15 @@
 package excel.accounting.service;
 
 import excel.accounting.db.QueryBuilder;
-import excel.accounting.db.RowTypeConverter;
+import excel.accounting.db.EntityToRowColumns;
 import excel.accounting.db.Transaction;
 import excel.accounting.entity.IncomeItem;
 import excel.accounting.entity.Status;
 import excel.accounting.poi.ExcelTypeConverter;
+import excel.accounting.dao.IncomeItemDao;
 import excel.accounting.shared.DataConverter;
 import org.apache.poi.ss.usermodel.Cell;
 
-import java.math.BigDecimal;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +22,15 @@ import java.util.stream.Collectors;
  * @since Oct 2016
  */
 public class IncomeItemService extends AbstractService implements
-        RowTypeConverter<IncomeItem>, ExcelTypeConverter<IncomeItem> {
+        EntityToRowColumns<IncomeItem>, ExcelTypeConverter<IncomeItem> {
+    private IncomeItemDao incomeItemDao;
+
+    public IncomeItemDao getIncomeItemDao() {
+        if (incomeItemDao == null) {
+            incomeItemDao = (IncomeItemDao) getDao("incomeItemDao");
+        }
+        return incomeItemDao;
+    }
 
     @Override
     protected String getSqlFileName() {
@@ -35,7 +42,7 @@ public class IncomeItemService extends AbstractService implements
     */
     public List<IncomeItem> loadAll() {
         QueryBuilder queryBuilder = getQueryBuilder("loadAll");
-        return getDataReader().findRowDataList(queryBuilder, this);
+        return getDataReader().findRowDataList(queryBuilder, getIncomeItemDao());
     }
 
     /*
@@ -61,7 +68,7 @@ public class IncomeItemService extends AbstractService implements
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (IncomeItem item : filteredList) {
-            transaction.addBatch(getRowObjectMap(queryBuilder, item));
+            transaction.addBatch(getColumnsMap("updateStatus", item));
         }
         transaction.executeBatch();
     }
@@ -83,7 +90,7 @@ public class IncomeItemService extends AbstractService implements
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (IncomeItem item : itemList) {
-            transaction.addBatch(getRowObjectMap(queryBuilder, item));
+            transaction.addBatch(getColumnsMap("insertIncomeItem", item));
         }
         transaction.executeBatch();
     }
@@ -96,7 +103,7 @@ public class IncomeItemService extends AbstractService implements
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (IncomeItem item : itemList) {
-            transaction.addBatch(getRowObjectMap(queryBuilder, item));
+            transaction.addBatch(getColumnsMap("updateIncomeItem", item));
         }
         transaction.executeBatch();
     }
@@ -110,24 +117,9 @@ public class IncomeItemService extends AbstractService implements
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (IncomeItem item : filteredList) {
-            transaction.addBatch(getRowObjectMap(queryBuilder, item));
+            transaction.addBatch(getColumnsMap("deleteIncomeItem", item));
         }
         transaction.executeBatch();
-    }
-
-    /**
-     * id, income_date, description, currency, amount, status
-     */
-    @Override
-    public IncomeItem getRowType(QueryBuilder builder, Object[] objectArray) {
-        IncomeItem item = new IncomeItem();
-        item.setId((Integer) objectArray[0]);
-        item.setIncomeDate((Date) objectArray[1]);
-        item.setDescription((String) objectArray[2]);
-        item.setCurrency((String) objectArray[3]);
-        item.setAmount((BigDecimal) objectArray[4]);
-        item.setStatus(DataConverter.getStatus(objectArray[5]));
-        return item;
     }
 
     /**
@@ -141,20 +133,20 @@ public class IncomeItemService extends AbstractService implements
      * income_date, description, currency, amount By Id
      */
     @Override
-    public Map<Integer, Object> getRowObjectMap(QueryBuilder builder, IncomeItem type) {
+    public Map<Integer, Object> getColumnsMap(final String queryName, IncomeItem type) {
         Map<Integer, Object> map = new HashMap<>();
-        if ("insertIncomeItem".equals(builder.getQueryName())) {
+        if ("insertIncomeItem".equals(queryName)) {
             map.put(1, type.getIncomeDate());
             map.put(2, type.getDescription());
             map.put(3, type.getCurrency());
             map.put(4, type.getAmount());
             map.put(5, Status.Drafted.toString());
-        } else if ("deleteIncomeItem".equals(builder.getQueryName())) {
+        } else if ("deleteIncomeItem".equals(queryName)) {
             map.put(1, type.getId());
-        } else if ("updateStatus".equals(builder.getQueryName())) {
+        } else if ("updateStatus".equals(queryName)) {
             map.put(1, type.getStatus().toString());
             map.put(2, type.getId());
-        } else if ("updateIncomeItem".equals(builder.getQueryName())) {
+        } else if ("updateIncomeItem".equals(queryName)) {
             map.put(1, type.getIncomeDate());
             map.put(2, type.getDescription());
             map.put(3, type.getCurrency());

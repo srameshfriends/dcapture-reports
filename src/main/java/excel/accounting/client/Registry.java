@@ -1,5 +1,6 @@
 package excel.accounting.client;
 
+import excel.accounting.dao.*;
 import excel.accounting.service.*;
 import excel.accounting.shared.ApplicationControl;
 import excel.accounting.ui.ViewManager;
@@ -40,5 +41,15 @@ abstract class Registry {
         control.addService("bankTransactionService", new BankTransactionService());
         control.addService("exchangeRateService", new ExchangeRateService());
         control.addService("assetService", new AssetService());
+    }
+
+    static void registerDao(ApplicationControl control) {
+        control.addDao("currencyDao", new CurrencyDao());
+        control.addDao("accountDao", new AccountDao());
+        control.addDao("incomeItemDao", new IncomeItemDao());
+        control.addDao("incomeCategoryDao", new IncomeCategoryDao());
+        control.addDao("expenseCategoryDao", new ExpenseCategoryDao());
+        control.addDao("expenseItemDao", new ExpenseItemDao());
+        control.addDao("assetDao", new AssetDao());
     }
 }

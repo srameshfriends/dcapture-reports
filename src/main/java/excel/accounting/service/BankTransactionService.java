@@ -1,16 +1,15 @@
 package excel.accounting.service;
 
 import excel.accounting.db.QueryBuilder;
-import excel.accounting.db.RowTypeConverter;
+import excel.accounting.db.EntityToRowColumns;
 import excel.accounting.db.Transaction;
 import excel.accounting.entity.BankTransaction;
 import excel.accounting.entity.Status;
 import excel.accounting.poi.ExcelTypeConverter;
+import excel.accounting.dao.BankTransactionDao;
 import excel.accounting.shared.DataConverter;
 import org.apache.poi.ss.usermodel.Cell;
 
-import java.math.BigDecimal;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,21 +22,26 @@ import java.util.stream.Collectors;
  * @since Oct 2016
  */
 public class BankTransactionService extends AbstractService implements
-        RowTypeConverter<BankTransaction>, ExcelTypeConverter<BankTransaction> {
+        EntityToRowColumns<BankTransaction>, ExcelTypeConverter<BankTransaction> {
+    private BankTransactionDao bankTransactionDao;
 
     @Override
     protected String getSqlFileName() {
         return "bank-transaction";
     }
 
-    public List<BankTransaction> loadAll() {
-        QueryBuilder queryBuilder = getQueryBuilder("loadAll");
-        return getDataReader().findRowDataList(queryBuilder, this);
+    public BankTransactionDao getBankTransactionDao() {
+        if(bankTransactionDao == null) {
+            bankTransactionDao = (BankTransactionDao)getDao("bankTransactionDao");
+        }
+        return bankTransactionDao;
     }
 
-    /*
-    * find all id list
-    */
+    public List<BankTransaction> loadAll() {
+        QueryBuilder queryBuilder = getQueryBuilder("loadAll");
+        return getDataReader().findRowDataList(queryBuilder, getBankTransactionDao());
+    }
+
     public List<Integer> findIdList() {
         QueryBuilder queryBuilder = getQueryBuilder("findIdList");
         return getDataReader().findInteger(queryBuilder);
@@ -58,7 +62,7 @@ public class BankTransactionService extends AbstractService implements
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (BankTransaction bankTransaction : filteredList) {
-            transaction.addBatch(getRowObjectMap(queryBuilder, bankTransaction));
+            transaction.addBatch(getColumnsMap("updateStatus", bankTransaction));
         }
         transaction.executeBatch();
     }
@@ -80,7 +84,7 @@ public class BankTransactionService extends AbstractService implements
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (BankTransaction bankTransaction : bankTransactionList) {
-            transaction.addBatch(getRowObjectMap(queryBuilder, bankTransaction));
+            transaction.addBatch(getColumnsMap("insertBankTransaction", bankTransaction));
         }
         transaction.executeBatch();
     }
@@ -90,7 +94,7 @@ public class BankTransactionService extends AbstractService implements
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (BankTransaction bankTransaction : bankTransactionList) {
-            transaction.addBatch(getRowObjectMap(queryBuilder, bankTransaction));
+            transaction.addBatch(getColumnsMap("updateBankTransaction", bankTransaction));
         }
         transaction.executeBatch();
     }
@@ -104,29 +108,9 @@ public class BankTransactionService extends AbstractService implements
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (BankTransaction bankTransaction : filteredList) {
-            transaction.addBatch(getRowObjectMap(queryBuilder, bankTransaction));
+            transaction.addBatch(getColumnsMap("deleteBankTransaction", bankTransaction));
         }
         transaction.executeBatch();
-    }
-
-    /**
-     * id, bank, transaction_date, transaction_index, transaction_code, description, currency,
-     * credit_amount, debit_amount, status
-     */
-    @Override
-    public BankTransaction getRowType(QueryBuilder builder, Object[] objectArray) {
-        BankTransaction bankTransaction = new BankTransaction();
-        bankTransaction.setId((Integer) objectArray[0]);
-        bankTransaction.setBank((String) objectArray[1]);
-        bankTransaction.setTransactionDate((Date) objectArray[2]);
-        bankTransaction.setTransactionIndex((Integer) objectArray[3]);
-        bankTransaction.setTransactionCode((String) objectArray[4]);
-        bankTransaction.setDescription((String) objectArray[5]);
-        bankTransaction.setCurrency((String) objectArray[6]);
-        bankTransaction.setCreditAmount((BigDecimal) objectArray[7]);
-        bankTransaction.setDebitAmount((BigDecimal) objectArray[8]);
-        bankTransaction.setStatus(DataConverter.getStatus(objectArray[9]));
-        return bankTransaction;
     }
 
     /**
@@ -142,9 +126,9 @@ public class BankTransactionService extends AbstractService implements
      * By Id
      */
     @Override
-    public Map<Integer, Object> getRowObjectMap(QueryBuilder builder, BankTransaction type) {
+    public Map<Integer, Object> getColumnsMap(final String queryName, BankTransaction type) {
         Map<Integer, Object> map = new HashMap<>();
-        if ("insertBankTransaction".equals(builder.getQueryName())) {
+        if ("insertBankTransaction".equals(queryName)) {
             map.put(1, type.getBank());
             map.put(2, type.getTransactionDate());
             map.put(3, type.getTransactionIndex());
@@ -154,12 +138,12 @@ public class BankTransactionService extends AbstractService implements
             map.put(7, type.getCreditAmount());
             map.put(8, type.getDebitAmount());
             map.put(9, Status.Drafted.toString());
-        } else if ("deleteBankTransaction".equals(builder.getQueryName())) {
+        } else if ("deleteBankTransaction".equals(queryName)) {
             map.put(1, type.getId());
-        } else if ("updateStatus".equals(builder.getQueryName())) {
+        } else if ("updateStatus".equals(queryName)) {
             map.put(1, type.getStatus().toString());
             map.put(2, type.getId());
-        } else if ("updateBankTransaction".equals(builder.getQueryName())) {
+        } else if ("updateBankTransaction".equals(queryName)) {
             map.put(1, type.getBank());
             map.put(2, type.getTransactionDate());
             map.put(3, type.getTransactionIndex());
