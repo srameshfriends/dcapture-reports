@@ -6,11 +6,11 @@ import excel.accounting.entity.Status;
 import excel.accounting.poi.ExcelTypeConverter;
 import excel.accounting.dao.CurrencyDao;
 import excel.accounting.shared.DataConverter;
+import excel.accounting.shared.RulesType;
+import excel.accounting.shared.StringRules;
 import org.apache.poi.ss.usermodel.Cell;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -19,8 +19,8 @@ import java.util.stream.Collectors;
  * @author Ramesh
  * @since Oct, 2016
  */
-public class CurrencyService extends AbstractService implements //
-        RowColumnsToEntity<Currency>, EntityToRowColumns<Currency>, ExcelTypeConverter<Currency> {
+public class CurrencyService extends AbstractService implements EntityToRowColumns<Currency>,
+        ExcelTypeConverter<Currency> {
     private CurrencyDao currencyDao;
 
     @Override
@@ -28,83 +28,99 @@ public class CurrencyService extends AbstractService implements //
         return "currency";
     }
 
-    public CurrencyDao getCurrencyDao() {
-        if(currencyDao == null) {
-            currencyDao = (CurrencyDao)getDao("currencyDao");
+    private CurrencyDao getCurrencyDao() {
+        if (currencyDao == null) {
+            currencyDao = (CurrencyDao) getBean("currencyDao");
         }
         return currencyDao;
     }
 
-    public List<Currency> searchCurrency(String searchText, Status status) {
-        InClauseQuery inClauseQuery = new InClauseQuery(status.toString());
-        QueryBuilder queryBuilder = getQueryBuilder("searchCurrency");
-        queryBuilder.addInClauseQuery("$status", inClauseQuery);
-        SearchTextQuery searchTextQuery = null;
-        if (SearchTextQuery.isValid(searchText)) {
-            searchTextQuery = new SearchTextQuery(searchText);
-            searchTextQuery.add("code", "name");
-        }
-        queryBuilder.addSearchTextQuery("$searchText", searchTextQuery);
-        return getDataReader().findRowDataList(queryBuilder, getCurrencyDao());
-    }
-
-    public List<Currency> loadAll() {
-        QueryBuilder queryBuilder = getQueryBuilder("loadAll");
-        return getDataReader().findRowDataList(queryBuilder, this);
-    }
-
-    public List<String> findCodeList() {
-        QueryBuilder queryBuilder = getQueryBuilder("findCodeList");
-        return getDataReader().findString(queryBuilder);
-    }
-
-    private void updateStatus(Status requiredStatus, Status changedStatus, List<Currency> currencyList) {
-        List<Currency> filteredList = filteredByStatus(requiredStatus, currencyList);
-        if (filteredList.isEmpty()) {
-            return;
-        }
-        for (Currency currency : filteredList) {
-            currency.setStatus(changedStatus);
-        }
+    private void updateStatus(List<Currency> currencyList) {
         QueryBuilder queryBuilder = getQueryBuilder("updateStatus");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
-        for (Currency currency : filteredList) {
+        for (Currency currency : currencyList) {
             transaction.addBatch(getColumnsMap("updateStatus", currency));
         }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     public void setAsDrafted(List<Currency> currencyList) {
-        updateStatus(Status.Confirmed, Status.Drafted, currencyList);
+        List<Currency> filteredList = filteredByStatus(Status.Confirmed, currencyList);
+        if (filteredList.isEmpty()) {
+            setMessage("Wrong Status : confirmed currency are allowed to modify as drafted");
+            return;
+        }
+        for (Currency currency : filteredList) {
+            currency.setStatus(Status.Drafted);
+        }
+        updateStatus(currencyList);
     }
 
     public void setAsConfirmed(List<Currency> currencyList) {
-        updateStatus(Status.Drafted, Status.Confirmed, currencyList);
+        List<Currency> filteredList = filteredByStatus(Status.Drafted, currencyList);
+        if (filteredList.isEmpty()) {
+            setMessage("Wrong Status : drafted currency are allowed to modify as confirmed");
+            return;
+        }
+        for (Currency currency : filteredList) {
+            currency.setStatus(Status.Confirmed);
+        }
+        updateStatus(currencyList);
     }
 
     public void setAsClosed(List<Currency> currencyList) {
-        updateStatus(Status.Confirmed, Status.Closed, currencyList);
+        List<Currency> filteredList = filteredByStatus(Status.Confirmed, currencyList);
+        if (filteredList.isEmpty()) {
+            setMessage("Wrong Status : confirmed currency are allowed to modify as closed");
+            return;
+        }
+        for (Currency currency : filteredList) {
+            currency.setStatus(Status.Closed);
+        }
+        updateStatus(currencyList);
+    }
+
+    public void reopenCurrency(List<Currency> currencyList) {
+        List<Currency> filteredList = filteredByStatus(Status.Closed, currencyList);
+        if (filteredList.isEmpty()) {
+            setMessage("Wrong Status : closed currency are allowed to reopen");
+            return;
+        }
+        for (Currency currency : filteredList) {
+            currency.setStatus(Status.Confirmed);
+        }
+        updateStatus(currencyList);
+    }
+
+    private boolean insertValid(Currency currency, StringRules rules) {
+        return rules.isValid(currency.getCode()) && !StringRules.isEmpty(currency.getName());
     }
 
     public void insertCurrency(List<Currency> currencyList) {
+        setMessage("Currency code, name should not be empty");
+        StringRules rules = new StringRules();
+        rules.setMinMaxLength(3, 3);
+        rules.setRulesType(RulesType.AlphaOnly);
+        //
+        List<String> existingList = getCurrencyDao().findCodeList();
+        List<Currency> validList = new ArrayList<>();
+        for (Currency currency : currencyList) {
+            if (insertValid(currency, rules) && !existingList.contains(currency.getCode())) {
+                validList.add(currency);
+            }
+        }
+        if(validList.isEmpty()) {
+            setMessage("Valid currency not found");
+            return;
+        }
         QueryBuilder queryBuilder = getQueryBuilder("insertCurrency");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
-        for (Currency currency : currencyList) {
+        for (Currency currency : validList) {
             transaction.addBatch(getColumnsMap("insertCurrency", currency));
         }
-        transaction.executeBatch();
-    }
-
-    public void updateCurrency(List<Currency> currencyList) {
-        QueryBuilder queryBuilder = getQueryBuilder("updateCurrency");
-        Transaction transaction = createTransaction();
-        transaction.setBatchQuery(queryBuilder);
-        for (Currency currency : currencyList) {
-            transaction.addBatch(getColumnsMap("updateCurrency", currency));
-        }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     public void deleteCurrency(List<Currency> currencyList) {
@@ -119,21 +135,7 @@ public class CurrencyService extends AbstractService implements //
         for (Currency currency : filteredList) {
             transaction.addBatch(getColumnsMap("deleteCurrency", currency));
         }
-        transaction.executeBatch();
-    }
-
-    /**
-     * code, name, status, decimal_precision, symbol
-     */
-    @Override
-    public Currency getEntity(String queryName, Object[] columns) {
-        Currency currency = new Currency();
-        currency.setCode((String) columns[0]);
-        currency.setName((String) columns[1]);
-        currency.setDecimalPrecision((Integer) columns[2]);
-        currency.setSymbol((String) columns[3]);
-        currency.setStatus(DataConverter.getStatus(columns[4]));
-        return currency;
+        executeBatch(transaction);
     }
 
     /**
@@ -143,8 +145,6 @@ public class CurrencyService extends AbstractService implements //
      * find by code
      * updateStatus
      * set status find by code
-     * updateCurrency
-     * name, decimal_precision, symbol find by code
      */
     @Override
     public Map<Integer, Object> getColumnsMap(final String queryName, Currency entity) {
@@ -160,11 +160,6 @@ public class CurrencyService extends AbstractService implements //
         } else if ("updateStatus".equals(queryName)) {
             map.put(1, entity.getStatus().toString());
             map.put(2, entity.getCode());
-        } else if ("updateCurrency".equals(queryName)) {
-            map.put(1, entity.getName());
-            map.put(2, entity.getDecimalPrecision());
-            map.put(3, entity.getSymbol());
-            map.put(4, entity.getCode());
         }
         return map;
     }

@@ -1,13 +1,16 @@
 package excel.accounting.service;
 
+import excel.accounting.dao.AccountDao;
+import excel.accounting.dao.CurrencyDao;
 import excel.accounting.db.*;
 import excel.accounting.entity.Account;
 import excel.accounting.entity.AccountType;
 import excel.accounting.entity.Currency;
 import excel.accounting.entity.Status;
 import excel.accounting.poi.ExcelTypeConverter;
-import excel.accounting.dao.AccountDao;
 import excel.accounting.shared.DataConverter;
+import excel.accounting.shared.RulesType;
+import excel.accounting.shared.StringRules;
 import org.apache.poi.ss.usermodel.Cell;
 
 import java.math.BigDecimal;
@@ -19,12 +22,26 @@ import java.util.stream.Collectors;
  */
 public class AccountService extends AbstractService implements ExcelTypeConverter<Account>,
         EntityToRowColumns<Account> {
-    private CurrencyService currencyService;
     private AccountDao accountDao;
+    private CurrencyDao currencyDao;
 
     @Override
     protected String getSqlFileName() {
         return "account";
+    }
+
+    private AccountDao getAccountDao() {
+        if (accountDao == null) {
+            accountDao = (AccountDao) getBean("accountDao");
+        }
+        return accountDao;
+    }
+
+    private CurrencyDao getCurrencyDao() {
+        if (currencyDao == null) {
+            currencyDao = (CurrencyDao) getBean("currencyDao");
+        }
+        return currencyDao;
     }
 
     private boolean isValidAccount(Account account) {
@@ -32,62 +49,10 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
                 account.getAccountType() == null || account.getName() == null);
     }
 
-    public List<Account> searchAccount(String searchText, Status status, AccountType... accountTypes) {
-        QueryBuilder queryBuilder = getQueryBuilder("searchAccount");
-        InClauseQuery statusQuery = new InClauseQuery(status);
-        queryBuilder.addInClauseQuery("$status", statusQuery);
-        InClauseQuery accountTypeQuery = new InClauseQuery(accountTypes);
-        queryBuilder.addInClauseQuery("$accountType", accountTypeQuery);
-        SearchTextQuery searchTextQuery = null;
-        if (SearchTextQuery.isValid(searchText)) {
-            searchTextQuery = new SearchTextQuery(searchText);
-            searchTextQuery.add("code", "name");
-        }
-        queryBuilder.addSearchTextQuery("$searchText", searchTextQuery);
-        return getDataReader().findRowDataList(queryBuilder, getAccountDao());
-    }
-
-    private CurrencyService getCurrencyService() {
-        if (currencyService == null) {
-            currencyService = (CurrencyService) getService("currencyService");
-        }
-        return currencyService;
-    }
-
-    public AccountDao getAccountDao() {
-        if(accountDao == null) {
-            accountDao = (AccountDao)getDao("accountDao");
-        }
-        return accountDao;
-    }
-
-    public List<AccountType> getAccountTypeList() {
+    private List<AccountType> getAccountTypeList() {
         List<AccountType> accountTypeList = new ArrayList<>();
         Collections.addAll(accountTypeList, AccountType.values());
         return accountTypeList;
-    }
-
-    public List<Account> loadAll() {
-        QueryBuilder queryBuilder = getQueryBuilder("loadAll");
-        return getDataReader().findRowDataList(queryBuilder, getAccountDao());
-    }
-
-    public List<Account> findAccountsByType(String searchText, AccountType... accountTypeArray) {
-        InClauseQuery inClauseQuery = new InClauseQuery(accountTypeArray);
-        QueryBuilder queryBuilder = getQueryBuilder("findAccountsByType");
-        queryBuilder.addInClauseQuery("$account_type", inClauseQuery);
-        SearchTextQuery searchTextQuery = null;
-        if (SearchTextQuery.isValid(searchText)) {
-            searchTextQuery = new SearchTextQuery(searchText);
-            searchTextQuery.add("account_number", "name", "description");
-        }
-        queryBuilder.addSearchTextQuery("$searchText", searchTextQuery);
-        return getDataReader().findRowDataList(queryBuilder, getAccountDao());
-    }
-
-    public List<String> findAccountNumberList() {
-        QueryBuilder queryBuilder = getQueryBuilder("findAccountNumberList");
-        return getDataReader().findString(queryBuilder);
     }
 
     private void updateStatus(Status requiredStatus, Status changedStatus, List<Account> accountList) {
@@ -104,7 +69,7 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
         for (Account account : filteredList) {
             transaction.addBatch(getColumnsMap("updateStatus", account));
         }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     public void updateCurrency(Currency currency, List<Account> accountList) {
@@ -122,7 +87,7 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
         for (Account account : filteredList) {
             transaction.addBatch(getColumnsMap("updateCurrency", account));
         }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     public void setAsDrafted(List<Account> accountList) {
@@ -139,7 +104,7 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
             account.setStatus(Status.Confirmed);
             validList.add(account);
         });
-        if(validList.isEmpty()) {
+        if (validList.isEmpty()) {
             return;
         }
         QueryBuilder queryBuilder = getQueryBuilder("updateStatus");
@@ -148,21 +113,41 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
         for (Account account : validList) {
             transaction.addBatch(getColumnsMap("updateStatus", account));
         }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     public void setAsClosed(List<Account> accountList) {
         updateStatus(Status.Confirmed, Status.Closed, accountList);
     }
 
+    private boolean insertValid(Account account, StringRules rules) {
+        return rules.isValid(account.getAccountNumber()) && !StringRules.isEmpty(account.getName());
+    }
+
     public void insertAccount(List<Account> accountList) {
-        List<String> currencyList = getCurrencyService().findCodeList();
-        List<AccountType> accountTypeList = getAccountTypeList();
+        setMessage("Account number, name should not be empty");
+        StringRules rules = new StringRules();
+        rules.setMinMaxLength(3, 6);
+        rules.setFirstCharAlphaOnly(true);
+        rules.setRulesType(RulesType.Alphanumeric);
         //
+        List<String> existingList = getAccountDao().findAccountNumberList();
+        List<Account> validList = new ArrayList<>();
+        for (Account account : accountList) {
+            if (insertValid(account, rules) && !existingList.contains(account.getAccountNumber())) {
+                validList.add(account);
+            }
+        }
+        if (validList.isEmpty()) {
+            setMessage("Valid accounts not found");
+            return;
+        }
+        List<String> currencyList = getCurrencyDao().findCodeList();
+        List<AccountType> accountTypeList = getAccountTypeList();
         QueryBuilder queryBuilder = getQueryBuilder("insertAccount");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
-        for (Account account : accountList) {
+        for (Account account : validList) {
             if (account.getAccountType() != null && !accountTypeList.contains(account.getAccountType())) {
                 account.setAccountType(null);
             }
@@ -171,7 +156,7 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
             }
             transaction.addBatch(getColumnsMap("insertAccount", account));
         }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     public void updateAccount(List<Account> accountList) {
@@ -181,7 +166,7 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
         for (Account account : accountList) {
             transaction.addBatch(getColumnsMap("updateAccount", account));
         }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     public void deleteAccount(List<Account> accountList) {
@@ -195,7 +180,7 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
         for (Account account : filteredList) {
             transaction.addBatch(getColumnsMap("deleteAccount", account));
         }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     /**

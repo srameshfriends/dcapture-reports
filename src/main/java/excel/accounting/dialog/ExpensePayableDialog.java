@@ -1,8 +1,8 @@
 package excel.accounting.dialog;
 
+import excel.accounting.dao.AccountDao;
 import excel.accounting.entity.Account;
 import excel.accounting.entity.AccountType;
-import excel.accounting.service.AccountService;
 import excel.accounting.ui.ReadableTableView;
 import excel.accounting.ui.SearchTextField;
 import javafx.collections.FXCollections;
@@ -23,7 +23,7 @@ import java.util.List;
  * @since Oct, 2016
  */
 public class ExpensePayableDialog extends AbstractDialog {
-    private AccountService accountService;
+    private AccountDao accountDao;
     private ReadableTableView<Account> expenseTable, incomeTable;
     private SearchTextField expenseSearchField, bankCashSearchField;
     private Label messageLabel;
@@ -45,7 +45,7 @@ public class ExpensePayableDialog extends AbstractDialog {
 
     private void loadExpenseAccounts() {
         String searchText = expenseSearchField.getText();
-        List<Account> accountList = accountService.findAccountsByType(searchText, AccountType.IncomeExpense,
+        List<Account> accountList = accountDao.findAccountsByType(searchText, AccountType.IncomeExpense,
                 AccountType.Expense);
         ObservableList<Account> observableList = FXCollections.observableArrayList(accountList);
         expenseTable.setItems(observableList);
@@ -53,7 +53,7 @@ public class ExpensePayableDialog extends AbstractDialog {
 
     private void loadBankCashAccounts() {
         String searchText = bankCashSearchField.getText();
-        List<Account> accountList = accountService.findAccountsByType(searchText, AccountType.Cash,
+        List<Account> accountList = accountDao.findAccountsByType(searchText, AccountType.Cash,
                 AccountType.Bank);
         ObservableList<Account> observableList = FXCollections.observableArrayList(accountList);
         incomeTable.setItems(observableList);
@@ -129,7 +129,7 @@ public class ExpensePayableDialog extends AbstractDialog {
 
     @Override
     protected Parent create() {
-        accountService = (AccountService) getApplicationControl().getService("accountService");
+        accountDao = (AccountDao) getService("accountDao");
         messageLabel = new Label();
         HBox basePanel = new HBox();
         basePanel.getChildren().addAll(createExpenseControl(), createBankCashControl());

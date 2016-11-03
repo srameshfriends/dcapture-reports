@@ -17,8 +17,7 @@ public class Main extends Application {
         applicationControl = ApplicationControl.instance();
         viewManager = new ViewManager();
         viewManager.start(applicationControl, primaryStage);
-        Registry.registerDao(applicationControl);
-        Registry.registerService(applicationControl);
+        Registry.registerBean(applicationControl);
         Registry.registerView(viewManager);
         primaryStage.setOnCloseRequest(event -> onApplicationCloseEvent());
     }

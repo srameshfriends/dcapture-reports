@@ -1,9 +1,9 @@
 package excel.accounting.dialog;
 
+import excel.accounting.dao.AccountDao;
 import excel.accounting.entity.Account;
 import excel.accounting.entity.AccountType;
 import excel.accounting.entity.Status;
-import excel.accounting.service.AccountService;
 import excel.accounting.shared.ApplicationControl;
 import excel.accounting.ui.ReadableTableView;
 import excel.accounting.ui.SearchTextField;
@@ -21,7 +21,7 @@ import java.util.List;
 public class AccountDialog extends AbstractDialog {
     private ReadableTableView<Account> tableView;
     private SearchTextField searchTextField;
-    private AccountService accountService;
+    private AccountDao accountDao;
     private AccountType[] accTypes;
 
     public AccountDialog(ApplicationControl control, Stage primaryStage, AccountType... accountTypes) {
@@ -52,7 +52,7 @@ public class AccountDialog extends AbstractDialog {
     }
 
     private void loadAccount() {
-        List<Account> accounts = accountService.searchAccount(searchTextField.getText(), Status.Confirmed, accTypes);
+        List<Account> accounts = accountDao.searchAccount(searchTextField.getText(), Status.Confirmed, accTypes);
         ObservableList<Account> observableList = FXCollections.observableArrayList(accounts);
         tableView.setItems(observableList);
     }
@@ -63,7 +63,7 @@ public class AccountDialog extends AbstractDialog {
 
     @Override
     protected Parent create() {
-        accountService = (AccountService) getService("accountService");
+        accountDao = (AccountDao) getService("accountDao");
         searchTextField = new SearchTextField();
         searchTextField.setActionHandler(actionId -> loadAccount());
         tableView = new ReadableTableView<Account>().create();

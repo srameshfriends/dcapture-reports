@@ -31,25 +31,23 @@ abstract class Registry {
         manager.addView(new ExchangeRateView());
     }
 
-    static void registerService(ApplicationControl control) {
-        control.addService("currencyService", new CurrencyService());
-        control.addService("accountService", new AccountService());
-        control.addService("incomeCategoryService", new IncomeCategoryService());
-        control.addService("incomeItemService", new IncomeItemService());
-        control.addService("expenseCategoryService", new ExpenseCategoryService());
-        control.addService("expenseItemService", new ExpenseItemService());
-        control.addService("bankTransactionService", new BankTransactionService());
-        control.addService("exchangeRateService", new ExchangeRateService());
-        control.addService("assetService", new AssetService());
-    }
-
-    static void registerDao(ApplicationControl control) {
-        control.addDao("currencyDao", new CurrencyDao());
-        control.addDao("accountDao", new AccountDao());
-        control.addDao("incomeItemDao", new IncomeItemDao());
-        control.addDao("incomeCategoryDao", new IncomeCategoryDao());
-        control.addDao("expenseCategoryDao", new ExpenseCategoryDao());
-        control.addDao("expenseItemDao", new ExpenseItemDao());
-        control.addDao("assetDao", new AssetDao());
+    static void registerBean(ApplicationControl control) {
+        control.addBean("currencyService", new CurrencyService());
+        control.addBean("accountService", new AccountService());
+        control.addBean("incomeCategoryService", new IncomeCategoryService());
+        control.addBean("incomeItemService", new IncomeItemService());
+        control.addBean("expenseCategoryService", new ExpenseCategoryService());
+        control.addBean("expenseItemService", new ExpenseItemService());
+        control.addBean("bankTransactionService", new BankTransactionService());
+        control.addBean("exchangeRateService", new ExchangeRateService());
+        control.addBean("assetService", new AssetService());
+        //
+        control.addBean("currencyDao", new CurrencyDao());
+        control.addBean("accountDao", new AccountDao());
+        control.addBean("incomeItemDao", new IncomeItemDao());
+        control.addBean("incomeCategoryDao", new IncomeCategoryDao());
+        control.addBean("expenseCategoryDao", new ExpenseCategoryDao());
+        control.addBean("expenseItemDao", new ExpenseItemDao());
+        control.addBean("assetDao", new AssetDao());
     }
 }

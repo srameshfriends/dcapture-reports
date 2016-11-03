@@ -14,13 +14,19 @@ import excel.accounting.shared.DataConverter;
  */
 public class ExpenseCategoryDao extends AbstractDao<ExpenseCategory> implements //
         RowColumnsToEntity<ExpenseCategory> {
+    @Override
+    protected String getTableName() {
+        return "expense_category";
+    }
 
-    public ExpenseCategoryDao() {
+    @Override
+    protected String getSqlFileName() {
+        return "expense-category";
     }
 
     @Override
     protected ExpenseCategory getReferenceRow(String primaryKay) {
-        QueryBuilder builder = getQueryBuilder("expense-category", "findByCode");
+        QueryBuilder builder = getQueryBuilder("findByCode");
         builder.add(1, primaryKay);
         return getDataReader().findSingleRow(builder, this);
     }

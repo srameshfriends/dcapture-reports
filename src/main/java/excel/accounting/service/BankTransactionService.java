@@ -30,9 +30,9 @@ public class BankTransactionService extends AbstractService implements
         return "bank-transaction";
     }
 
-    public BankTransactionDao getBankTransactionDao() {
-        if(bankTransactionDao == null) {
-            bankTransactionDao = (BankTransactionDao)getDao("bankTransactionDao");
+    private BankTransactionDao getBankTransactionDao() {
+        if (bankTransactionDao == null) {
+            bankTransactionDao = (BankTransactionDao) getBean("bankTransactionDao");
         }
         return bankTransactionDao;
     }
@@ -64,7 +64,7 @@ public class BankTransactionService extends AbstractService implements
         for (BankTransaction bankTransaction : filteredList) {
             transaction.addBatch(getColumnsMap("updateStatus", bankTransaction));
         }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     public void setAsDrafted(List<BankTransaction> bankTransactionList) {
@@ -86,7 +86,7 @@ public class BankTransactionService extends AbstractService implements
         for (BankTransaction bankTransaction : bankTransactionList) {
             transaction.addBatch(getColumnsMap("insertBankTransaction", bankTransaction));
         }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     public void updateBankTransaction(List<BankTransaction> bankTransactionList) {
@@ -96,7 +96,7 @@ public class BankTransactionService extends AbstractService implements
         for (BankTransaction bankTransaction : bankTransactionList) {
             transaction.addBatch(getColumnsMap("updateBankTransaction", bankTransaction));
         }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     public void deleteBankTransaction(List<BankTransaction> bankTransactionList) {
@@ -110,7 +110,7 @@ public class BankTransactionService extends AbstractService implements
         for (BankTransaction bankTransaction : filteredList) {
             transaction.addBatch(getColumnsMap("deleteBankTransaction", bankTransaction));
         }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     /**

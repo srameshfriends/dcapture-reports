@@ -4,6 +4,8 @@ import excel.accounting.db.*;
 import excel.accounting.shared.ApplicationControl;
 import excel.accounting.shared.HasAppsControl;
 
+import java.sql.SQLException;
+
 /**
  * Abstract Service
  *
@@ -24,10 +26,6 @@ public abstract class AbstractService implements HasAppsControl, HasDataProcesso
         applicationControl.setMessage(message);
     }
 
-    protected void appendMessage(String message) {
-        applicationControl.appendMessage(message);
-    }
-
     @Override
     public DataReader getDataReader() {
         return dataReader;
@@ -40,7 +38,7 @@ public abstract class AbstractService implements HasAppsControl, HasDataProcesso
 
     protected abstract String getSqlFileName();
 
-    protected QueryBuilder getQueryBuilder(String queryName){
+    protected QueryBuilder getQueryBuilder(String queryName) {
         return applicationControl.getDataProcessor().getQueryBuilder(getSqlFileName(), queryName);
     }
 
@@ -48,11 +46,15 @@ public abstract class AbstractService implements HasAppsControl, HasDataProcesso
         return applicationControl;
     }
 
-    protected Object getService(String name) {
-        return applicationControl.getService(name);
+    protected Object getBean(String name) {
+        return applicationControl.getBean(name);
     }
 
-    protected Object getDao(String name) {
-        return applicationControl.getDao(name);
+    protected void executeBatch(Transaction transaction) {
+        try {
+            transaction.executeBatch();
+        } catch (SQLException ex) {
+            setMessage(ex.getErrorCode() + " : " + ex.getMessage());
+        }
     }
 }

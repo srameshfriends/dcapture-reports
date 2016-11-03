@@ -30,7 +30,6 @@ public class ViewManager implements ActionHandler {
     private SplitPane basePanel;
     private BorderPane contentPane;
     private Label titleLabel;
-    private TextArea messagePanel;
     private VBox menuPanel;
     private MenuGroupPanel registersPanel, expensePanel, incomePanel, assetsPanel, managementPanel;
     private SessionDialog sessionDialog;
@@ -69,7 +68,7 @@ public class ViewManager implements ActionHandler {
         titleLabel.setStyle(titleStyle.toString());
         titleLabel.setMinHeight(30);
         titleLabel.setMaxHeight(30);
-        messagePanel = createLogArea();
+        TextField messagePanel = createLogPanel();
         applicationControl.setMessagePanel(messagePanel);
         //
         contentPane = new BorderPane();
@@ -90,16 +89,19 @@ public class ViewManager implements ActionHandler {
         onHeightChanged(height);
     }
 
-    private TextArea createLogArea() {
+    private TextField createLogPanel() {
         StyleBuilder messageStyle = new StyleBuilder();
         messageStyle.fontSize(12);
         messageStyle.color("#ff0000");
         messageStyle.padding(2);
-        TextArea textArea = new TextArea();
-        textArea.setStyle(messageStyle.toString());
-        textArea.setMaxHeight(30);
-        textArea.setEditable(false);
-        return textArea;
+        messageStyle.textBoxBorder("transparent");
+        messageStyle.focusColor("transparent");
+        messageStyle.backgroundInsets(0);
+        TextField field = new TextField();
+        field.setStyle(messageStyle.toString());
+        field.setMaxHeight(30);
+        field.setEditable(false);
+        return field;
     }
 
     private void onWidthChanged(double width) {

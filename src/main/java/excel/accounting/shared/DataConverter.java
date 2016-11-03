@@ -44,7 +44,18 @@ public class DataConverter {
     }
 
     public static String getString(Cell cell) {
-        return cell.getStringCellValue();
+        if (CellType.STRING.equals(cell.getCellTypeEnum())) {
+            return cell.getStringCellValue();
+        } else if (CellType.NUMERIC.equals(cell.getCellTypeEnum())) {
+            Double dle = cell.getNumericCellValue();
+            return dle == 0 ? null : dle.toString();
+        } else if (CellType.BOOLEAN.equals(cell.getCellTypeEnum())) {
+            Boolean bln = cell.getBooleanCellValue();
+            return bln.toString();
+        } else if (CellType.ERROR.equals(cell.getCellTypeEnum())) {
+            return null;
+        }
+        return null;
     }
 
     private static double getDouble(Cell cell) {

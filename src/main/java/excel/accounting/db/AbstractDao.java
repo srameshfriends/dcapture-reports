@@ -16,6 +16,10 @@ public abstract class AbstractDao<T> implements HasAppsControl {
         dataReader = new DataReader(control.getDataProcessor());
     }
 
+    protected abstract String getTableName();
+
+    protected abstract String getSqlFileName();
+
     protected DataReader getDataReader() {
         return dataReader;
     }
@@ -24,14 +28,10 @@ public abstract class AbstractDao<T> implements HasAppsControl {
         applicationControl.setMessage(message);
     }
 
-    protected void appendMessage(String message) {
-        applicationControl.appendMessage(message);
-    }
-
     protected abstract T getReferenceRow(String primaryKay);
 
-    protected QueryBuilder getQueryBuilder(String fileName, String templateName) {
-        return applicationControl.getDataProcessor().getQueryBuilder(fileName, templateName);
+    protected QueryBuilder getQueryBuilder(String templateName) {
+        return applicationControl.getDataProcessor().getQueryBuilder(getSqlFileName(), templateName);
     }
 
     public boolean isReferenceUsed(String primaryKay) {

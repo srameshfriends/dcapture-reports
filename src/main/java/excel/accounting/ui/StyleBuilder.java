@@ -40,6 +40,18 @@ public class StyleBuilder {
         builder.append("-fx-text-fill:").append(colorCode).append(";\n");
     }
 
+    public void textBoxBorder(String value) {
+        builder.append("-fx-text-box-border:").append(value).append(";\n");
+    }
+
+    public void focusColor(String value) {
+        builder.append("-fx-focus-color:").append(value).append(";\n");
+    }
+
+    public void backgroundInsets(int value) {
+        builder.append("-fx-background-insets:").append(value).append(";\n");
+    }
+
     @Override
     public String toString() {
         return builder.toString();

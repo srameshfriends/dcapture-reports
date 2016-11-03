@@ -28,4 +28,7 @@ SELECT account_number, name, account_type, status, currency, balance, descriptio
 --searchAccount
 SELECT account_number, name, account_type, status, currency, balance, description FROM entity.account
  WHERE status IN ($status) AND account_type IN ($accountType) $searchText;
+--findByAccountNumber
+SELECT account_number, name, account_type, status, currency, balance, description FROM entity.account
+ WHERE account_number = ?;
 --

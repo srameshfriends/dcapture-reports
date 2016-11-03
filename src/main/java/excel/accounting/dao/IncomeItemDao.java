@@ -16,15 +16,19 @@ import java.util.Date;
  * @since Nov, 2016
  */
 public class IncomeItemDao extends AbstractDao<IncomeItem> implements RowColumnsToEntity<IncomeItem> {
-
-    public IncomeItemDao() {
+    @Override
+    protected String getTableName() {
+        return "entity.Income_item";
     }
 
-
+    @Override
+    protected String getSqlFileName() {
+        return "Income-item";
+    }
 
     @Override
     protected IncomeItem getReferenceRow(String primaryKay) {
-        QueryBuilder builder = getQueryBuilder("income-item", "findByCode");
+        QueryBuilder builder = getQueryBuilder("findByCode");
         builder.add(1, primaryKay);
         return getDataReader().findSingleRow(builder, this);
     }

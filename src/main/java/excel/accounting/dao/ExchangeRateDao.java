@@ -13,13 +13,19 @@ import java.util.Date;
  * Exchange Rate Dao
  */
 public class ExchangeRateDao extends AbstractDao<ExchangeRate> implements RowColumnsToEntity<ExchangeRate> {
+    @Override
+    protected String getTableName() {
+        return "exchange_rate";
+    }
 
-    public ExchangeRateDao() {
+    @Override
+    protected String getSqlFileName() {
+        return "exchange-rate";
     }
 
     @Override
     protected ExchangeRate getReferenceRow(String primaryKay) {
-        QueryBuilder builder = getQueryBuilder("exchange-rate", "findByCode");
+        QueryBuilder builder = getQueryBuilder("findByCode");
         builder.add(1, primaryKay);
         return getDataReader().findSingleRow(builder, this);
     }

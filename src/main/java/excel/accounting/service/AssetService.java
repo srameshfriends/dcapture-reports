@@ -24,9 +24,9 @@ import java.util.stream.Collectors;
 public class AssetService extends AbstractService implements EntityToRowColumns<Asset>, ExcelTypeConverter<Asset> {
     private AssetDao assetDao;
 
-    public AssetDao getAssetDao() {
+    private AssetDao getAssetDao() {
         if (assetDao == null) {
-            assetDao = (AssetDao) getDao("assetDao");
+            assetDao = (AssetDao) getBean("assetDao");
         }
         return assetDao;
     }
@@ -60,7 +60,7 @@ public class AssetService extends AbstractService implements EntityToRowColumns<
         for (Asset asset : filteredList) {
             transaction.addBatch(getColumnsMap("updateStatus", asset));
         }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     public void setAsDrafted(List<Asset> assetList) {
@@ -82,7 +82,7 @@ public class AssetService extends AbstractService implements EntityToRowColumns<
         for (Asset asset : assetList) {
             transaction.addBatch(getColumnsMap("insertAsset", asset));
         }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     public void updateAsset(List<Asset> assetList) {
@@ -92,7 +92,7 @@ public class AssetService extends AbstractService implements EntityToRowColumns<
         for (Asset asset : assetList) {
             transaction.addBatch(getColumnsMap("updateAsset", asset));
         }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     public void deleteAsset(List<Asset> assetList) {
@@ -106,7 +106,7 @@ public class AssetService extends AbstractService implements EntityToRowColumns<
         for (Asset asset : filteredList) {
             transaction.addBatch(getColumnsMap("deleteAsset", asset));
         }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     /**

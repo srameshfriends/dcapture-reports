@@ -4,11 +4,11 @@
 CREATE TABLE IF NOT EXISTS entity.currency (code VARCHAR(8),
  name VARCHAR(128), decimal_precision INTEGER, symbol VARCHAR(8), status VARCHAR(32), PRIMARY KEY (code));
 --loadAll
-SELECT code, name, decimal_precision, symbol, status FROM entity.currency;
+SELECT code, name, decimal_precision, symbol, status FROM entity.currency ORDER BY code;
 --findByCode
 SELECT code, name, decimal_precision, symbol, status FROM entity.currency WHERE code = ?;
 --findCodeList
-SELECT code FROM entity.currency;
+SELECT code FROM entity.currency ORDER BY code;
 --insertCurrency
 INSERT INTO entity.currency (code, name, decimal_precision, symbol, status) VALUES(?,?,?,?,?);
 --deleteCurrency

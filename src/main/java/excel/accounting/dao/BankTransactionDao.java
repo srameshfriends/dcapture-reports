@@ -16,6 +16,16 @@ import java.util.Date;
 public class BankTransactionDao extends AbstractDao<BankTransaction> implements //
         RowColumnsToEntity<BankTransaction> {
 
+    @Override
+    protected String getTableName() {
+        return "bank_transaction";
+    }
+
+    @Override
+    protected String getSqlFileName() {
+        return "bank-transaction";
+    }
+
     /**
      * id, bank, transaction_date, transaction_index, transaction_code, description, currency,
      * credit_amount, debit_amount, status
@@ -38,7 +48,7 @@ public class BankTransactionDao extends AbstractDao<BankTransaction> implements 
 
     @Override
     protected BankTransaction getReferenceRow(String primaryKay) {
-        QueryBuilder builder = getQueryBuilder("bank-transaction", "findByCode");
+        QueryBuilder builder = getQueryBuilder("findByCode");
         builder.add(1, primaryKay);
         return getDataReader().findSingleRow(builder, this);
     }

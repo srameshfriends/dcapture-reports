@@ -1,5 +1,6 @@
 package excel.accounting.dialog;
 
+import excel.accounting.dao.CurrencyDao;
 import excel.accounting.entity.Currency;
 import excel.accounting.entity.Status;
 import excel.accounting.service.CurrencyService;
@@ -20,7 +21,7 @@ import java.util.List;
 public class CurrencyDialog extends AbstractDialog {
     private ReadableTableView<Currency> tableView;
     private SearchTextField searchTextField;
-    private CurrencyService currencyService;
+    private CurrencyDao currencyDao;
 
     public CurrencyDialog(ApplicationControl control, Stage primaryStage) {
         initialize(control, primaryStage);
@@ -42,7 +43,7 @@ public class CurrencyDialog extends AbstractDialog {
     }
 
     private void loadCurrency() {
-        List<Currency> currencyList = currencyService.searchCurrency(searchTextField.getText(), Status.Confirmed);
+        List<Currency> currencyList = currencyDao.searchCurrency(searchTextField.getText(), Status.Confirmed);
         ObservableList<Currency> observableList = FXCollections.observableArrayList(currencyList);
         tableView.setItems(observableList);
     }
@@ -53,7 +54,7 @@ public class CurrencyDialog extends AbstractDialog {
 
     @Override
     protected Parent create() {
-        currencyService = (CurrencyService) getService("currencyService");
+        currencyDao = (CurrencyDao) getService("currencyDao");
         searchTextField = new SearchTextField();
         searchTextField.setActionHandler(actionId -> loadCurrency());
         tableView = new ReadableTableView<Currency>().create();

@@ -23,9 +23,9 @@ public class ExpenseCategoryService extends AbstractService implements
         EntityToRowColumns<ExpenseCategory>, ExcelTypeConverter<ExpenseCategory> {
     private ExpenseCategoryDao expenseCategoryDao;
 
-    public ExpenseCategoryDao getExpenseCategoryDao() {
+    private ExpenseCategoryDao getExpenseCategoryDao() {
         if (expenseCategoryDao == null) {
-            expenseCategoryDao = (ExpenseCategoryDao) getDao("expenseCategoryDao");
+            expenseCategoryDao = (ExpenseCategoryDao) getBean("expenseCategoryDao");
         }
         return expenseCategoryDao;
     }
@@ -72,7 +72,7 @@ public class ExpenseCategoryService extends AbstractService implements
         for (ExpenseCategory category : filteredList) {
             transaction.addBatch(getColumnsMap("updateStatus", category));
         }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     public void setAsDrafted(List<ExpenseCategory> categoryList) {
@@ -94,7 +94,7 @@ public class ExpenseCategoryService extends AbstractService implements
         for (ExpenseCategory category : categoryList) {
             transaction.addBatch(getColumnsMap("insertExpenseCategory", category));
         }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     public void updateExpenseCategory(List<ExpenseCategory> categoryList) {
@@ -104,7 +104,7 @@ public class ExpenseCategoryService extends AbstractService implements
         for (ExpenseCategory category : categoryList) {
             transaction.addBatch(getColumnsMap("updateExpenseCategory", category));
         }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     public void deleteExpenseCategory(List<ExpenseCategory> categoryList) {
@@ -118,7 +118,7 @@ public class ExpenseCategoryService extends AbstractService implements
         for (ExpenseCategory category : filteredList) {
             transaction.addBatch(getColumnsMap("deleteExpenseCategory", category));
         }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     /**

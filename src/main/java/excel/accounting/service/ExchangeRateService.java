@@ -25,9 +25,9 @@ public class ExchangeRateService extends AbstractService implements
         EntityToRowColumns<ExchangeRate>, ExcelTypeConverter<ExchangeRate> {
     private ExchangeRateDao exchangeRateRelation;
 
-    public ExchangeRateDao getExchangeRateDao() {
+    private ExchangeRateDao getExchangeRateDao() {
         if (exchangeRateRelation == null) {
-            exchangeRateRelation = (ExchangeRateDao) getDao("exchangeRateDao");
+            exchangeRateRelation = (ExchangeRateDao) getBean("exchangeRateDao");
         }
         return exchangeRateRelation;
     }
@@ -61,7 +61,7 @@ public class ExchangeRateService extends AbstractService implements
         for (ExchangeRate item : filteredList) {
             transaction.addBatch(getColumnsMap("updateStatus", item));
         }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     public void setAsDrafted(List<ExchangeRate> itemList) {
@@ -83,7 +83,7 @@ public class ExchangeRateService extends AbstractService implements
         for (ExchangeRate item : itemList) {
             transaction.addBatch(getColumnsMap("insertExchangeRate", item));
         }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     /*
@@ -96,7 +96,7 @@ public class ExchangeRateService extends AbstractService implements
         for (ExchangeRate item : itemList) {
             transaction.addBatch(getColumnsMap("updateExchangeRate", item));
         }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     public void deleteExchangeRate(List<ExchangeRate> itemList) {
@@ -110,7 +110,7 @@ public class ExchangeRateService extends AbstractService implements
         for (ExchangeRate item : filteredList) {
             transaction.addBatch(getColumnsMap("deleteExchangeRate", item));
         }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     /**

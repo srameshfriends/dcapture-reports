@@ -75,7 +75,7 @@ public class SessionDialog extends AbstractDialog {
         transaction.addBatch("U1", "User 1", DataConverter.encode("user1"));
         transaction.addBatch("U2", "User 2", DataConverter.encode("user2"));
         transaction.addBatch("U3", "User 3", DataConverter.encode("user3"));
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     @Override

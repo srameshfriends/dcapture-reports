@@ -6,6 +6,7 @@ import excel.accounting.db.AbstractDao;
 import excel.accounting.db.TableReferenceFactory;
 import excel.accounting.model.ApplicationConfig;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 
 import java.io.FileReader;
 import java.nio.file.Path;
@@ -20,9 +21,8 @@ public class ApplicationControl {
     private ApplicationConfig applicationConfig;
     private DataProcessor dataProcessor;
     private String userName, userCode;
-    private Map<String, Object> serviceMap;
-    private Map<String, AbstractDao> relationMap;
-    private TextArea messagePanel;
+    private Map<String, Object> beanMap;
+    private TextField messagePanel;
     private TableReferenceFactory foreignKeyConstraint;
 
     private ApplicationControl() {
@@ -36,8 +36,7 @@ public class ApplicationControl {
         foreignKeyConstraint = TableReferenceFactory.instance();
         Gson gson = new Gson();
         applicationConfig = gson.fromJson(new FileReader(configPath.toFile()), ApplicationConfig.class);
-        serviceMap = new HashMap<>();
-        relationMap = new HashMap<>();
+        beanMap = new HashMap<>();
         startDatabase();
     }
 
@@ -62,21 +61,12 @@ public class ApplicationControl {
         return userName;
     }
 
-    public void setMessagePanel(TextArea textArea) {
-        messagePanel = textArea;
+    public void setMessagePanel(TextField field) {
+        messagePanel = field;
     }
 
     public void setMessage(String message) {
         messagePanel.setText(message);
-    }
-
-    public void appendMessage(String message) {
-        if (messagePanel.getText().length() == 0) {
-            messagePanel.setText(message);
-        } else {
-            messagePanel.selectEnd();
-            messagePanel.insertText(messagePanel.getText().length(), " \n " + message);
-        }
     }
 
     public ApplicationConfig getApplicationConfig() {
@@ -99,24 +89,15 @@ public class ApplicationControl {
         dataProcessor.startDatabase(applicationConfig);
     }
 
-    public void addService(String name, Object service) {
+    public void addBean(String name, Object service) {
         if (service instanceof HasAppsControl) {
             ((HasAppsControl) service).setApplicationControl(this);
         }
-        serviceMap.put(name, service);
+        beanMap.put(name, service);
     }
 
-    public void addDao(String name, AbstractDao relation) {
-        relation.setApplicationControl(this);
-        relationMap.put(name, relation);
-    }
-
-    public Object getService(String serviceName) {
-        return serviceMap.get(serviceName);
-    }
-
-    public Object getDao(String relationName) {
-        return relationMap.get(relationName);
+    public Object getBean(String name) {
+        return beanMap.get(name);
     }
 
     public void close() {

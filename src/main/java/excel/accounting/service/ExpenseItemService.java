@@ -1,5 +1,6 @@
 package excel.accounting.service;
 
+import excel.accounting.dao.CurrencyDao;
 import excel.accounting.db.QueryBuilder;
 import excel.accounting.db.EntityToRowColumns;
 import excel.accounting.db.Transaction;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
  */
 public class ExpenseItemService extends AbstractService implements
         EntityToRowColumns<ExpenseItem>, ExcelTypeConverter<ExpenseItem> {
+    private CurrencyDao currencyDao;
     private CurrencyService currencyService;
     private ExpenseItemDao expenseItemDao;
 
@@ -33,14 +35,21 @@ public class ExpenseItemService extends AbstractService implements
 
     private CurrencyService getCurrencyService() {
         if (currencyService == null) {
-            currencyService = (CurrencyService) getService("currencyService");
+            currencyService = (CurrencyService) getBean("currencyService");
         }
         return currencyService;
     }
 
+    private CurrencyDao getCurrencyDao() {
+        if (currencyDao == null) {
+            currencyDao = (CurrencyDao) getBean("currencyDao");
+        }
+        return currencyDao;
+    }
+
     public ExpenseItemDao getExpenseItemDao() {
         if (expenseItemDao == null) {
-            expenseItemDao = (ExpenseItemDao) getDao("expenseItemDao");
+            expenseItemDao = (ExpenseItemDao) getBean("expenseItemDao");
         }
         return expenseItemDao;
     }
@@ -74,7 +83,7 @@ public class ExpenseItemService extends AbstractService implements
         for (ExpenseItem item : filteredList) {
             transaction.addBatch(getColumnsMap("updateStatus", item));
         }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     public void setAsDrafted(List<ExpenseItem> itemList) {
@@ -86,7 +95,7 @@ public class ExpenseItemService extends AbstractService implements
     }
 
     public void insertExpenseItem(List<ExpenseItem> itemList) {
-        List<String> currencyCodeList = getCurrencyService().findCodeList();
+        List<String> currencyCodeList = getCurrencyDao().findCodeList();
         QueryBuilder queryBuilder = getQueryBuilder("insertExpenseItem");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
@@ -96,7 +105,7 @@ public class ExpenseItemService extends AbstractService implements
             }
             transaction.addBatch(getColumnsMap("insertExpenseItem", item));
         }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     public void deleteExpenseItem(List<ExpenseItem> itemList) {
@@ -110,7 +119,7 @@ public class ExpenseItemService extends AbstractService implements
         for (ExpenseItem item : filteredList) {
             transaction.addBatch(getColumnsMap("deleteExpenseItem", item));
         }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     public void updateExpenseAccount(Account expenseAccount, List<ExpenseItem> expenseItemList) {
@@ -122,7 +131,7 @@ public class ExpenseItemService extends AbstractService implements
             expenseItem.setExpenseAccount(expenseAccountNumber);
             transaction.addBatch(getColumnsMap("updateExpenseAccount", expenseItem));
         }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     public void updateCurrency(Currency currency, List<ExpenseItem> expenseItemList) {
@@ -134,7 +143,7 @@ public class ExpenseItemService extends AbstractService implements
             expenseItem.setCurrency(currencyCode);
             transaction.addBatch(getColumnsMap("updateExpenseAccount", expenseItem));
         }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     public void updateExpenseCategory(ExpenseCategory expenseCategory, List<ExpenseItem> expenseItemList) {
@@ -146,7 +155,7 @@ public class ExpenseItemService extends AbstractService implements
             expenseItem.setExpenseCategory(categoryCode);
             transaction.addBatch(getColumnsMap("updateExpenseCategory", expenseItem));
         }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     /**

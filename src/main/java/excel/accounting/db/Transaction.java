@@ -95,7 +95,7 @@ public class Transaction {
         addBatch(parameterMap);
     }
 
-    public void executeBatch() {
+    public void executeBatch() throws SQLException {
         if (batchStatement == null) {
             throw new RuntimeException("Batch transaction is disabled");
         }
@@ -110,6 +110,7 @@ public class Transaction {
             if (logger.isDebugEnabled()) {
                 e.printStackTrace();
             }
+            throw e;
         }
     }
 

@@ -13,10 +13,19 @@ import java.util.Date;
  * Asset Dao
  */
 public class AssetDao extends AbstractDao<Asset> implements RowColumnsToEntity<Asset> {
+    @Override
+    protected String getTableName() {
+        return "asset";
+    }
+
+    @Override
+    protected String getSqlFileName() {
+        return "asset";
+    }
 
     @Override
     protected Asset getReferenceRow(String primaryKay) {
-        QueryBuilder builder = getQueryBuilder("asset", "findByCode");
+        QueryBuilder builder = getQueryBuilder("findByCode");
         builder.add(1, primaryKay);
         return getDataReader().findSingleRow(builder, this);
     }

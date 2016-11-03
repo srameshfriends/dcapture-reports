@@ -25,9 +25,9 @@ public class IncomeItemService extends AbstractService implements
         EntityToRowColumns<IncomeItem>, ExcelTypeConverter<IncomeItem> {
     private IncomeItemDao incomeItemDao;
 
-    public IncomeItemDao getIncomeItemDao() {
+    private IncomeItemDao getIncomeItemDao() {
         if (incomeItemDao == null) {
-            incomeItemDao = (IncomeItemDao) getDao("incomeItemDao");
+            incomeItemDao = (IncomeItemDao) getBean("incomeItemDao");
         }
         return incomeItemDao;
     }
@@ -70,7 +70,7 @@ public class IncomeItemService extends AbstractService implements
         for (IncomeItem item : filteredList) {
             transaction.addBatch(getColumnsMap("updateStatus", item));
         }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     public void setAsDrafted(List<IncomeItem> itemList) {
@@ -92,7 +92,7 @@ public class IncomeItemService extends AbstractService implements
         for (IncomeItem item : itemList) {
             transaction.addBatch(getColumnsMap("insertIncomeItem", item));
         }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     /*
@@ -105,7 +105,7 @@ public class IncomeItemService extends AbstractService implements
         for (IncomeItem item : itemList) {
             transaction.addBatch(getColumnsMap("updateIncomeItem", item));
         }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     public void deleteIncomeItem(List<IncomeItem> itemList) {
@@ -119,7 +119,7 @@ public class IncomeItemService extends AbstractService implements
         for (IncomeItem item : filteredList) {
             transaction.addBatch(getColumnsMap("deleteIncomeItem", item));
         }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     /**

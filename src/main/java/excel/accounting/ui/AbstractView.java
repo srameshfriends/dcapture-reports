@@ -35,10 +35,6 @@ public abstract class AbstractView implements ViewHolder {
         applicationControl.setMessage(message);
     }
 
-    protected void appendMessage(String message) {
-        applicationControl.appendMessage(message);
-    }
-
     private Map<String, Button> getActionBtnMap() {
         if (actionBtnMap == null) {
             actionBtnMap = new HashMap<>();
@@ -78,7 +74,7 @@ public abstract class AbstractView implements ViewHolder {
     }
 
     protected Object getService(String name) {
-        return applicationControl.getService(name);
+        return applicationControl.getBean(name);
     }
 
     protected void onResize(double width, double height) {

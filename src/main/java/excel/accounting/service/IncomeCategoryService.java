@@ -63,7 +63,7 @@ public class IncomeCategoryService extends AbstractService implements ExcelTypeC
         for (IncomeCategory category : filteredList) {
             transaction.addBatch(getColumnsMap("updateStatus", category));
         }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     public void setAsDrafted(List<IncomeCategory> categoryList) {
@@ -85,7 +85,7 @@ public class IncomeCategoryService extends AbstractService implements ExcelTypeC
         for (IncomeCategory category : categoryList) {
             transaction.addBatch(getColumnsMap("insertIncomeCategory", category));
         }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     public void updateIncomeCategory(List<IncomeCategory> categoryList) {
@@ -95,7 +95,7 @@ public class IncomeCategoryService extends AbstractService implements ExcelTypeC
         for (IncomeCategory category : categoryList) {
             transaction.addBatch(getColumnsMap("updateIncomeCategory", category));
         }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     public void deleteIncomeCategory(List<IncomeCategory> categoryList) {
@@ -109,7 +109,7 @@ public class IncomeCategoryService extends AbstractService implements ExcelTypeC
         for (IncomeCategory category : filteredList) {
             transaction.addBatch(getColumnsMap("deleteIncomeCategory", category));
         }
-        transaction.executeBatch();
+        executeBatch(transaction);
     }
 
     /**

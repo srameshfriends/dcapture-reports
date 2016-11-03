@@ -10,12 +10,13 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.TitledPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+
+import java.sql.SQLException;
 
 /**
  * Abstract Dialog
@@ -56,10 +57,6 @@ public abstract class AbstractDialog implements EventHandler<ActionEvent> {
         applicationControl.setMessage(message);
     }
 
-    protected void appendMessage(String message) {
-        applicationControl.appendMessage(message);
-    }
-
     protected DataReader getDataReader() {
         return dataReader;
     }
@@ -85,7 +82,7 @@ public abstract class AbstractDialog implements EventHandler<ActionEvent> {
     }
 
     protected Object getService(String name) {
-        return applicationControl.getService(name);
+        return applicationControl.getBean(name);
     }
 
     public void show() {
@@ -126,5 +123,14 @@ public abstract class AbstractDialog implements EventHandler<ActionEvent> {
     }
 
     protected void onCloseEvent() {
+    }
+
+    protected void executeBatch(Transaction transaction) {
+        try {
+            transaction.executeBatch();
+        } catch (SQLException ex) {
+            System.out.println(ex.getErrorCode());
+            System.out.println(ex.getMessage());
+        }
     }
 }

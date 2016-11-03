@@ -1,5 +1,6 @@
 package excel.accounting.view;
 
+import excel.accounting.dao.CurrencyDao;
 import excel.accounting.entity.Currency;
 import excel.accounting.poi.ReadExcelData;
 import excel.accounting.poi.WriteExcelData;
@@ -17,7 +18,6 @@ import javafx.scene.layout.VBox;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -30,10 +30,11 @@ import java.util.List;
 public class CurrencyView extends AbstractView implements ViewHolder {
     private final String exportActionId = "exportAction", deleteActionId = "deleteAction";
     private final String exportSelectedActionId = "exportSelectedAction";
-    private final String confirmedActionId = "confirmedAction";
+    private final String confirmedActionId = "confirmedAction", reopenActionId = "reopenAction";
     private final String closedActionId = "closedAction", draftedActionId = "draftedAction";
 
     private ReadableTableView<Currency> tableView;
+    private CurrencyDao currencyDao;
     private CurrencyService currencyService;
     private VBox basePanel;
 
@@ -45,6 +46,7 @@ public class CurrencyView extends AbstractView implements ViewHolder {
     @Override
     public Node createControl() {
         ViewListener viewListener = new ViewListener();
+        currencyDao = (CurrencyDao) getService("currencyDao");
         currencyService = (CurrencyService) getService("currencyService");
         tableView = new ReadableTableView<Currency>().create();
         tableView.addTextColumn("code", "Currency").setPrefWidth(120);
@@ -54,9 +56,10 @@ public class CurrencyView extends AbstractView implements ViewHolder {
         tableView.addTextColumn("status", "Status").setMinWidth(120);
         tableView.addSelectionChangeListener(viewListener);
         tableView.setContextMenuHandler(viewListener);
-        tableView.addContextMenuItem(draftedActionId, "Update As Drafted");
-        tableView.addContextMenuItem(confirmedActionId, "Update As Confirmed");
-        tableView.addContextMenuItem(closedActionId, "Update As Closed");
+        tableView.addContextMenuItem(draftedActionId, "Set As Drafted");
+        tableView.addContextMenuItem(confirmedActionId, "Set As Confirmed");
+        tableView.addContextMenuItem(closedActionId, "Set As Closed");
+        tableView.addContextMenuItem(reopenActionId, "Reopen Currency");
         tableView.addContextMenuItem(exportSelectedActionId, "Export Currency");
         tableView.addContextMenuItem(deleteActionId, "Delete Currency");
         //
@@ -105,8 +108,18 @@ public class CurrencyView extends AbstractView implements ViewHolder {
         basePanel.setPrefHeight(height);
     }
 
-    private void statusChangedEvent(String actionId) {
-        if (!confirmDialog("Change Status", "Are you really wish to change selected accounts Status?")) {
+    private void changeStatusEvent(String actionId) {
+        String message = "";
+        if (confirmedActionId.equals(actionId)) {
+            message = "Are you really wish to change to confirmed?";
+        } else if (draftedActionId.equals(actionId)) {
+            message = "Are you really wish to change to drafted?";
+        } else if (closedActionId.equals(actionId)) {
+            message = "Are you really wish to change to closed?";
+        } else if (reopenActionId.equals(actionId)) {
+            message = "Are you really wish to reopen as confirmed status?";
+        }
+        if (!confirmDialog("Confirmation", message)) {
             return;
         }
         if (confirmedActionId.equals(actionId)) {
@@ -115,17 +128,22 @@ public class CurrencyView extends AbstractView implements ViewHolder {
             currencyService.setAsDrafted(tableView.getSelectedItems());
         } else if (closedActionId.equals(actionId)) {
             currencyService.setAsClosed(tableView.getSelectedItems());
+        } else if (reopenActionId.equals(actionId)) {
+            currencyService.reopenCurrency(tableView.getSelectedItems());
         }
         loadRecords();
     }
 
     private void deleteEvent() {
+        if (!confirmDialog("Delete?", "Are you really wish to delete selected currencies?")) {
+            return;
+        }
         currencyService.deleteCurrency(tableView.getSelectedItems());
         loadRecords();
     }
 
     private void loadRecords() {
-        List<Currency> currencyList = currencyService.loadAll();
+        List<Currency> currencyList = currencyDao.loadAll();
         if (currencyList == null || currencyList.isEmpty()) {
             return;
         }
@@ -134,31 +152,18 @@ public class CurrencyView extends AbstractView implements ViewHolder {
     }
 
     private void importFromExcelEvent() {
+        setMessage("");
         File file = FileHelper.showOpenFileDialogExcel(getPrimaryStage());
         if (file == null) {
             return;
         }
         ReadExcelData<Currency> readExcelData = new ReadExcelData<>("", file, currencyService);
-        List<Currency> rowDataList = readExcelData.readRowData(currencyService.getColumnNames().length, true);
-        if (rowDataList.isEmpty()) {
+        List<Currency> dataList = readExcelData.readRowData(currencyService.getColumnNames().length, true);
+        if (dataList.isEmpty()) {
+            setMessage("Valid import records not found");
             return;
         }
-        List<String> existingCodeList = currencyService.findCodeList();
-        List<Currency> updateList = new ArrayList<>();
-        List<Currency> insertList = new ArrayList<>();
-        for (Currency currency : rowDataList) {
-            if (existingCodeList.contains(currency.getCode())) {
-                updateList.add(currency);
-            } else {
-                insertList.add(currency);
-            }
-        }
-        if (!updateList.isEmpty()) {
-            currencyService.updateCurrency(updateList);
-        }
-        if (!insertList.isEmpty()) {
-            currencyService.insertCurrency(insertList);
-        }
+        currencyService.insertCurrency(dataList);
         loadRecords();
     }
 
@@ -175,7 +180,7 @@ public class CurrencyView extends AbstractView implements ViewHolder {
             List<Currency> selected = tableView.getSelectedItems();
             writeExcelData.writeRowData(selected);
         } else {
-            writeExcelData.writeRowData(currencyService.loadAll());
+            writeExcelData.writeRowData(currencyDao.loadAll());
         }
     }
 
@@ -187,17 +192,18 @@ public class CurrencyView extends AbstractView implements ViewHolder {
     private void performActionEvent(final String actionId) {
         setMessage("");
         switch (actionId) {
+            case confirmedActionId:
+            case draftedActionId:
+            case closedActionId:
+            case reopenActionId:
+                changeStatusEvent(actionId);
+                break;
             case deleteActionId:
                 deleteEvent();
                 break;
             case exportActionId:
             case exportSelectedActionId:
                 exportToExcelEvent(actionId);
-                break;
-            case confirmedActionId:
-            case draftedActionId:
-            case closedActionId:
-                statusChangedEvent(actionId);
                 break;
         }
     }
