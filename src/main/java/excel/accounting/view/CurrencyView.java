@@ -117,7 +117,7 @@ public class CurrencyView extends AbstractView implements ViewHolder {
         } else if (closedActionId.equals(actionId)) {
             message = "Are you really wish to change to closed?";
         } else if (reopenActionId.equals(actionId)) {
-            message = "Are you really wish to reopen as confirmed status?";
+            message = "Are you really wish to reopen currencies?";
         }
         if (!confirmDialog("Confirmation", message)) {
             return;

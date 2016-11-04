@@ -54,7 +54,7 @@ public class CurrencyService extends AbstractService implements EntityToRowColum
         for (Currency currency : filteredList) {
             currency.setStatus(Status.Drafted);
         }
-        updateStatus(currencyList);
+        updateStatus(filteredList);
     }
 
     public void setAsConfirmed(List<Currency> currencyList) {
@@ -66,7 +66,7 @@ public class CurrencyService extends AbstractService implements EntityToRowColum
         for (Currency currency : filteredList) {
             currency.setStatus(Status.Confirmed);
         }
-        updateStatus(currencyList);
+        updateStatus(filteredList);
     }
 
     public void setAsClosed(List<Currency> currencyList) {
@@ -78,7 +78,7 @@ public class CurrencyService extends AbstractService implements EntityToRowColum
         for (Currency currency : filteredList) {
             currency.setStatus(Status.Closed);
         }
-        updateStatus(currencyList);
+        updateStatus(filteredList);
     }
 
     public void reopenCurrency(List<Currency> currencyList) {
@@ -90,7 +90,7 @@ public class CurrencyService extends AbstractService implements EntityToRowColum
         for (Currency currency : filteredList) {
             currency.setStatus(Status.Confirmed);
         }
-        updateStatus(currencyList);
+        updateStatus(filteredList);
     }
 
     private boolean insertValid(Currency currency, StringRules rules) {

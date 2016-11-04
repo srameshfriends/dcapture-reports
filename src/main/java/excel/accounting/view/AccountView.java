@@ -32,7 +32,8 @@ public class AccountView extends AbstractView implements ViewHolder {
     private final String exportActionId = "exportAction", deleteActionId = "deleteAction";
     private final String exportSelectedActionId = "exportSelectedAction";
     private final String draftedActionId = "draftedAction", confirmedActionId = "confirmedAction";
-    private final String closedActionId = "closedAction", updateCurrencyActionId = "updateCurrencyAction";
+    private final String closedActionId = "closedAction", reopenActionId = "reopenAction";
+    private final String changeCurrencyActionId = "modifyCurrencyAction";
 
     private ReadableTableView<Account> tableView;
     private AccountDao accountDao;
@@ -62,7 +63,8 @@ public class AccountView extends AbstractView implements ViewHolder {
         tableView.addContextMenuItem(draftedActionId, "Set As Drafted");
         tableView.addContextMenuItem(confirmedActionId, "Set As Confirmed");
         tableView.addContextMenuItem(closedActionId, "Set As Closed");
-        tableView.addContextMenuItem(updateCurrencyActionId, "Update Currency");
+        tableView.addContextMenuItem(reopenActionId, "Reopen Account");
+        tableView.addContextMenuItem(changeCurrencyActionId, "Change Currency");
         tableView.addContextMenuItem(exportSelectedActionId, "Export Accounts");
         tableView.addContextMenuItem(deleteActionId, "Delete Accounts");
         //
@@ -119,6 +121,8 @@ public class AccountView extends AbstractView implements ViewHolder {
             message = "Are you really wish to change status as Drafted?";
         } else if (closedActionId.equals(actionId)) {
             message = "Are you really wish to change status as Closed?";
+        } else if (reopenActionId.equals(actionId)) {
+            message = "Are you really wish to reopen accounts?";
         }
         if (!confirmDialog("Status Update", message)) {
             return;
@@ -129,11 +133,16 @@ public class AccountView extends AbstractView implements ViewHolder {
             accountService.setAsDrafted(tableView.getSelectedItems());
         } else if (closedActionId.equals(actionId)) {
             accountService.setAsClosed(tableView.getSelectedItems());
+        } else if (reopenActionId.equals(actionId)) {
+            accountService.reopenAccount(tableView.getSelectedItems());
         }
         loadRecords();
     }
 
     private void deleteEvent() {
+        if (!confirmDialog("Delete?", "Are you really wish to delete selected accounts?")) {
+            return;
+        }
         accountService.deleteAccount(tableView.getSelectedItems());
         loadRecords();
     }
@@ -147,7 +156,10 @@ public class AccountView extends AbstractView implements ViewHolder {
         tableView.setItems(observableList);
     }
 
-    private void updateCurrency() {
+    private void changeCurrencyEvent() {
+        if (!confirmDialog("Change Currency?", "Are you really wish to change currency for selected accounts?")) {
+            return;
+        }
         CurrencyDialog dialog = new CurrencyDialog(getApplicationControl(), getPrimaryStage());
         dialog.showAndWait();
         if (dialog.isCancelled() || dialog.getSelected() == null) {
@@ -155,7 +167,7 @@ public class AccountView extends AbstractView implements ViewHolder {
         }
         List<Account> accountList = tableView.getSelectedItems();
         if (accountList != null) {
-            accountService.updateCurrency(dialog.getSelected(), accountList);
+            accountService.changeCurrency(dialog.getSelected(), accountList);
             loadRecords();
         }
     }
@@ -211,10 +223,11 @@ public class AccountView extends AbstractView implements ViewHolder {
             case confirmedActionId:
             case draftedActionId:
             case closedActionId:
+            case reopenActionId:
                 statusChangedEvent(actionId);
                 break;
-            case updateCurrencyActionId:
-                updateCurrency();
+            case changeCurrencyActionId:
+                changeCurrencyEvent();
                 break;
         }
     }
@@ -227,6 +240,7 @@ public class AccountView extends AbstractView implements ViewHolder {
 
         @Override
         public void onActionEvent(final String actionId) {
+            setMessage("");
             performActionEvent(actionId);
         }
     }

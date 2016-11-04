@@ -16,11 +16,9 @@ INSERT INTO entity.account (account_number, name, account_type, status, currency
 VALUES(?,?,?,?,?,?,?);
 --deleteAccount
 DELETE FROM entity.account WHERE account_number = ?;
---updateAccount
-UPDATE entity.account SET name = ?, account_type = ?, currency = ?, description = ? WHERE account_number = ?;
 --updateStatus
 UPDATE entity.account SET status = ? WHERE account_number = ?;
---updateCurrency
+--changeCurrency
 UPDATE entity.account SET currency = ? WHERE account_number = ?;
 --findAccountsByType
 SELECT account_number, name, account_type, status, currency, balance, description FROM entity.account
