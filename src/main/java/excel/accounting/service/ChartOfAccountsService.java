@@ -1,12 +1,12 @@
 package excel.accounting.service;
 
-import excel.accounting.dao.AccountDao;
+import excel.accounting.dao.ChartOfAccountsDao;
 import excel.accounting.dao.CurrencyDao;
-import excel.accounting.db.*;
-import excel.accounting.entity.Account;
-import excel.accounting.entity.AccountType;
+import excel.accounting.db.EntityToRowColumns;
+import excel.accounting.db.QueryBuilder;
+import excel.accounting.db.Transaction;
+import excel.accounting.entity.*;
 import excel.accounting.entity.Currency;
-import excel.accounting.entity.Status;
 import excel.accounting.poi.ExcelTypeConverter;
 import excel.accounting.shared.DataConverter;
 import excel.accounting.shared.RulesType;
@@ -18,23 +18,26 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Account Service
+ * Chart Of Accounts Service
+ *
+ * @author Ramesh
+ * @since Nov, 2016
  */
-public class AccountService extends AbstractService implements ExcelTypeConverter<Account>,
-        EntityToRowColumns<Account> {
-    private AccountDao accountDao;
+public class ChartOfAccountsService extends AbstractService implements ExcelTypeConverter<ChartOfAccounts>,
+        EntityToRowColumns<ChartOfAccounts> {
+    private ChartOfAccountsDao chartOfAccountsDao;
     private CurrencyDao currencyDao;
 
     @Override
     protected String getSqlFileName() {
-        return "account";
+        return "chartof-accounts";
     }
 
-    private AccountDao getAccountDao() {
-        if (accountDao == null) {
-            accountDao = (AccountDao) getBean("accountDao");
+    private ChartOfAccountsDao getChartOfAccountsDao() {
+        if (chartOfAccountsDao == null) {
+            chartOfAccountsDao = (ChartOfAccountsDao) getBean("chartOfAccountsDao");
         }
-        return accountDao;
+        return chartOfAccountsDao;
     }
 
     private CurrencyDao getCurrencyDao() {
@@ -50,62 +53,62 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
         return accountTypeList;
     }
 
-    private void updateStatus(List<Account> accountList) {
+    private void updateStatus(List<ChartOfAccounts> accountList) {
         QueryBuilder queryBuilder = getQueryBuilder("updateStatus");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
-        for (Account account : accountList) {
+        for (ChartOfAccounts account : accountList) {
             transaction.addBatch(getColumnsMap("updateStatus", account));
         }
         executeBatch(transaction);
     }
 
-    public void updateCurrency(Currency currency, List<Account> accountList) {
-        List<Account> filteredList = filteredByStatus(Status.Drafted, accountList);
+    public void updateCurrency(Currency currency, List<ChartOfAccounts> accountList) {
+        List<ChartOfAccounts> filteredList = filteredByStatus(Status.Drafted, accountList);
         if (filteredList.isEmpty()) {
             setMessage("Error : Only drafted accounts are allowed to change currency");
             return;
         }
         final String currencyCode = currency == null ? null : currency.getCode();
-        for (Account account : filteredList) {
+        for (ChartOfAccounts account : filteredList) {
             account.setCurrency(currencyCode);
         }
         QueryBuilder queryBuilder = getQueryBuilder("updateCurrency");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
-        for (Account account : filteredList) {
+        for (ChartOfAccounts account : filteredList) {
             transaction.addBatch(getColumnsMap("updateCurrency", account));
         }
         executeBatch(transaction);
     }
 
-    public void updateAccountType(AccountType accountType, List<Account> accountList) {
-        List<Account> filteredList = filteredByStatus(Status.Drafted, accountList);
+    public void updateAccountType(AccountType accountType, List<ChartOfAccounts> accountList) {
+        List<ChartOfAccounts> filteredList = filteredByStatus(Status.Drafted, accountList);
         if (filteredList.isEmpty()) {
             setMessage("Error : Only drafted accounts are allowed to modify");
             return;
         }
-        for (Account account : filteredList) {
+        for (ChartOfAccounts account : filteredList) {
             account.setAccountType(accountType);
         }
         QueryBuilder queryBuilder = getQueryBuilder("updateAccountType");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
-        for (Account account : filteredList) {
+        for (ChartOfAccounts account : filteredList) {
             transaction.addBatch(getColumnsMap("updateAccountType", account));
         }
         executeBatch(transaction);
     }
 
-    public void setAsDrafted(List<Account> accountList) {
-        List<Account> filteredList = filteredByStatus(Status.Confirmed, accountList);
+    public void setAsDrafted(List<ChartOfAccounts> accountList) {
+        List<ChartOfAccounts> filteredList = filteredByStatus(Status.Confirmed, accountList);
         if (filteredList.isEmpty()) {
             setMessage("Wrong Status : confirmed accounts are allowed to modify as drafted");
             return;
         }
-        for (Account account : filteredList) {
-            String errorMessage = getAccountDao().isEntityReferenceUsed(account.getCode());
-            if(errorMessage != null) {
+        for (ChartOfAccounts account : filteredList) {
+            String errorMessage = getChartOfAccountsDao().isEntityReferenceUsed(account.getCode());
+            if (errorMessage != null) {
                 setMessage(errorMessage);
                 return;
             }
@@ -114,13 +117,13 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
         updateStatus(filteredList);
     }
 
-    public void setAsConfirmed(List<Account> accountList) {
-        List<Account> filteredList = filteredByStatus(Status.Drafted, accountList);
+    public void setAsConfirmed(List<ChartOfAccounts> accountList) {
+        List<ChartOfAccounts> filteredList = filteredByStatus(Status.Drafted, accountList);
         if (filteredList.isEmpty()) {
             setMessage("Error : Only drafted accounts are allowed to confirm");
             return;
         }
-        List<Account> validList = new ArrayList<>();
+        List<ChartOfAccounts> validList = new ArrayList<>();
         filteredList.stream().filter(this::confirmValidate).forEach(account -> {
             account.setStatus(Status.Confirmed);
             validList.add(account);
@@ -132,49 +135,49 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
         updateStatus(validList);
     }
 
-    public void setAsClosed(List<Account> accountList) {
-        List<Account> filteredList = filteredByStatus(Status.Confirmed, accountList);
+    public void setAsClosed(List<ChartOfAccounts> accountList) {
+        List<ChartOfAccounts> filteredList = filteredByStatus(Status.Confirmed, accountList);
         if (filteredList.isEmpty()) {
             setMessage("Wrong Status : Only confirmed accounts should be closed");
             return;
         }
-        for (Account account : filteredList) {
+        for (ChartOfAccounts account : filteredList) {
             account.setStatus(Status.Closed);
         }
         updateStatus(filteredList);
     }
 
-    public void reopenAccount(List<Account> accountList) {
-        List<Account> filteredList = filteredByStatus(Status.Closed, accountList);
+    public void reopenAccount(List<ChartOfAccounts> accountList) {
+        List<ChartOfAccounts> filteredList = filteredByStatus(Status.Closed, accountList);
         if (filteredList.isEmpty()) {
             setMessage("Wrong Status : closed accounts are allowed to reopen");
             return;
         }
-        for (Account account : filteredList) {
+        for (ChartOfAccounts account : filteredList) {
             account.setStatus(Status.Confirmed);
         }
         updateStatus(filteredList);
     }
 
-    private boolean confirmValidate(Account account) {
+    private boolean confirmValidate(ChartOfAccounts account) {
         return !(account.getCode() == null || account.getCurrency() == null ||
                 account.getAccountType() == null || account.getName() == null);
     }
 
-    private boolean insertValidate(Account account, StringRules rules) {
+    private boolean insertValidate(ChartOfAccounts account, StringRules rules) {
         return rules.isValid(account.getCode()) && !StringRules.isEmpty(account.getName());
     }
 
-    public void insertAccount(List<Account> accountList) {
-        setMessage("Account number, name should not be empty");
+    public void insertAccount(List<ChartOfAccounts> accountList) {
+        setMessage("ChartOfAccounts number, name should not be empty");
         StringRules rules = new StringRules();
         rules.setMinMaxLength(3, 6);
         rules.setFirstCharAlphaOnly(true);
         rules.setRulesType(RulesType.Alphanumeric);
         //
-        List<String> existingList = getAccountDao().findCodeList();
-        List<Account> validList = new ArrayList<>();
-        for (Account account : accountList) {
+        List<String> existingList = getChartOfAccountsDao().findCodeList();
+        List<ChartOfAccounts> validList = new ArrayList<>();
+        for (ChartOfAccounts account : accountList) {
             if (insertValidate(account, rules) && !existingList.contains(account.getCode())) {
                 validList.add(account);
             }
@@ -188,7 +191,7 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
         QueryBuilder queryBuilder = getQueryBuilder("insertAccount");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
-        for (Account account : validList) {
+        for (ChartOfAccounts account : validList) {
             if (account.getAccountType() != null && !accountTypeList.contains(account.getAccountType())) {
                 account.setAccountType(null);
             }
@@ -200,8 +203,8 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
         executeBatch(transaction);
     }
 
-    public void deleteAccount(List<Account> accountList) {
-        List<Account> filteredList = filteredByStatus(Status.Drafted, accountList);
+    public void deleteAccount(List<ChartOfAccounts> accountList) {
+        List<ChartOfAccounts> filteredList = filteredByStatus(Status.Drafted, accountList);
         if (filteredList.isEmpty()) {
             setMessage("Error : Drafted accounts not found to delete");
             return;
@@ -209,7 +212,7 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
         QueryBuilder queryBuilder = getQueryBuilder("deleteAccount");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
-        for (Account account : filteredList) {
+        for (ChartOfAccounts account : filteredList) {
             transaction.addBatch(getColumnsMap("deleteAccount", account));
         }
         executeBatch(transaction);
@@ -226,7 +229,7 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
      * set currency find by code
      */
     @Override
-    public Map<Integer, Object> getColumnsMap(final String queryName, Account account) {
+    public Map<Integer, Object> getColumnsMap(final String queryName, ChartOfAccounts account) {
         Map<Integer, Object> map = new HashMap<>();
         if ("insertAccount".equals(queryName)) {
             map.put(1, account.getCode());
@@ -253,15 +256,15 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
 
     @Override
     public String[] getColumnNames() {
-        return new String[]{"Account Number", "Name", "Account Type", "Status", "Currency", "Balance", "Description"};
+        return new String[]{"Accounts Number", "Name", "Accounts Type", "Status", "Currency", "Balance", "Description"};
     }
 
     /**
      * code, name, account_type, status, currency, description
      */
     @Override
-    public Account getExcelType(String type, Cell[] array) {
-        Account account = new Account();
+    public ChartOfAccounts getExcelType(String type, Cell[] array) {
+        ChartOfAccounts account = new ChartOfAccounts();
         account.setCode(DataConverter.getString(array[0]));
         account.setName(DataConverter.getString(array[1]));
         account.setAccountType(DataConverter.getAccountType(array[2]));
@@ -276,7 +279,7 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
      * code, name, account_type, status, currency, balance, description
      */
     @Override
-    public Object[] getExcelRow(String type, Account account) {
+    public Object[] getExcelRow(String type, ChartOfAccounts account) {
         Object[] cellData = new Object[7];
         cellData[0] = account.getCode();
         cellData[1] = account.getName();
@@ -288,7 +291,7 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
         return cellData;
     }
 
-    private List<Account> filteredByStatus(Status status, List<Account> accList) {
+    private List<ChartOfAccounts> filteredByStatus(Status status, List<ChartOfAccounts> accList) {
         return accList.stream().filter(acc -> status.equals(acc.getStatus())).collect(Collectors.toList());
     }
 }

@@ -7,7 +7,7 @@ package excel.accounting.entity;
  * @since Oct, 2016
  */
 public class ExpenseCategory {
-    private String code, name, currency, expenseAccount, description;
+    private String code, name, chartOfAccounts, description;
     private Status status;
 
     public String getCode() {
@@ -26,20 +26,12 @@ public class ExpenseCategory {
         this.name = name;
     }
 
-    public String getCurrency() {
-        return currency;
+    public String getChartOfAccounts() {
+        return chartOfAccounts;
     }
 
-    public void setCurrency(String currency) {
-        this.currency = currency;
-    }
-
-    public String getExpenseAccount() {
-        return expenseAccount;
-    }
-
-    public void setExpenseAccount(String expenseAccount) {
-        this.expenseAccount = expenseAccount;
+    public void setChartOfAccounts(String chartOfAccounts) {
+        this.chartOfAccounts = chartOfAccounts;
     }
 
     public String getDescription() {

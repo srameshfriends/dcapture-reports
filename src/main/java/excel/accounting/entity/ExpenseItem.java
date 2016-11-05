@@ -11,16 +11,16 @@ import java.util.Date;
  */
 public class ExpenseItem {
     private Date expenseDate;
-    private String expenseCode, referenceNumber, description, currency, expenseCategory, expenseAccount;
+    private String code, referenceNumber, description, currency, expenseCategory, expenseAccount;
     private BigDecimal amount;
     private Status status;
 
-    public String getExpenseCode() {
-        return expenseCode;
+    public String getCode() {
+        return code;
     }
 
-    public void setExpenseCode(String expenseCode) {
-        this.expenseCode = expenseCode;
+    public void setCode(String code) {
+        this.code = code;
     }
 
     public Date getExpenseDate() {

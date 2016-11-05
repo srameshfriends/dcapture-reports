@@ -2,16 +2,17 @@ package excel.accounting.shared;
 
 import com.google.gson.Gson;
 import excel.accounting.db.DataProcessor;
-import excel.accounting.db.AbstractDao;
-import excel.accounting.db.TableReferenceFactory;
+import excel.accounting.db.EntityReferenceFactory;
 import excel.accounting.model.ApplicationConfig;
-import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.nio.file.Path;
+import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * Application Control
@@ -23,7 +24,7 @@ public class ApplicationControl {
     private String userName, userCode;
     private Map<String, Object> beanMap;
     private TextField messagePanel;
-    private TableReferenceFactory foreignKeyConstraint;
+    private Map<String, String> messageMap;
 
     private ApplicationControl() {
     }
@@ -33,11 +34,11 @@ public class ApplicationControl {
         if (configPath == null) {
             throw new NullPointerException("Application config json is missing");
         }
-        foreignKeyConstraint = TableReferenceFactory.instance();
         Gson gson = new Gson();
         applicationConfig = gson.fromJson(new FileReader(configPath.toFile()), ApplicationConfig.class);
         beanMap = new HashMap<>();
         startDatabase();
+        loadMessages();
     }
 
     public static ApplicationControl instance() throws Exception {
@@ -57,8 +58,36 @@ public class ApplicationControl {
         userName = name;
     }
 
+    private void loadMessages() throws Exception {
+        messageMap = new HashMap<>();
+        final Path path = FileHelper.getClassPath("config/message.properties");
+        if (path != null) {
+            Properties properties = new Properties();
+            properties.load(new FileInputStream(path.toFile()));
+            for (String name : properties.stringPropertyNames()) {
+                messageMap.put(name, properties.getProperty(name));
+            }
+        }
+    }
+
     public String getUserName() {
         return userName;
+    }
+
+    public String getUserCode() {
+        return userCode;
+    }
+
+    public String getMessage(String name) {
+        return messageMap.get(name);
+    }
+
+    public String getMessage(String name, Object... params) {
+        String msg = messageMap.get(name);
+        if (params != null && msg != null) {
+            return MessageFormat.format(msg, params);
+        }
+        return msg;
     }
 
     public void setMessagePanel(TextField field) {

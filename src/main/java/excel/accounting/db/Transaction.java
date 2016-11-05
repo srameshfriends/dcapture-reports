@@ -150,7 +150,7 @@ public class Transaction {
                 statement.setBoolean(entry.getKey(), (Boolean) parameter);
             } else if (parameter instanceof java.util.Date) {
                 statement.setDate(entry.getKey(), toSqlDate((java.util.Date) parameter));
-            } else {
+            } else if(parameter instanceof  DataType) {
                 DataType dataType = (DataType) parameter;
                 if (DataType.DateType.equals(dataType)) {
                     statement.setDate(entry.getKey(), null);
@@ -165,6 +165,8 @@ public class Transaction {
                 } else if (DataType.BooleanType.equals(dataType)) {
                     statement.setBoolean(entry.getKey(), false);
                 }
+            } else {
+                statement.setString(entry.getKey(), parameter.toString());
             }
         }
     }

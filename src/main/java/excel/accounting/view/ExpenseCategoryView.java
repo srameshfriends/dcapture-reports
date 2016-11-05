@@ -1,5 +1,6 @@
 package excel.accounting.view;
 
+import excel.accounting.dao.ExpenseCategoryDao;
 import excel.accounting.entity.ExpenseCategory;
 import excel.accounting.poi.ReadExcelData;
 import excel.accounting.poi.WriteExcelData;
@@ -30,11 +31,13 @@ import java.util.List;
 public class ExpenseCategoryView extends AbstractView implements ViewHolder {
     private final String exportActionId = "exportAction", deleteActionId = "deleteAction";
     private final String exportSelectedActionId = "exportSelectedAction";
-    private final String confirmedActionId = "confirmedAction";
+    private final String confirmedActionId = "confirmedAction", reopenActionId = "reopenAction";
     private final String closedActionId = "closedAction", draftedActionId = "draftedAction";
+    private final String updateChartOfAccActionId = "updateChartOfAccAction";
 
     private ReadableTableView<ExpenseCategory> tableView;
-    private ExpenseCategoryService incomeCategoryService;
+    private ExpenseCategoryDao expenseCategoryDao;
+    private ExpenseCategoryService expenseCategoryService;
     private VBox basePanel;
 
     @Override
@@ -45,21 +48,23 @@ public class ExpenseCategoryView extends AbstractView implements ViewHolder {
     @Override
     public Node createControl() {
         ViewListener viewListener = new ViewListener();
-        incomeCategoryService = (ExpenseCategoryService) getService("expenseCategoryService");
+        expenseCategoryService = (ExpenseCategoryService) getService("expenseCategoryService");
+        expenseCategoryDao = (ExpenseCategoryDao) getService("expenseCategoryDao");
         tableView = new ReadableTableView<ExpenseCategory>().create();
-        tableView.addTextColumn("code", "Category Code").setPrefWidth(120);
-        tableView.addTextColumn("name", "Name").setPrefWidth(200);
-        tableView.addTextColumn("description", "Description").setPrefWidth(280);
-        tableView.addTextColumn("currency", "Currency").setMinWidth(60);
-        tableView.addTextColumn("expenseAccount", "Expense Account").setMinWidth(220);
+        tableView.addTextColumn("code", "Category Code").setPrefWidth(100);
+        tableView.addTextColumn("name", "Name").setPrefWidth(160);
+        tableView.addTextColumn("chartOfAccounts", "Chart Of Accounts").setPrefWidth(100);
+        tableView.addTextColumn("description", "Description").setMinWidth(200);
         tableView.addTextColumn("status", "Status").setMinWidth(80);
         tableView.addSelectionChangeListener(viewListener);
         tableView.setContextMenuHandler(viewListener);
-        tableView.addContextMenuItem(draftedActionId, "Update As Drafted");
         tableView.addContextMenuItem(confirmedActionId, "Update As Confirmed");
+        tableView.addContextMenuItem(draftedActionId, "Update As Drafted");
         tableView.addContextMenuItem(closedActionId, "Update As Closed");
-        tableView.addContextMenuItem(exportSelectedActionId, "Export Expense Categories");
-        tableView.addContextMenuItem(deleteActionId, "Delete Expense Categories");
+        tableView.addContextMenuItem(reopenActionId, "Reopen Expense Category");
+        tableView.addContextMenuItem(updateChartOfAccActionId, "Set Chart Of Accounts");
+        tableView.addContextMenuItem(exportSelectedActionId, "Export Expense Category");
+        tableView.addContextMenuItem(deleteActionId, "Delete Expense Category");
         //
         basePanel = new VBox();
         basePanel.getChildren().addAll(createToolbar(), tableView.getTableView());
@@ -71,7 +76,7 @@ public class ExpenseCategoryView extends AbstractView implements ViewHolder {
         Button refreshBtn, importBtn, exportBtn;
         refreshBtn = createButton(refreshActionId, "Refresh", event -> loadRecords());
         importBtn = createButton(importActionId, "Import", event -> importFromExcelEvent());
-        exportBtn = createButton(exportActionId, "Export", event -> exportToExcelEvent(exportActionId));
+        exportBtn = createButton(exportActionId, "Export", event -> exportToExcel(exportActionId));
         //
         HBox box = new HBox();
         box.setSpacing(12);
@@ -106,28 +111,28 @@ public class ExpenseCategoryView extends AbstractView implements ViewHolder {
         basePanel.setPrefHeight(height);
     }
 
-    private void statusChangedEvent(String actionId) {
+    private void updateStatus(String actionId) {
         if (!confirmDialog("Update Expense Category Status",
                 "Are you really wish to change selected income category Status?")) {
             return;
         }
         if (confirmedActionId.equals(actionId)) {
-            incomeCategoryService.setAsConfirmed(tableView.getSelectedItems());
+            expenseCategoryService.setAsConfirmed(tableView.getSelectedItems());
         } else if (draftedActionId.equals(actionId)) {
-            incomeCategoryService.setAsDrafted(tableView.getSelectedItems());
+            expenseCategoryService.setAsDrafted(tableView.getSelectedItems());
         } else if (closedActionId.equals(actionId)) {
-            incomeCategoryService.setAsClosed(tableView.getSelectedItems());
+            expenseCategoryService.setAsClosed(tableView.getSelectedItems());
         }
         loadRecords();
     }
 
-    private void deleteEvent() {
-        incomeCategoryService.deleteExpenseCategory(tableView.getSelectedItems());
+    private void deleteExpenseCategory() {
+        expenseCategoryService.deleteExpenseCategory(tableView.getSelectedItems());
         loadRecords();
     }
 
     private void loadRecords() {
-        List<ExpenseCategory> categoryList = incomeCategoryService.loadAll();
+        List<ExpenseCategory> categoryList = expenseCategoryDao.loadAll();
         if (categoryList == null || categoryList.isEmpty()) {
             return;
         }
@@ -135,31 +140,35 @@ public class ExpenseCategoryView extends AbstractView implements ViewHolder {
         tableView.setItems(observableList);
     }
 
+    private void updateChartOfAccounts() {
+       //
+    }
+
     private void importFromExcelEvent() {
         File file = FileHelper.showOpenFileDialogExcel(getPrimaryStage());
         if (file == null) {
             return;
         }
-        ReadExcelData<ExpenseCategory> readExcelData = new ReadExcelData<>("", file, incomeCategoryService);
-        List<ExpenseCategory> dataList = readExcelData.readRowData(incomeCategoryService.getColumnNames().length, true);
+        ReadExcelData<ExpenseCategory> readExcelData = new ReadExcelData<>("", file, expenseCategoryService);
+        List<ExpenseCategory> dataList = readExcelData.readRowData(expenseCategoryService.getColumnNames().length, true);
         if (dataList.isEmpty()) {
             return;
         }
-        List<String> existingCodeList = incomeCategoryService.findCodeList();
+        List<String> existingList = expenseCategoryDao.findCodeList();
         List<ExpenseCategory> updateList = new ArrayList<>();
         List<ExpenseCategory> insertList = new ArrayList<>();
         for (ExpenseCategory category : dataList) {
-            if (existingCodeList.contains(category.getCode())) {
+            if (existingList.contains(category.getCode())) {
                 updateList.add(category);
             } else {
                 insertList.add(category);
             }
         }
         if (!updateList.isEmpty()) {
-            incomeCategoryService.updateExpenseCategory(updateList);
+            expenseCategoryService.updateExpenseCategory(updateList);
         }
         if (!insertList.isEmpty()) {
-            incomeCategoryService.insertExpenseCategory(insertList);
+            expenseCategoryService.insertExpenseCategory(insertList);
         }
         loadRecords();
     }
@@ -167,7 +176,7 @@ public class ExpenseCategoryView extends AbstractView implements ViewHolder {
     /*
     id, code, name, status, currency, debit_account, credit_account, description
     */
-    private void exportToExcelEvent(final String actionId) {
+    private void exportToExcel(final String actionId) {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyMMddHHmm");
         String fileName = simpleDateFormat.format(new Date());
         fileName = "expense-category" + fileName + ".xls";
@@ -175,12 +184,12 @@ public class ExpenseCategoryView extends AbstractView implements ViewHolder {
         if (file == null) {
             return;
         }
-        WriteExcelData<ExpenseCategory> writeExcelData = new WriteExcelData<>(actionId, file, incomeCategoryService);
+        WriteExcelData<ExpenseCategory> writeExcelData = new WriteExcelData<>(actionId, file, expenseCategoryService);
         if (exportSelectedActionId.equals(actionId)) {
             List<ExpenseCategory> selected = tableView.getSelectedItems();
             writeExcelData.writeRowData(selected);
         } else {
-            writeExcelData.writeRowData(incomeCategoryService.loadAll());
+            writeExcelData.writeRowData(expenseCategoryDao.loadAll());
         }
 
     }
@@ -193,16 +202,20 @@ public class ExpenseCategoryView extends AbstractView implements ViewHolder {
     private void performActionEvent(final String actionId) {
         switch (actionId) {
             case deleteActionId:
-                deleteEvent();
+                deleteExpenseCategory();
                 break;
             case exportActionId:
             case exportSelectedActionId:
-                exportToExcelEvent(actionId);
+                exportToExcel(actionId);
                 break;
             case confirmedActionId:
             case draftedActionId:
             case closedActionId:
-                statusChangedEvent(actionId);
+            case reopenActionId:
+                updateStatus(actionId);
+                break;
+            case updateChartOfAccActionId:
+                updateChartOfAccounts();
                 break;
         }
     }

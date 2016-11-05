@@ -7,5 +7,5 @@ package excel.accounting.entity;
  * @since Oct, 2016
  */
 public enum AccountType {
-    IncomeExpense, Expense, Income, Bank, Cash, Asset
+    Income, Bank, Cash, Asset, Expense
 }

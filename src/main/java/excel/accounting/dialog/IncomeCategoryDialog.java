@@ -54,7 +54,7 @@ public class IncomeCategoryDialog extends AbstractDialog {
 
     @Override
     protected Parent create() {
-        incomeCategoryService = (IncomeCategoryService) getService("incomeCategoryService");
+        incomeCategoryService = (IncomeCategoryService) getBean("incomeCategoryService");
         searchTextField = new SearchTextField();
         searchTextField.setActionHandler(actionId -> loadCurrency());
         tableView = new ReadableTableView<IncomeCategory>().create();

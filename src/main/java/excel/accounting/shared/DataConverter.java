@@ -2,6 +2,7 @@ package excel.accounting.shared;
 
 import excel.accounting.entity.AccountType;
 import excel.accounting.entity.Status;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.poi.hssf.usermodel.HSSFDateUtil;
 import org.apache.poi.ss.usermodel.Cell;
@@ -12,6 +13,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Base64;
 import java.util.Date;
+import java.util.Scanner;
 
 /**
  * DataConverter
@@ -25,13 +27,35 @@ public class DataConverter {
         return decimal.intValue();
     }
 
+    public static int getInteger(String value) {
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException ex) {
+            // ignore exception
+        }
+        return 0;
+    }
+
+    public static String getSequence(String prefix, int sequence) {
+        String value = "";
+        if (10 > sequence) {
+            value = "000";
+        } else if (9 < sequence && 100 > sequence) {
+            value = "00";
+        } else if (99 < sequence && 1000 > sequence) {
+            value = "0";
+        } else if (999 < sequence && 10000 > sequence) {
+            value = "";
+        }
+        return value + prefix + sequence;
+    }
+
     public static Status getStatus(Object status) {
         return status == null ? Status.Drafted : getEnum(Status.class, status.toString());
     }
 
     public static AccountType getAccountType(Object accountType) {
-        AccountType enumType = accountType == null ? null : getEnum(AccountType.class, accountType.toString());
-        return enumType == null ? AccountType.IncomeExpense : enumType;
+        return accountType == null ? null : getEnum(AccountType.class, accountType.toString());
     }
 
     private static <E extends Enum<E>> E getEnum(Class<E> enumClass, String name) {
@@ -126,5 +150,14 @@ public class DataConverter {
             /// ignore exception
         }
         return null;
+    }
+
+    public static String getSystemSerialNumber() throws Throwable {
+        // wmic command for diskdrive id: wmic DISKDRIVE GET SerialNumber
+        // wmic command for cpu id : wmic cpu get ProcessorId
+        Process process = Runtime.getRuntime().exec(new String[]{"wmic", "bios", "get", "serialnumber"});
+        process.getOutputStream().close();
+        Scanner scanner = new Scanner(process.getInputStream());
+        return scanner.next();
     }
 }

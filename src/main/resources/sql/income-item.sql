@@ -9,7 +9,7 @@ ALTER TABLE entity.income_item ADD FOREIGN KEY (currency) REFERENCES entity.curr
 --foreignKeyIncomeCategory
 ALTER TABLE entity.income_item ADD FOREIGN KEY (income_category) REFERENCES entity.income_category(code);
 --foreignKeyIncomeAccount
-ALTER TABLE entity.income_item ADD FOREIGN KEY (income_account) REFERENCES entity.account(account_number);
+ALTER TABLE entity.income_item ADD FOREIGN KEY (income_account) REFERENCES entity.account(code);
 --loadAll
 SELECT id, income_date, description, currency, amount, status FROM entity.income_item ORDER BY income_date;
 --findIdList

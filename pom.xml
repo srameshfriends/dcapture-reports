@@ -18,6 +18,7 @@
         <h2>1.4.192</h2>
         <poi>3.15</poi>
         <gson>2.6.2</gson>
+        <persistence>2.1.0</persistence>
         <commons-lang3>3.4</commons-lang3>
     </properties>
 
@@ -69,6 +70,12 @@
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>${gson}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.eclipse.persistence</groupId>
+            <artifactId>javax.persistence</artifactId>
+            <version>${persistence}</version>
         </dependency>
 
     </dependencies>

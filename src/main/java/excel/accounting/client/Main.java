@@ -20,6 +20,7 @@ public class Main extends Application {
         Registry.registerBean(applicationControl);
         Registry.registerView(viewManager);
         primaryStage.setOnCloseRequest(event -> onApplicationCloseEvent());
+        viewManager.showView(null);
     }
 
     private void onApplicationCloseEvent() {

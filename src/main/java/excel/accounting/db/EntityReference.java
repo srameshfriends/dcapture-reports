@@ -3,10 +3,10 @@ package excel.accounting.db;
 /**
  * Table Reference
  */
-public class TableReference {
+public class EntityReference {
     private final String table, column, referenceTable, referenceColumn;
 
-    public TableReference(String table, String column, String referenceTable, String referenceColumn) {
+    public EntityReference(String table, String column, String referenceTable, String referenceColumn) {
         this.table = table;
         this.column = column;
         this.referenceTable = referenceTable;
@@ -27,5 +27,14 @@ public class TableReference {
 
     public String getReferenceColumn() {
         return referenceColumn;
+    }
+
+    String getQuery() {
+        String query = "SELECT ".concat(column).concat(" FROM ").concat(table).concat(" WHERE ").concat(column);
+        return query.concat(" = ?");
+    }
+
+    EntityReference newInstance() {
+        return new EntityReference(table, column, referenceTable, referenceColumn);
     }
 }

@@ -64,8 +64,10 @@ public class QueryBuilder {
     }
 
     public QueryBuilder addInClauseQuery(String replaceName, InClauseQuery inClauseQuery) {
-        replaceMap.put(replaceName, inClauseQuery.toString());
-        inClauseQuery.getParameterList().forEach(this::addParameter);
+        replaceMap.put(replaceName, inClauseQuery == null ? "" : inClauseQuery.toString());
+        if(inClauseQuery != null) {
+            inClauseQuery.getParameterList().forEach(this::addParameter);
+        }
         return QueryBuilder.this;
     }
 

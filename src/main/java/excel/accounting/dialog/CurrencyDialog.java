@@ -3,7 +3,6 @@ package excel.accounting.dialog;
 import excel.accounting.dao.CurrencyDao;
 import excel.accounting.entity.Currency;
 import excel.accounting.entity.Status;
-import excel.accounting.service.CurrencyService;
 import excel.accounting.shared.ApplicationControl;
 import excel.accounting.ui.ReadableTableView;
 import excel.accounting.ui.SearchTextField;
@@ -54,7 +53,7 @@ public class CurrencyDialog extends AbstractDialog {
 
     @Override
     protected Parent create() {
-        currencyDao = (CurrencyDao) getService("currencyDao");
+        currencyDao = (CurrencyDao) getBean("currencyDao");
         searchTextField = new SearchTextField();
         searchTextField.setActionHandler(actionId -> loadCurrency());
         tableView = new ReadableTableView<Currency>().create();

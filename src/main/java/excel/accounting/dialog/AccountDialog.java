@@ -30,9 +30,6 @@ public class AccountDialog extends AbstractDialog {
     }
 
     private void setAccountTypes(AccountType... accountTypes) {
-        if(accountTypes == null) {
-            accountTypes = new AccountType[]{AccountType.IncomeExpense};
-        }
         this.accTypes = accountTypes;
     }
 
@@ -63,11 +60,11 @@ public class AccountDialog extends AbstractDialog {
 
     @Override
     protected Parent create() {
-        accountDao = (AccountDao) getService("accountDao");
+        accountDao = (AccountDao) getBean("accountDao");
         searchTextField = new SearchTextField();
         searchTextField.setActionHandler(actionId -> loadAccount());
         tableView = new ReadableTableView<Account>().create();
-        tableView.addTextColumn("accountNumber", "Account Number").setPrefWidth(140);
+        tableView.addTextColumn("code", "Account Number").setPrefWidth(140);
         tableView.addTextColumn("name", "Name").setPrefWidth(260);
         //
         VBox basePanel = new VBox();

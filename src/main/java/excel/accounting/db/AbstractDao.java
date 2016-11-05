@@ -28,29 +28,19 @@ public abstract class AbstractDao<T> implements HasAppsControl {
         applicationControl.setMessage(message);
     }
 
-    protected abstract T getReferenceRow(String primaryKay);
+    protected abstract T getReferenceRow(String code);
 
     protected QueryBuilder getQueryBuilder(String templateName) {
         return applicationControl.getDataProcessor().getQueryBuilder(getSqlFileName(), templateName);
     }
 
-    public boolean isReferenceUsed(String primaryKay) {
-       /* for (Map.Entry<String, Set<String>> entry : relationMap.entrySet()) {
-            for (String columnName : entry.getValue()) {
-                if (isReferenceUsed(entry.getKey(), columnName, primaryKay)) {
-                    return true;
-                }
-            }
-        }*/
-        return false;
-    }
-
-    private boolean isReferenceUsed(String tableName, String columnName, String primaryKey) {
-        QueryBuilder builder = new QueryBuilder();
-        builder.setQueryTemplate("SELECT " + columnName + " FROM " + tableName + " WHERE " + columnName + " = ?");
-        builder.limit(0, 1);
-        builder.add(1, primaryKey);
-        Object object = getDataReader().findSingleObject(builder);
-        return object instanceof String;
+    public String isEntityReferenceUsed(String code) {
+        EntityReference reference = applicationControl.getDataProcessor().getUsedEntityReference(getTableName(), code);
+        if(reference == null) {
+            return null;
+        }
+        String tbl = applicationControl.getMessage(reference.getTable());
+        String col = applicationControl.getMessage(reference.getTable() + "." + reference.getColumn());
+        return applicationControl.getMessage("entity.reference.used", code, tbl, col);
     }
 }

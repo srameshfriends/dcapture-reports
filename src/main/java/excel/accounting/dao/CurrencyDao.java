@@ -13,7 +13,7 @@ import java.util.List;
 public class CurrencyDao extends AbstractDao<Currency> implements RowColumnsToEntity<Currency> {
     @Override
     protected String getTableName() {
-        return "currency";
+        return "entity.currency";
     }
 
     @Override
@@ -22,9 +22,9 @@ public class CurrencyDao extends AbstractDao<Currency> implements RowColumnsToEn
     }
 
     @Override
-    protected Currency getReferenceRow(String primaryKay) {
+    protected Currency getReferenceRow(String code) {
         QueryBuilder builder = getQueryBuilder("findByCode");
-        builder.add(1, primaryKay);
+        builder.add(1, code);
         return getDataReader().findSingleRow(builder, this);
     }
 

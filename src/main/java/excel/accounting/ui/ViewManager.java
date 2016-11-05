@@ -57,7 +57,7 @@ public class ViewManager implements ActionHandler {
         this.primaryStage.heightProperty().addListener((arg0, arg1, arg2) -> onHeightChanged((Double) arg2));
         sessionDialog = new SessionDialog();
         sessionDialog.initialize(control, primaryStage);
-        sessionDialog.setViewHandler(this);
+        sessionDialog.setActionHandler(this);
         //
         StyleBuilder titleStyle = new StyleBuilder();
         titleStyle.fontSize(14);
@@ -73,7 +73,7 @@ public class ViewManager implements ActionHandler {
         //
         contentPane = new BorderPane();
         contentPane.setTop(titleLabel);
-        contentPane.setCenter(new Label("Welcome to Excel Accounting"));
+        contentPane.setCenter(new Label());
         contentPane.setBottom(messagePanel);
         //
         basePanel = new SplitPane();
@@ -162,14 +162,16 @@ public class ViewManager implements ActionHandler {
 
     @Override
     public void onActionEvent(String actionId) {
-        showView(actionId);
+        if(actionId != null) {
+            showView(actionId);
+        }
     }
 
-    private void showView(String name) {
-        /*if (!applicationControl.isAuthenticated()) {
+    public void showView(String name) {
+        if (!applicationControl.isAuthenticated()) {
             sessionDialog.show(name);
             return;
-        }*/
+        }
         applicationControl.setMessage("");
         ViewConfig viewConfig = getViewConfig(name);
         if (viewConfig == null) {

@@ -3,7 +3,6 @@ package excel.accounting.poi;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.DateFormatConverter;
-import org.apache.poi.xssf.model.StylesTable;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -85,6 +84,8 @@ public class WriteExcelData<T> {
                 cell.setCellValue(decimal.doubleValue());
             } else if (obj instanceof Integer) {
                 cell.setCellValue((Integer) obj);
+            } else {
+                cell.setCellValue(obj.toString());
             }
             cellIndex += 1;
         }

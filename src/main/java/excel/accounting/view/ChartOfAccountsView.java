@@ -1,21 +1,21 @@
 package excel.accounting.view;
 
-import excel.accounting.dao.AccountDao;
+import excel.accounting.dao.ChartOfAccountsDao;
 import excel.accounting.dialog.CurrencyDialog;
 import excel.accounting.dialog.EnumSelectionDialog;
-import excel.accounting.entity.Account;
 import excel.accounting.entity.AccountType;
-import excel.accounting.ui.*;
+import excel.accounting.entity.ChartOfAccounts;
 import excel.accounting.poi.ReadExcelData;
 import excel.accounting.poi.WriteExcelData;
-import excel.accounting.service.AccountService;
+import excel.accounting.service.ChartOfAccountsService;
 import excel.accounting.shared.FileHelper;
+import excel.accounting.ui.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
@@ -25,35 +25,35 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * Account View
+ * Chart Of Accounts View
  *
  * @author Ramesh
- * @since Oct, 2016
+ * @since Nov, 2016
  */
-public class AccountView extends AbstractView implements ViewHolder {
+public class ChartOfAccountsView extends AbstractView implements ViewHolder {
     private final String exportActionId = "exportAction", deleteActionId = "deleteAction";
     private final String exportSelectedActionId = "exportSelectedAction";
     private final String draftedActionId = "draftedAction", confirmedActionId = "confirmedAction";
     private final String closedActionId = "closedAction", reopenActionId = "reopenAction";
-    private final String updateCurrencyActionId = "updateCurrencyAction";
-    private final String updateAccountTypeActionId = "updateAccountTypeAction";
+    private final String changeCurrencyActionId = "modifyCurrencyAction";
+    private final String changeAccountTypeActionId = "changeAccountTypeAction";
 
-    private ReadableTableView<Account> tableView;
-    private AccountDao accountDao;
-    private AccountService accountService;
+    private ReadableTableView<ChartOfAccounts> tableView;
+    private ChartOfAccountsDao chartOfAccountsDao;
+    private ChartOfAccountsService chartOfAccService;
     private VBox basePanel;
 
     @Override
     public ViewConfig getViewConfig() {
-        return new ViewConfig(ViewGroup.Registers, "accountView", "Account");
+        return new ViewConfig(ViewGroup.Registers, "chartOfAccountsView", "Chart Of Accounts");
     }
 
     @Override
     public Node createControl() {
         ViewListener viewListener = new ViewListener();
-        accountDao = (AccountDao) getService("accountDao");
-        accountService = (AccountService) getService("accountService");
-        tableView = new ReadableTableView<Account>().create();
+        chartOfAccountsDao = (ChartOfAccountsDao) getService("chartOfAccountsDao");
+        chartOfAccService = (ChartOfAccountsService) getService("chartOfAccountsService");
+        tableView = new ReadableTableView<ChartOfAccounts>().create();
         tableView.addTextColumn("code", "Account Number").setPrefWidth(120);
         tableView.addTextColumn("name", "Name").setPrefWidth(220);
         tableView.addTextColumn("description", "Description").setPrefWidth(260);
@@ -67,8 +67,8 @@ public class AccountView extends AbstractView implements ViewHolder {
         tableView.addContextMenuItem(confirmedActionId, "Set As Confirmed");
         tableView.addContextMenuItem(closedActionId, "Set As Closed");
         tableView.addContextMenuItem(reopenActionId, "Reopen Account");
-        tableView.addContextMenuItem(updateAccountTypeActionId, "Set Account Type");
-        tableView.addContextMenuItem(updateCurrencyActionId, "Set Currency");
+        tableView.addContextMenuItem(changeAccountTypeActionId, "Set Account Type");
+        tableView.addContextMenuItem(changeCurrencyActionId, "Set Currency");
 
         tableView.addContextMenuItem(exportSelectedActionId, "Export Accounts");
         tableView.addContextMenuItem(deleteActionId, "Delete Accounts");
@@ -118,7 +118,7 @@ public class AccountView extends AbstractView implements ViewHolder {
         basePanel.setPrefHeight(height);
     }
 
-    private void updateStatus(String actionId) {
+    private void statusChangedEvent(String actionId) {
         String message = "Error : Unknown action id " + actionId;
         if (confirmedActionId.equals(actionId)) {
             message = "Are you really wish to change status as Confirmed?";
@@ -133,13 +133,13 @@ public class AccountView extends AbstractView implements ViewHolder {
             return;
         }
         if (confirmedActionId.equals(actionId)) {
-            accountService.setAsConfirmed(tableView.getSelectedItems());
+            chartOfAccService.setAsConfirmed(tableView.getSelectedItems());
         } else if (draftedActionId.equals(actionId)) {
-            accountService.setAsDrafted(tableView.getSelectedItems());
+            chartOfAccService.setAsDrafted(tableView.getSelectedItems());
         } else if (closedActionId.equals(actionId)) {
-            accountService.setAsClosed(tableView.getSelectedItems());
+            chartOfAccService.setAsClosed(tableView.getSelectedItems());
         } else if (reopenActionId.equals(actionId)) {
-            accountService.reopenAccount(tableView.getSelectedItems());
+            chartOfAccService.reopenAccount(tableView.getSelectedItems());
         }
         loadRecords();
     }
@@ -148,42 +148,42 @@ public class AccountView extends AbstractView implements ViewHolder {
         if (!confirmDialog("Delete?", "Are you really wish to delete selected accounts?")) {
             return;
         }
-        accountService.deleteAccount(tableView.getSelectedItems());
+        chartOfAccService.deleteAccount(tableView.getSelectedItems());
         loadRecords();
     }
 
     private void loadRecords() {
-        List<Account> accountList = accountDao.loadAll();
+        List<ChartOfAccounts> accountList = chartOfAccountsDao.loadAll();
         if (accountList == null || accountList.isEmpty()) {
             return;
         }
-        ObservableList<Account> observableList = FXCollections.observableArrayList(accountList);
+        ObservableList<ChartOfAccounts> observableList = FXCollections.observableArrayList(accountList);
         tableView.setItems(observableList);
     }
 
-    private void updateCurrency() {
+    private void changeCurrencyEvent() {
         CurrencyDialog dialog = new CurrencyDialog(getApplicationControl(), getPrimaryStage());
         dialog.showAndWait();
         if (dialog.isCancelled() || dialog.getSelected() == null) {
             return;
         }
-        List<Account> accountList = tableView.getSelectedItems();
+        List<ChartOfAccounts> accountList = tableView.getSelectedItems();
         if (accountList != null) {
-            accountService.updateCurrency(dialog.getSelected(), accountList);
+            chartOfAccService.updateCurrency(dialog.getSelected(), accountList);
             loadRecords();
         }
     }
 
-    private void updateAccountType() {
+    private void changeAccountTypeEvent() {
         EnumSelectionDialog<AccountType> dialog = new EnumSelectionDialog<>(getApplicationControl(), getPrimaryStage());
         dialog.setValueList(AccountType.values());
         dialog.showAndWait();
         if (dialog.isCancelled()) {
             return;
         }
-        List<Account> accountList = tableView.getSelectedItems();
+        List<ChartOfAccounts> accountList = tableView.getSelectedItems();
         if (accountList != null) {
-            accountService.updateAccountType(dialog.getSelected(), accountList);
+            chartOfAccService.updateAccountType(dialog.getSelected(), accountList);
             loadRecords();
         }
     }
@@ -194,13 +194,13 @@ public class AccountView extends AbstractView implements ViewHolder {
         if (file == null) {
             return;
         }
-        ReadExcelData<Account> readExcelData = new ReadExcelData<>("", file, accountService);
-        List<Account> dataList = readExcelData.readRowData(accountService.getColumnNames().length, true);
+        ReadExcelData<ChartOfAccounts> readExcelData = new ReadExcelData<>("", file, chartOfAccService);
+        List<ChartOfAccounts> dataList = readExcelData.readRowData(chartOfAccService.getColumnNames().length, true);
         if (dataList.isEmpty()) {
             setMessage("Valid import records not found");
             return;
         }
-        accountService.insertAccount(dataList);
+        chartOfAccService.insertAccount(dataList);
         loadRecords();
     }
 
@@ -212,12 +212,12 @@ public class AccountView extends AbstractView implements ViewHolder {
         if (file == null) {
             return;
         }
-        WriteExcelData<Account> writeExcelData = new WriteExcelData<>(actionId, file, accountService);
+        WriteExcelData<ChartOfAccounts> writeExcelData = new WriteExcelData<>(actionId, file, chartOfAccService);
         if (exportSelectedActionId.equals(actionId)) {
-            List<Account> selected = tableView.getSelectedItems();
+            List<ChartOfAccounts> selected = tableView.getSelectedItems();
             writeExcelData.writeRowData(selected);
         } else {
-            writeExcelData.writeRowData(accountDao.loadAll());
+            writeExcelData.writeRowData(chartOfAccountsDao.loadAll());
         }
 
     }
@@ -240,13 +240,13 @@ public class AccountView extends AbstractView implements ViewHolder {
             case draftedActionId:
             case closedActionId:
             case reopenActionId:
-                updateStatus(actionId);
+                statusChangedEvent(actionId);
                 break;
-            case updateCurrencyActionId:
-                updateCurrency();
+            case changeCurrencyActionId:
+                changeCurrencyEvent();
                 break;
-            case updateAccountTypeActionId:
-                updateAccountType();
+            case changeAccountTypeActionId:
+                changeAccountTypeEvent();
                 break;
         }
     }

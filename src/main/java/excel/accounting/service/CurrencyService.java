@@ -52,6 +52,11 @@ public class CurrencyService extends AbstractService implements EntityToRowColum
             return;
         }
         for (Currency currency : filteredList) {
+            String errorMessage = getCurrencyDao().isEntityReferenceUsed(currency.getCode());
+            if(errorMessage != null) {
+                setMessage(errorMessage);
+                return;
+            }
             currency.setStatus(Status.Drafted);
         }
         updateStatus(filteredList);

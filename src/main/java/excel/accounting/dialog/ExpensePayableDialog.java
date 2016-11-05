@@ -45,16 +45,14 @@ public class ExpensePayableDialog extends AbstractDialog {
 
     private void loadExpenseAccounts() {
         String searchText = expenseSearchField.getText();
-        List<Account> accountList = accountDao.findAccountsByType(searchText, AccountType.IncomeExpense,
-                AccountType.Expense);
+        List<Account> accountList = accountDao.findByAccountTypes(searchText, AccountType.Expense);
         ObservableList<Account> observableList = FXCollections.observableArrayList(accountList);
         expenseTable.setItems(observableList);
     }
 
     private void loadBankCashAccounts() {
         String searchText = bankCashSearchField.getText();
-        List<Account> accountList = accountDao.findAccountsByType(searchText, AccountType.Cash,
-                AccountType.Bank);
+        List<Account> accountList = accountDao.findByAccountTypes(searchText, AccountType.Cash, AccountType.Bank);
         ObservableList<Account> observableList = FXCollections.observableArrayList(accountList);
         incomeTable.setItems(observableList);
     }
@@ -129,7 +127,7 @@ public class ExpensePayableDialog extends AbstractDialog {
 
     @Override
     protected Parent create() {
-        accountDao = (AccountDao) getService("accountDao");
+        accountDao = (AccountDao) getBean("accountDao");
         messageLabel = new Label();
         HBox basePanel = new HBox();
         basePanel.getChildren().addAll(createExpenseControl(), createBankCashControl());

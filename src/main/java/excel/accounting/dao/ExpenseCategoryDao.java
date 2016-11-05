@@ -1,10 +1,11 @@
 package excel.accounting.dao;
 
-import excel.accounting.db.AbstractDao;
-import excel.accounting.db.QueryBuilder;
-import excel.accounting.db.RowColumnsToEntity;
+import excel.accounting.db.*;
 import excel.accounting.entity.ExpenseCategory;
+import excel.accounting.entity.Status;
 import excel.accounting.shared.DataConverter;
+
+import java.util.List;
 
 /**
  * Expense Category Dao
@@ -16,7 +17,7 @@ public class ExpenseCategoryDao extends AbstractDao<ExpenseCategory> implements 
         RowColumnsToEntity<ExpenseCategory> {
     @Override
     protected String getTableName() {
-        return "expense_category";
+        return "entity.expense_category";
     }
 
     @Override
@@ -31,18 +32,40 @@ public class ExpenseCategoryDao extends AbstractDao<ExpenseCategory> implements 
         return getDataReader().findSingleRow(builder, this);
     }
 
+    public List<String> findCodeList() {
+        QueryBuilder queryBuilder = getQueryBuilder("findCodeList");
+        return getDataReader().findString(queryBuilder);
+    }
+
+    public List<ExpenseCategory> loadAll() {
+        QueryBuilder queryBuilder = getQueryBuilder("loadAll");
+        return getDataReader().findRowDataList(queryBuilder, this);
+    }
+
+    public List<ExpenseCategory> searchExpenseCategory(String searchText, Status... statuses) {
+        InClauseQuery inClauseQuery = new InClauseQuery(statuses);
+        QueryBuilder queryBuilder = getQueryBuilder("searchExpenseCategory");
+        queryBuilder.addInClauseQuery("$status", inClauseQuery);
+        SearchTextQuery searchTextQuery = null;
+        if (SearchTextQuery.isValid(searchText)) {
+            searchTextQuery = new SearchTextQuery(searchText);
+            searchTextQuery.add("code", "name");
+        }
+        queryBuilder.addSearchTextQuery("$searchText", searchTextQuery);
+        return getDataReader().findRowDataList(queryBuilder, this);
+    }
+
     /**
-     * code, name, status, currency, expense_account description
+     * code, name, chartof_accounts, description, status
      */
     @Override
     public ExpenseCategory getEntity(String queryName, Object[] columns) {
         ExpenseCategory category = new ExpenseCategory();
         category.setCode((String) columns[0]);
         category.setName((String) columns[1]);
-        category.setStatus(DataConverter.getStatus(columns[2]));
-        category.setCurrency((String) columns[3]);
-        category.setExpenseAccount((String) columns[4]);
-        category.setDescription((String) columns[5]);
+        category.setChartOfAccounts((String) columns[2]);
+        category.setDescription((String) columns[3]);
+        category.setStatus(DataConverter.getStatus(columns[4]));
         return category;
     }
 }

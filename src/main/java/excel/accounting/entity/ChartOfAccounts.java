@@ -3,12 +3,12 @@ package excel.accounting.entity;
 import java.math.BigDecimal;
 
 /**
- * Account
+ * Chart Of Accounts
  *
  * @author Ramesh
- * @since Oct, 2016
+ * @since Nov, 2016
  */
-public class Account {
+public class ChartOfAccounts {
     private String code, name, currency, description;
     private BigDecimal balance;
     private Status status;

@@ -6,8 +6,10 @@ import excel.accounting.entity.Status;
 import excel.accounting.poi.ExcelTypeConverter;
 import excel.accounting.dao.ExpenseCategoryDao;
 import excel.accounting.shared.DataConverter;
+import excel.accounting.shared.StringRules;
 import org.apache.poi.ss.usermodel.Cell;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,56 +37,82 @@ public class ExpenseCategoryService extends AbstractService implements
         return "expense-category";
     }
 
-    public List<ExpenseCategory> loadAll() {
-        QueryBuilder queryBuilder = getQueryBuilder("loadAll");
-        return getDataReader().findRowDataList(queryBuilder, getExpenseCategoryDao());
+    private boolean confirmValidate(ExpenseCategory expenseCategory) {
+        return !(expenseCategory.getCode() == null || expenseCategory.getName() == null ||
+                expenseCategory.getChartOfAccounts() == null);
     }
 
-    public List<ExpenseCategory> searchExpenseCategory(String searchText, Status... statuses) {
-        InClauseQuery inClauseQuery = new InClauseQuery(statuses);
-        QueryBuilder queryBuilder = getQueryBuilder("searchExpenseCategory");
-        queryBuilder.addInClauseQuery("$status", inClauseQuery);
-        SearchTextQuery searchTextQuery = null;
-        if (SearchTextQuery.isValid(searchText)) {
-            searchTextQuery = new SearchTextQuery(searchText);
-            searchTextQuery.add("code", "name");
-        }
-        queryBuilder.addSearchTextQuery("$searchText", searchTextQuery);
-        return getDataReader().findRowDataList(queryBuilder, getExpenseCategoryDao());
+    private boolean insertValidate(ExpenseCategory expenseCategory, StringRules rules) {
+        return rules.isValid(expenseCategory.getCode()) && !StringRules.isEmpty(expenseCategory.getName());
     }
 
-    public List<String> findCodeList() {
-        QueryBuilder queryBuilder = getQueryBuilder("findCodeList");
-        return getDataReader().findString(queryBuilder);
-    }
-
-    private void updateStatus(Status requiredStatus, Status changedStatus, List<ExpenseCategory> categoryList) {
-        List<ExpenseCategory> filteredList = filteredByStatus(requiredStatus, categoryList);
-        if (filteredList.isEmpty()) {
-            return;
-        }
-        for (ExpenseCategory category : filteredList) {
-            category.setStatus(changedStatus);
-        }
+    private void updateStatus(List<ExpenseCategory> dataList) {
         QueryBuilder queryBuilder = getQueryBuilder("updateStatus");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
-        for (ExpenseCategory category : filteredList) {
+        for (ExpenseCategory category : dataList) {
             transaction.addBatch(getColumnsMap("updateStatus", category));
         }
         executeBatch(transaction);
     }
 
-    public void setAsDrafted(List<ExpenseCategory> categoryList) {
-        updateStatus(Status.Confirmed, Status.Drafted, categoryList);
+    public void setAsDrafted(List<ExpenseCategory> dataList) {
+        List<ExpenseCategory> filteredList = filteredByStatus(Status.Confirmed, dataList);
+        if (filteredList.isEmpty()) {
+            setMessage("Wrong Status : Only confirmed expense category set as drafted");
+            return;
+        }
+        for (ExpenseCategory data : filteredList) {
+            String errorMessage = getExpenseCategoryDao().isEntityReferenceUsed(data.getCode());
+            if (errorMessage != null) {
+                setMessage(errorMessage);
+                return;
+            }
+            data.setStatus(Status.Drafted);
+        }
+        updateStatus(filteredList);
     }
 
-    public void setAsConfirmed(List<ExpenseCategory> categoryList) {
-        updateStatus(Status.Drafted, Status.Confirmed, categoryList);
+    public void setAsConfirmed(List<ExpenseCategory> dataList) {
+        List<ExpenseCategory> filteredList = filteredByStatus(Status.Drafted, dataList);
+        if (filteredList.isEmpty()) {
+            setMessage("Error : Only drafted expense category are allowed to confirm");
+            return;
+        }
+        List<ExpenseCategory> validList = new ArrayList<>();
+        filteredList.stream().filter(this::confirmValidate).forEach(account -> {
+            account.setStatus(Status.Confirmed);
+            validList.add(account);
+        });
+        if (validList.isEmpty()) {
+            setMessage("Error : valid drafted expense category not found");
+            return;
+        }
+        updateStatus(validList);
     }
 
-    public void setAsClosed(List<ExpenseCategory> categoryList) {
-        updateStatus(Status.Confirmed, Status.Closed, categoryList);
+    public void setAsClosed(List<ExpenseCategory> dataList) {
+        List<ExpenseCategory> filteredList = filteredByStatus(Status.Confirmed, dataList);
+        if (filteredList.isEmpty()) {
+            setMessage("Error : Only confirmed expense category should be closed");
+            return;
+        }
+        for (ExpenseCategory expenseCategory : filteredList) {
+            expenseCategory.setStatus(Status.Closed);
+        }
+        updateStatus(filteredList);
+    }
+
+    public void reopenExpenseCategory(List<ExpenseCategory> dataList) {
+        List<ExpenseCategory> filteredList = filteredByStatus(Status.Closed, dataList);
+        if (filteredList.isEmpty()) {
+            setMessage("Wrong Status : closed expense category are allowed to reopen");
+            return;
+        }
+        for (ExpenseCategory expenseCategory : filteredList) {
+            expenseCategory.setStatus(Status.Confirmed);
+        }
+        updateStatus(filteredList);
     }
 
     public void insertExpenseCategory(List<ExpenseCategory> categoryList) {
@@ -121,77 +149,51 @@ public class ExpenseCategoryService extends AbstractService implements
         executeBatch(transaction);
     }
 
-    /**
-     * insertExpenseCategory
-     * code, name, status, currency, expense_account description
-     * deleteExpenseCategory
-     * find by code
-     * updateStatus
-     * set status find by code
-     * updateExpenseCategory
-     * code, name, currency, expense_account description
-     */
     @Override
     public Map<Integer, Object> getColumnsMap(final String queryName, ExpenseCategory type) {
         Map<Integer, Object> map = new HashMap<>();
         if ("insertExpenseCategory".equals(queryName)) {
             map.put(1, type.getCode());
             map.put(2, type.getName());
-            map.put(3, Status.Drafted.toString());
-            map.put(4, type.getCurrency());
-            map.put(5, type.getExpenseAccount());
-            map.put(6, type.getDescription());
+            map.put(3, type.getChartOfAccounts());
+            map.put(4, type.getDescription());
+            map.put(5, Status.Drafted.toString());
         } else if ("deleteExpenseCategory".equals(queryName)) {
             map.put(1, type.getCode());
         } else if ("updateStatus".equals(queryName)) {
             map.put(1, type.getStatus().toString());
             map.put(2, type.getCode());
-        } else if ("updateExpenseCategory".equals(queryName)) {
-            map.put(1, type.getCode());
-            map.put(2, type.getName());
-            map.put(3, type.getCurrency());
-            map.put(4, type.getExpenseAccount());
-            map.put(5, type.getDescription());
-            map.put(6, type.getCode());
+        } else if ("updateChartOfAccounts".equals(queryName)) {
+            map.put(1, type.getChartOfAccounts());
+            map.put(2, type.getCode());
         }
         return map;
     }
 
-    /**
-     * code, name, status, currency, expense account, description
-     */
     @Override
     public String[] getColumnNames() {
-        return new String[]{"Category Code", "Name", "Status", "Currency", "Expense Account", "Description"};
+        return new String[]{"Category Code", "Name", "Chart Of Accounts", "Description", "Status"};
     }
 
-    /**
-     * code, name, status, currency, expense_account, description
-     */
     @Override
     public ExpenseCategory getExcelType(String type, Cell[] array) {
         ExpenseCategory category = new ExpenseCategory();
         category.setCode(DataConverter.getString(array[0]));
         category.setName(DataConverter.getString(array[1]));
-        category.setStatus(DataConverter.getStatus(array[2]));
-        category.setCurrency(DataConverter.getString(array[3]));
-        category.setExpenseAccount(DataConverter.getString(array[4]));
-        category.setDescription(DataConverter.getString(array[5]));
+        category.setChartOfAccounts(DataConverter.getString(array[2]));
+        category.setDescription(DataConverter.getString(array[3]));
+        category.setStatus(DataConverter.getStatus(array[4]));
         return category;
     }
 
-    /**
-     * code, name, status, currency, expense_account description
-     */
     @Override
     public Object[] getExcelRow(String type, ExpenseCategory category) {
-        Object[] cellData = new Object[6];
+        Object[] cellData = new Object[5];
         cellData[0] = category.getCode();
         cellData[1] = category.getName();
-        cellData[2] = category.getStatus().toString();
-        cellData[3] = category.getCurrency();
-        cellData[4] = category.getExpenseAccount();
-        cellData[5] = category.getDescription();
+        cellData[2] = category.getChartOfAccounts();
+        cellData[3] = category.getDescription();
+        cellData[4] = category.getStatus();
         return cellData;
     }
 

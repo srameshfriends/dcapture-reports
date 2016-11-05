@@ -1,8 +1,8 @@
 package excel.accounting.dialog;
 
+import excel.accounting.dao.ExpenseCategoryDao;
 import excel.accounting.entity.ExpenseCategory;
 import excel.accounting.entity.Status;
-import excel.accounting.service.ExpenseCategoryService;
 import excel.accounting.shared.ApplicationControl;
 import excel.accounting.ui.ReadableTableView;
 import excel.accounting.ui.SearchTextField;
@@ -20,7 +20,7 @@ import java.util.List;
 public class ExpenseCategoryDialog extends AbstractDialog {
     private ReadableTableView<ExpenseCategory> tableView;
     private SearchTextField searchTextField;
-    private ExpenseCategoryService expenseCategoryService;
+    private ExpenseCategoryDao expenseCategoryDao;
 
     public ExpenseCategoryDialog(ApplicationControl control, Stage primaryStage) {
         initialize(control, primaryStage);
@@ -38,11 +38,11 @@ public class ExpenseCategoryDialog extends AbstractDialog {
 
     @Override
     protected void onOpenEvent() {
-        loadCurrency();
+        loadExpenseCategory();
     }
 
-    private void loadCurrency() {
-        List<ExpenseCategory> list = expenseCategoryService.searchExpenseCategory( //
+    private void loadExpenseCategory() {
+        List<ExpenseCategory> list = expenseCategoryDao.searchExpenseCategory( //
                 searchTextField.getText(), Status.Confirmed);
         ObservableList<ExpenseCategory> observableList = FXCollections.observableArrayList(list);
         tableView.setItems(observableList);
@@ -54,9 +54,9 @@ public class ExpenseCategoryDialog extends AbstractDialog {
 
     @Override
     protected Parent create() {
-        expenseCategoryService = (ExpenseCategoryService) getService("expenseCategoryService");
+        expenseCategoryDao = (ExpenseCategoryDao) getBean("expenseCategoryDao");
         searchTextField = new SearchTextField();
-        searchTextField.setActionHandler(actionId -> loadCurrency());
+        searchTextField.setActionHandler(actionId -> loadExpenseCategory());
         tableView = new ReadableTableView<ExpenseCategory>().create();
         tableView.addTextColumn("code", "Category Code").setPrefWidth(120);
         tableView.addTextColumn("name", "Name").setPrefWidth(260);

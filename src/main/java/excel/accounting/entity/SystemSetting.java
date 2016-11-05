@@ -10,7 +10,7 @@ import java.util.Date;
  * @since Nov, 2016
  */
 public class SystemSetting {
-    private String code, settingType, name, textValue;
+    private String code, groupCode, name, textValue;
     private BigDecimal decimalValue;
     private Date dateValue;
     private Boolean boolValue;
@@ -23,12 +23,12 @@ public class SystemSetting {
         this.code = code;
     }
 
-    public String getSettingType() {
-        return settingType;
+    public String getGroupCode() {
+        return groupCode;
     }
 
-    public void setSettingType(String settingType) {
-        this.settingType = settingType;
+    public void setGroupCode(String groupCode) {
+        this.groupCode = groupCode;
     }
 
     public String getName() {

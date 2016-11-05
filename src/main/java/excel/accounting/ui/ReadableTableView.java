@@ -35,6 +35,9 @@ public class ReadableTableView<T> {
 
     public void addContextMenuItem(final String actionId, String title) {
         MenuItem menuItem = new MenuItem(title);
+        StyleBuilder builder = new StyleBuilder();
+        builder.padding(2);
+        menuItem.setStyle(builder.toString());
         menuItem.setOnAction(event -> contextHandler.onActionEvent(actionId));
         contextMenu.getItems().add(menuItem);
     }

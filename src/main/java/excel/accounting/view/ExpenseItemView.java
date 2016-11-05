@@ -2,10 +2,7 @@ package excel.accounting.view;
 
 import excel.accounting.dialog.AccountDialog;
 import excel.accounting.dialog.CurrencyDialog;
-import excel.accounting.dialog.ExpensePayableDialog;
-import excel.accounting.entity.Account;
 import excel.accounting.entity.AccountType;
-import excel.accounting.entity.Currency;
 import excel.accounting.entity.ExpenseItem;
 import excel.accounting.poi.ReadExcelData;
 import excel.accounting.poi.WriteExcelData;
@@ -26,7 +23,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Expense Item View
@@ -55,7 +51,7 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
         ViewListener viewListener = new ViewListener();
         expenseItemService = (ExpenseItemService) getService("expenseItemService");
         tableView = new ReadableTableView<ExpenseItem>().create();
-        tableView.addTextColumn("expenseCode", "Item Code").setPrefWidth(90);
+        tableView.addTextColumn("code", "Item Code").setPrefWidth(90);
         tableView.addTextColumn("expenseDate", "Expense Date").setPrefWidth(100);
         tableView.addTextColumn("referenceNumber", "Reference Num").setPrefWidth(160);
         tableView.addTextColumn("description", "Description").setPrefWidth(380);
@@ -82,7 +78,7 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
         Button refreshBtn, importBtn, exportBtn;
         refreshBtn = createButton(refreshActionId, "Refresh", event -> loadRecords());
         importBtn = createButton(importActionId, "Import", event -> importFromExcelEvent());
-        exportBtn = createButton(exportActionId, "Export", event -> exportToExcelEvent(exportActionId));
+        exportBtn = createButton(exportActionId, "Export", event -> exportToExcel(exportActionId));
         //
         HBox box = new HBox();
         box.setSpacing(12);
@@ -117,9 +113,14 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
         basePanel.setPrefHeight(height);
     }
 
-    private void statusChangedEvent(String actionId) {
-        if (!confirmDialog("Update Expense Item Status",
-                "Are you really wish to change selected income category Status?")) {
+    private void updateStatus(String actionId) {
+        String message = "";
+        if (confirmedActionId.equals(actionId)) {
+            message = "Are you really wish to set as confirmed?";
+        } else if (draftedActionId.equals(actionId)) {
+            message = "Are you really wish to set as drafted?";
+        }
+        if (!confirmDialog("Confirmation", message)) {
             return;
         }
         if (confirmedActionId.equals(actionId)) {
@@ -155,8 +156,8 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
             return;
         }
         List<ExpenseItem> validList = new ArrayList<>();
-        for(ExpenseItem expenseItem : dataList) {
-            if(expenseItemService.isValidInsert(expenseItem)) {
+        for (ExpenseItem expenseItem : dataList) {
+            if (expenseItemService.isValidInsert(expenseItem)) {
                 validList.add(expenseItem);
             } else {
                 System.out.println("Not Valid");
@@ -169,7 +170,7 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
         List<String> existingCodeList = expenseItemService.findExpenseCodeList();
         dataList = new ArrayList<>();
         for (ExpenseItem expenseItem : validList) {
-            if (!existingCodeList.contains(expenseItem.getExpenseCode())) {
+            if (!existingCodeList.contains(expenseItem.getCode())) {
                 dataList.add(expenseItem);
             }
         }
@@ -181,7 +182,7 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
         loadRecords();
     }
 
-    private void exportToExcelEvent(final String actionId) {
+    private void exportToExcel(final String actionId) {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyMMddHHmm");
         String fileName = simpleDateFormat.format(new Date());
         fileName = "expense-item" + fileName + ".xls";
@@ -205,7 +206,7 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
         }
         CurrencyDialog currencyDialog = new CurrencyDialog(getApplicationControl(), getPrimaryStage());
         currencyDialog.showAndWait();
-        if (currencyDialog.isCancelled() || currencyDialog.getSelected() == null) {
+        if (currencyDialog.isCancelled()) {
             return;
         }
         expenseItemService.updateCurrency(currencyDialog.getSelected(), expenseItemList);
@@ -217,13 +218,12 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
         if (expenseItemList.isEmpty()) {
             return;
         }
-        AccountType[] accTypes = new AccountType[]{AccountType.Expense, AccountType.IncomeExpense};
-        AccountDialog accountDialog = new AccountDialog(getApplicationControl(), getPrimaryStage(), accTypes);
-        accountDialog.showAndWait();
-        if (accountDialog.isCancelled()) {
+        AccountDialog dialog = new AccountDialog(getApplicationControl(), getPrimaryStage(), AccountType.Expense);
+        dialog.showAndWait();
+        if (dialog.isCancelled()) {
             return;
         }
-        expenseItemService.updateExpenseAccount(accountDialog.getSelected(), expenseItemList);
+        expenseItemService.updateExpenseAccount(dialog.getSelected(), expenseItemList);
         loadRecords();
     }
 
@@ -238,11 +238,11 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
                 break;
             case exportActionId:
             case exportSelectedActionId:
-                exportToExcelEvent(actionId);
+                exportToExcel(actionId);
                 break;
             case confirmedActionId:
             case draftedActionId:
-                statusChangedEvent(actionId);
+                updateStatus(actionId);
                 break;
             case updateCurrencyActionId:
                 updateCurrency();

@@ -30,21 +30,23 @@ public abstract class AbstractDialog implements EventHandler<ActionEvent> {
     private Stage dialogStage;
     private boolean cancelled;
     private HBox actionBar;
+    private VBox basePanel;
 
     public void initialize(ApplicationControl control, Stage primaryStage) {
         this.applicationControl = control;
         dataReader = new DataReader(applicationControl.getDataProcessor());
-
         dialogStage = new Stage();
         dialogStage.initModality(Modality.WINDOW_MODAL);
         dialogStage.initOwner(primaryStage);
         dialogStage.initStyle(StageStyle.UNDECORATED);
-        Label titleLabel = new Label(getTitle());
         actionBar = new HBox();
         actionBar.setSpacing(24);
         actionBar.setPadding(new Insets(18));
-        //
-        VBox basePanel = new VBox();
+    }
+
+    private void createBasePanel() {
+        Label titleLabel = new Label(getTitle());
+        basePanel = new VBox();
         StyleBuilder styleBuilder = new StyleBuilder();
         styleBuilder.padding(8);
         styleBuilder.border(8, 1, "solid");
@@ -81,16 +83,22 @@ public abstract class AbstractDialog implements EventHandler<ActionEvent> {
         return applicationControl;
     }
 
-    protected Object getService(String name) {
+    protected Object getBean(String name) {
         return applicationControl.getBean(name);
     }
 
-    public void show() {
-        dialogStage.show();
+    void show() {
+        if(basePanel == null) {
+            createBasePanel();
+        }
         onOpenEvent();
+        dialogStage.show();
     }
 
     public void showAndWait() {
+        if(basePanel == null) {
+            createBasePanel();
+        }
         onOpenEvent();
         dialogStage.showAndWait();
     }
@@ -129,8 +137,7 @@ public abstract class AbstractDialog implements EventHandler<ActionEvent> {
         try {
             transaction.executeBatch();
         } catch (SQLException ex) {
-            System.out.println(ex.getErrorCode());
-            System.out.println(ex.getMessage());
+            setMessage(ex.getErrorCode() + " : " + ex.getMessage());
         }
     }
 }

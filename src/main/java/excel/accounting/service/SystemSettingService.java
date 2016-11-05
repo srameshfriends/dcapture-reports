@@ -31,7 +31,7 @@ public class SystemSettingService extends AbstractService implements EntityToRow
         return currencyDao;
     }
 
-    public void insertSystemSetting(List<SystemSetting> settingList) {
+    private void insertSystemSetting(List<SystemSetting> settingList) {
         QueryBuilder queryBuilder = getQueryBuilder("insertSystemSetting");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
@@ -63,7 +63,7 @@ public class SystemSettingService extends AbstractService implements EntityToRow
 
     /**
      * insertSystemSetting
-     * code, setting_type, name, text_value, decimal_value, date_value, bool_value
+     * code, group_code, name, text_value, decimal_value, date_value, bool_value
      * deleteSystemSetting
      * find by code
      * updateValue
@@ -74,7 +74,7 @@ public class SystemSettingService extends AbstractService implements EntityToRow
         Map<Integer, Object> map = new HashMap<>();
         if ("insertSystemSetting".equals(queryName)) {
             map.put(1, entity.getCode());
-            map.put(2, entity.getSettingType());
+            map.put(2, entity.getGroupCode());
             map.put(3, entity.getName());
             map.put(4, entity.getTextValue());
             map.put(5, entity.getDecimalValue());
@@ -90,5 +90,15 @@ public class SystemSettingService extends AbstractService implements EntityToRow
             map.put(5, entity.getCode());
         }
         return map;
+    }
+
+    public void insertDefaultSystemUser(boolean resetDefault) {
+        List<SystemSetting> settingList = getSystemSettingDao().getSystemUser();
+        if (resetDefault && !settingList.isEmpty()) {
+            deleteSystemSetting(settingList);
+        }
+        if(settingList.isEmpty()) {
+            insertSystemSetting(getSystemSettingDao().getDefaultSystemUser());
+        }
     }
 }

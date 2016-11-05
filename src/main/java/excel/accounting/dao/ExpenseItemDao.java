@@ -5,6 +5,7 @@ import excel.accounting.db.QueryBuilder;
 import excel.accounting.db.RowColumnsToEntity;
 import excel.accounting.entity.ExpenseItem;
 import excel.accounting.shared.DataConverter;
+import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -33,7 +34,7 @@ public class ExpenseItemDao extends AbstractDao<ExpenseItem> implements RowColum
     @Override
     public ExpenseItem getEntity(String queryName, Object[] columns) {
         ExpenseItem item = new ExpenseItem();
-        item.setExpenseCode((String) columns[0]);
+        item.setCode((String) columns[0]);
         item.setExpenseDate((Date) columns[1]);
         item.setReferenceNumber((String) columns[2]);
         item.setDescription((String) columns[3]);
@@ -43,5 +44,11 @@ public class ExpenseItemDao extends AbstractDao<ExpenseItem> implements RowColum
         item.setExpenseCategory((String) columns[7]);
         item.setExpenseAccount((String) columns[8]);
         return item;
+    }
+
+    public int findLastSequence() {
+        QueryBuilder builder = getQueryBuilder("findLastSequence");
+        String value = (String) getDataReader().findSingleObject(builder);
+        return value == null ? 0 : DataConverter.getInteger(value.substring(2));
     }
 }
