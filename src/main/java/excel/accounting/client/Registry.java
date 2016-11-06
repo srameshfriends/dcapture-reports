@@ -25,6 +25,7 @@ abstract class Registry {
         // Expense
         manager.addView(new ExpenseCategoryView());
         manager.addView(new ExpenseItemView());
+        manager.addView(new PaymentView());
         // Assets
         manager.addView(new AssetView());
         // Management
@@ -45,6 +46,7 @@ abstract class Registry {
         control.addBean("assetService", new AssetService());
         control.addBean("systemSettingService", new SystemSettingService());
         control.addBean("chartOfAccountsService", new ChartOfAccountsService());
+        control.addBean("paymentService", new PaymentService());
         //
         control.addBean("currencyDao", new CurrencyDao());
         control.addBean("accountDao", new AccountDao());
@@ -55,5 +57,6 @@ abstract class Registry {
         control.addBean("assetDao", new AssetDao());
         control.addBean("systemSettingDao", new SystemSettingDao());
         control.addBean("chartOfAccountsDao", new ChartOfAccountsDao());
+        control.addBean("paymentDao", new PaymentDao());
     }
 }

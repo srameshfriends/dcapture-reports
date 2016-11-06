@@ -3,7 +3,7 @@
 --createExchangeRate
 CREATE TABLE IF NOT EXISTS entity.exchange_rate (id INTEGER auto_increment, fetch_from VARCHAR(64), asof_date DATE,
 currency VARCHAR(8), exchange_currency VARCHAR(8), unit INTEGER, selling_rate DECIMAL, buying_rate DECIMAL,
-status VARCHAR(32), PRIMARY KEY (id));
+status VARCHAR(16), PRIMARY KEY (id));
 --foreignKeyCurrency
 ALTER TABLE entity.exchange_rate ADD FOREIGN KEY (currency) REFERENCES entity.currency(code);
 --foreignKeyExchangeCurrency

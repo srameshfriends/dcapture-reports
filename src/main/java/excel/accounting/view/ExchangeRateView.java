@@ -110,8 +110,7 @@ public class ExchangeRateView extends AbstractView implements ViewHolder {
     }
 
     private void statusChangedEvent(String actionId) {
-        if (!confirmDialog("Update Exchange Rate Status",
-                "Are you really wish to change selected exchange rate Status?")) {
+        if (!confirmDialog("Are you really wish to change status?")) {
             return;
         }
         if (confirmedActionId.equals(actionId)) {

@@ -14,6 +14,7 @@ public class ExpenseItem {
     private String code, referenceNumber, description, currency, expenseCategory, expenseAccount;
     private BigDecimal amount;
     private Status status;
+    private Boolean paid;
 
     public String getCode() {
         return code;
@@ -85,5 +86,13 @@ public class ExpenseItem {
 
     public void setExpenseAccount(String expenseAccount) {
         this.expenseAccount = expenseAccount;
+    }
+
+    public Boolean getPaid() {
+        return paid;
+    }
+
+    public void setPaid(Boolean paid) {
+        this.paid = paid;
     }
 }

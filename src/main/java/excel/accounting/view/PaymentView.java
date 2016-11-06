@@ -40,7 +40,7 @@ public class PaymentView extends AbstractView implements ViewHolder {
 
     @Override
     public ViewConfig getViewConfig() {
-        return new ViewConfig(ViewGroup.Registers, "accountView", "Payment");
+        return new ViewConfig(ViewGroup.Expense, "paymentView", "Payments");
     }
 
     @Override
@@ -118,7 +118,7 @@ public class PaymentView extends AbstractView implements ViewHolder {
         } else if (closedActionId.equals(actionId)) {
             message = "Are you really wish to change status as Closed?";
         }
-        if (!confirmDialog("Status Update", message)) {
+        if (!confirmDialog(message)) {
             return;
         }
         if (confirmedActionId.equals(actionId)) {

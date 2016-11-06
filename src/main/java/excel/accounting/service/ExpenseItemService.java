@@ -242,6 +242,9 @@ public class ExpenseItemService extends AbstractService implements
             map.put(5, type.getCurrency());
             map.put(6, type.getAmount());
             map.put(7, Status.Drafted.toString());
+            map.put(8, type.getExpenseCategory());
+            map.put(9, type.getExpenseAccount());
+            map.put(10, type.getPaid());
         } else if ("deleteExpenseItem".equals(queryName)) {
             map.put(1, type.getCode());
         } else if ("updateStatus".equals(queryName)) {
@@ -260,17 +263,12 @@ public class ExpenseItemService extends AbstractService implements
         return map;
     }
 
-    /**
-     * expense_code, expense_date, reference_number, description, currency, amount, status
-     */
     @Override
     public String[] getColumnNames() {
-        return new String[]{"Expense Code", "Expense Date", "Reference Number", "Description", "Currency", "Amount", "Status"};
+        return new String[]{"Expense Code", "Expense Date", "Reference", "Description", "Currency", "Amount", "Status",
+                "Category", "Account", "Paid Info"};
     }
 
-    /**
-     * expense_code, expense_date, reference_number, description, currency, amount, status
-     */
     @Override
     public ExpenseItem getExcelType(String type, Cell[] array) {
         ExpenseItem item = new ExpenseItem();
@@ -281,22 +279,25 @@ public class ExpenseItemService extends AbstractService implements
         item.setCurrency(DataConverter.getString(array[4]));
         item.setAmount(DataConverter.getBigDecimal(array[5]));
         item.setStatus(DataConverter.getStatus(array[6]));
+        item.setExpenseCategory(DataConverter.getString(array[7]));
+        item.setExpenseAccount(DataConverter.getString(array[8]));
+        item.setPaid(DataConverter.getBoolean(array[9]));
         return item;
     }
 
-    /**
-     * expense_code, expense_date, reference_number, description, currency, amount, status
-     */
     @Override
     public Object[] getExcelRow(String type, ExpenseItem item) {
-        Object[] cellData = new Object[7];
+        Object[] cellData = new Object[10];
         cellData[0] = item.getCode();
         cellData[1] = item.getExpenseDate();
         cellData[2] = item.getReferenceNumber();
         cellData[3] = item.getDescription();
         cellData[4] = item.getCurrency();
         cellData[5] = item.getAmount();
-        cellData[6] = item.getStatus().toString();
+        cellData[6] = item.getStatus();
+        cellData[7] = item.getExpenseCategory();
+        cellData[8] = item.getExpenseAccount();
+        cellData[9] = item.getPaid();
         return cellData;
     }
 

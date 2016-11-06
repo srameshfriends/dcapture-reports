@@ -2,8 +2,8 @@
 --
 --createExpenseItem
 CREATE TABLE IF NOT EXISTS entity.expense_item (code VARCHAR(8), expense_date DATE,
-reference_number VARCHAR(128), description VARCHAR(512), currency VARCHAR(8), amount DECIMAL, status VARCHAR(32),
-expense_category VARCHAR(8), expense_account VARCHAR(8), PRIMARY KEY (code));
+reference_number VARCHAR(128), description VARCHAR(512), currency VARCHAR(8), amount DECIMAL, status VARCHAR(16),
+expense_category VARCHAR(8), expense_account VARCHAR(8), paid BOOLEAN, PRIMARY KEY (code));
 --foreignKeyCurrency
 ALTER TABLE entity.expense_item ADD FOREIGN KEY (currency) REFERENCES entity.currency(code);
 --foreignKeyExpenseCategory
@@ -12,12 +12,12 @@ ALTER TABLE entity.expense_item ADD FOREIGN KEY (expense_category) REFERENCES en
 ALTER TABLE entity.expense_item ADD FOREIGN KEY (expense_account) REFERENCES entity.account(code);
 --loadAll
 SELECT code, expense_date, reference_number, description, currency, amount, status, expense_category,
- expense_account FROM entity.expense_item ORDER BY expense_date, code;
+ expense_account, paid FROM entity.expense_item ORDER BY expense_date, code;
 --findExpenseCodeList
 SELECT code FROM entity.expense_item;
 --insertExpenseItem
-INSERT INTO entity.expense_item (code, expense_date, reference_number, description, currency, amount, status)
- VALUES(?,?,?,?,?,?,?);
+INSERT INTO entity.expense_item (code, expense_date, reference_number, description, currency, amount, status,
+ expense_category, expense_account, paid) VALUES(?,?,?,?,?,?,?,?,?,?);
 --deleteExpenseItem
 DELETE FROM entity.expense_item WHERE code = ?;
 --updateStatus

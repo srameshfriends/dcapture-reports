@@ -3,7 +3,7 @@
 --createAssetTable
 CREATE TABLE IF NOT EXISTS entity.asset (code VARCHAR(8),
  name VARCHAR(64), description VARCHAR(512), asset_type VARCHAR(32), start_date DATE, end_date DATE,
- currency VARCHAR(8), cost DECIMAL, status VARCHAR(32), units DECIMAL, reference_number VARCHAR(32),
+ currency VARCHAR(8), cost DECIMAL, status VARCHAR(16), units DECIMAL, reference_number VARCHAR(32),
  category VARCHAR(32), PRIMARY KEY (code));
 --foreignKeyCurrency
 ALTER TABLE entity.asset ADD FOREIGN KEY (currency) REFERENCES entity.currency(code);

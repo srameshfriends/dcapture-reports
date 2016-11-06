@@ -1,11 +1,12 @@
 package excel.accounting.service;
 
+import excel.accounting.dao.ChartOfAccountsDao;
 import excel.accounting.db.*;
-import excel.accounting.entity.ExpenseCategory;
-import excel.accounting.entity.Status;
+import excel.accounting.entity.*;
 import excel.accounting.poi.ExcelTypeConverter;
 import excel.accounting.dao.ExpenseCategoryDao;
 import excel.accounting.shared.DataConverter;
+import excel.accounting.shared.RulesType;
 import excel.accounting.shared.StringRules;
 import org.apache.poi.ss.usermodel.Cell;
 
@@ -24,12 +25,20 @@ import java.util.stream.Collectors;
 public class ExpenseCategoryService extends AbstractService implements
         EntityToRowColumns<ExpenseCategory>, ExcelTypeConverter<ExpenseCategory> {
     private ExpenseCategoryDao expenseCategoryDao;
+    private ChartOfAccountsDao chartOfAccountsDao;
 
     private ExpenseCategoryDao getExpenseCategoryDao() {
         if (expenseCategoryDao == null) {
             expenseCategoryDao = (ExpenseCategoryDao) getBean("expenseCategoryDao");
         }
         return expenseCategoryDao;
+    }
+
+    private ChartOfAccountsDao getChartOfAccountsDao() {
+        if (chartOfAccountsDao == null) {
+            chartOfAccountsDao = (ChartOfAccountsDao) getBean("chartOfAccountsDao");
+        }
+        return chartOfAccountsDao;
     }
 
     @Override
@@ -115,12 +124,34 @@ public class ExpenseCategoryService extends AbstractService implements
         updateStatus(filteredList);
     }
 
-    public void insertExpenseCategory(List<ExpenseCategory> categoryList) {
+    public void insertExpenseCategory(List<ExpenseCategory> dataList) {
+        setMessage("Expense category, code, name should not be empty");
+        StringRules rules = new StringRules();
+        rules.setMinMaxLength(2, 6);
+        rules.setFirstCharAlphaOnly(true);
+        rules.setRulesType(RulesType.Alphanumeric);
+        //
+        List<String> existingList = getExpenseCategoryDao().findCodeList();
+        List<ExpenseCategory> validList = new ArrayList<>();
+        for (ExpenseCategory expenseCategory : dataList) {
+            if (insertValidate(expenseCategory, rules) && !existingList.contains(expenseCategory.getCode())) {
+                validList.add(expenseCategory);
+            }
+        }
+        if (validList.isEmpty()) {
+            setMessage("Valid expense category not found");
+            return;
+        }
+        List<String> chartOfAccountsList = getChartOfAccountsDao().findCodeList();
         QueryBuilder queryBuilder = getQueryBuilder("insertExpenseCategory");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
-        for (ExpenseCategory category : categoryList) {
-            transaction.addBatch(getColumnsMap("insertExpenseCategory", category));
+        for (ExpenseCategory expenseCategory : validList) {
+            if (expenseCategory.getChartOfAccounts() != null && //
+                    !chartOfAccountsList.contains(expenseCategory.getChartOfAccounts())) {
+                expenseCategory.setChartOfAccounts(null);
+            }
+            transaction.addBatch(getColumnsMap("insertExpenseCategory", expenseCategory));
         }
         executeBatch(transaction);
     }
@@ -131,6 +162,25 @@ public class ExpenseCategoryService extends AbstractService implements
         transaction.setBatchQuery(queryBuilder);
         for (ExpenseCategory category : categoryList) {
             transaction.addBatch(getColumnsMap("updateExpenseCategory", category));
+        }
+        executeBatch(transaction);
+    }
+
+    public void updateChartOfAccounts(ChartOfAccounts chartOfAccounts, List<ExpenseCategory> dataList) {
+        List<ExpenseCategory> filteredList = filteredByStatus(Status.Drafted, dataList);
+        if (filteredList.isEmpty()) {
+            setMessage("Error : Drafted expense categories allowed modify chart of accounts");
+            return;
+        }
+        final String accountCode = chartOfAccounts == null ? null : chartOfAccounts.getCode();
+        for (ExpenseCategory expenseCategory : filteredList) {
+            expenseCategory.setChartOfAccounts(accountCode);
+        }
+        QueryBuilder queryBuilder = getQueryBuilder("updateChartOfAccounts");
+        Transaction transaction = createTransaction();
+        transaction.setBatchQuery(queryBuilder);
+        for (ExpenseCategory expenseCategory : filteredList) {
+            transaction.addBatch(getColumnsMap("updateChartOfAccounts", expenseCategory));
         }
         executeBatch(transaction);
     }

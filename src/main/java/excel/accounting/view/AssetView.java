@@ -114,7 +114,7 @@ public class AssetView extends AbstractView implements ViewHolder {
     }
 
     private void statusChangedEvent(String actionId) {
-        if (!confirmDialog("Change Status", "Are you really wish to change selected assets status?")) {
+        if (!confirmDialog("Are you really wish to change selected assets status?")) {
             return;
         }
         if (confirmedActionId.equals(actionId)) {

@@ -2,11 +2,9 @@ package excel.accounting.ui;
 
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import javafx.event.EventHandler;
 import javafx.scene.control.*;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.input.MouseEvent;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -34,11 +32,19 @@ public class ReadableTableView<T> {
     }
 
     public void addContextMenuItem(final String actionId, String title) {
-        MenuItem menuItem = new MenuItem(title);
         StyleBuilder builder = new StyleBuilder();
         builder.padding(2);
+        MenuItem menuItem = new MenuItem(title);
         menuItem.setStyle(builder.toString());
         menuItem.setOnAction(event -> contextHandler.onActionEvent(actionId));
+        contextMenu.getItems().add(menuItem);
+    }
+
+    public void addContextMenuItemSeparator() {
+        StyleBuilder builder = new StyleBuilder();
+        builder.padding(2);
+        SeparatorMenuItem menuItem = new SeparatorMenuItem();
+        menuItem.setStyle(builder.toString());
         contextMenu.getItems().add(menuItem);
     }
 

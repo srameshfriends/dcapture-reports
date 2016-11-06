@@ -107,8 +107,7 @@ public class IncomeCategoryView extends AbstractView implements ViewHolder {
     }
 
     private void statusChangedEvent(String actionId) {
-        if (!confirmDialog("Update Income Category Status",
-                "Are you really wish to change selected income category Status?")) {
+        if (!confirmDialog("Are you really wish to change status?")) {
             return;
         }
         if (confirmedActionId.equals(actionId)) {

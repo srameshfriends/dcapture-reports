@@ -88,6 +88,10 @@ public abstract class AbstractView implements ViewHolder {
         }
     }
 
+    protected boolean confirmDialog(String description) {
+        return confirmDialog(null, description);
+    }
+
     protected boolean confirmDialog(String title, String description) {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setHeaderText(title);
@@ -98,7 +102,7 @@ public abstract class AbstractView implements ViewHolder {
 
     protected void showErrorMessage(String description) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setHeaderText("Application Error");
+        alert.setHeaderText(null);
         alert.setContentText(description);
         alert.showAndWait();
     }

@@ -5,6 +5,7 @@ import excel.accounting.entity.Currency;
 import excel.accounting.poi.ReadExcelData;
 import excel.accounting.poi.WriteExcelData;
 import excel.accounting.service.CurrencyService;
+import excel.accounting.shared.DataConverter;
 import excel.accounting.shared.FileHelper;
 import excel.accounting.ui.*;
 import javafx.collections.FXCollections;
@@ -17,8 +18,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 import java.io.File;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -56,11 +55,14 @@ public class CurrencyView extends AbstractView implements ViewHolder {
         tableView.addTextColumn("status", "Status").setMinWidth(120);
         tableView.addSelectionChangeListener(viewListener);
         tableView.setContextMenuHandler(viewListener);
-        tableView.addContextMenuItem(draftedActionId, "Set As Drafted");
         tableView.addContextMenuItem(confirmedActionId, "Set As Confirmed");
+        tableView.addContextMenuItemSeparator();
+        tableView.addContextMenuItem(draftedActionId, "Set As Drafted");
         tableView.addContextMenuItem(closedActionId, "Set As Closed");
         tableView.addContextMenuItem(reopenActionId, "Reopen Currency");
-        tableView.addContextMenuItem(exportSelectedActionId, "Export Currency");
+        tableView.addContextMenuItemSeparator();
+        tableView.addContextMenuItem(exportSelectedActionId, "Export As xls");
+        tableView.addContextMenuItemSeparator();
         tableView.addContextMenuItem(deleteActionId, "Delete Currency");
         //
         basePanel = new VBox();
@@ -111,15 +113,15 @@ public class CurrencyView extends AbstractView implements ViewHolder {
     private void changeStatusEvent(String actionId) {
         String message = "";
         if (confirmedActionId.equals(actionId)) {
-            message = "Are you really wish to change to confirmed?";
+            message = "Are you really wish to confirmed?";
         } else if (draftedActionId.equals(actionId)) {
-            message = "Are you really wish to change to drafted?";
+            message = "Are you really wish to drafted?";
         } else if (closedActionId.equals(actionId)) {
-            message = "Are you really wish to change to closed?";
+            message = "Are you really wish to closed?";
         } else if (reopenActionId.equals(actionId)) {
-            message = "Are you really wish to reopen currencies?";
+            message = "Are you really wish to reopen?";
         }
-        if (!confirmDialog("Confirmation", message)) {
+        if (!confirmDialog(message)) {
             return;
         }
         if (confirmedActionId.equals(actionId)) {
@@ -135,7 +137,7 @@ public class CurrencyView extends AbstractView implements ViewHolder {
     }
 
     private void deleteEvent() {
-        if (!confirmDialog("Delete?", "Are you really wish to delete selected currencies?")) {
+        if (!confirmDialog("Are you really wish to delete?")) {
             return;
         }
         currencyService.deleteCurrency(tableView.getSelectedItems());
@@ -168,9 +170,7 @@ public class CurrencyView extends AbstractView implements ViewHolder {
     }
 
     private void exportToExcelEvent(final String actionId) {
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyMMddHHmm");
-        String fileName = simpleDateFormat.format(new Date());
-        fileName = "currency" + fileName + ".xls";
+        String fileName = DataConverter.getUniqueFileName("currency", "xls");
         File file = FileHelper.showSaveFileDialogExcel(fileName, getPrimaryStage());
         if (file == null) {
             return;

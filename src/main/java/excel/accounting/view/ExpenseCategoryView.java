@@ -1,10 +1,13 @@
 package excel.accounting.view;
 
 import excel.accounting.dao.ExpenseCategoryDao;
+import excel.accounting.dialog.ChartOfAccountsDialog;
+import excel.accounting.entity.AccountType;
 import excel.accounting.entity.ExpenseCategory;
 import excel.accounting.poi.ReadExcelData;
 import excel.accounting.poi.WriteExcelData;
 import excel.accounting.service.ExpenseCategoryService;
+import excel.accounting.shared.DataConverter;
 import excel.accounting.shared.FileHelper;
 import excel.accounting.ui.*;
 import javafx.collections.FXCollections;
@@ -17,9 +20,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 import java.io.File;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -52,18 +53,21 @@ public class ExpenseCategoryView extends AbstractView implements ViewHolder {
         expenseCategoryDao = (ExpenseCategoryDao) getService("expenseCategoryDao");
         tableView = new ReadableTableView<ExpenseCategory>().create();
         tableView.addTextColumn("code", "Category Code").setPrefWidth(100);
-        tableView.addTextColumn("name", "Name").setPrefWidth(160);
-        tableView.addTextColumn("chartOfAccounts", "Chart Of Accounts").setPrefWidth(100);
-        tableView.addTextColumn("description", "Description").setMinWidth(200);
+        tableView.addTextColumn("name", "Name").setPrefWidth(200);
+        tableView.addTextColumn("chartOfAccounts", "Chart Of Accounts").setPrefWidth(120);
+        tableView.addTextColumn("description", "Description").setMinWidth(260);
         tableView.addTextColumn("status", "Status").setMinWidth(80);
         tableView.addSelectionChangeListener(viewListener);
         tableView.setContextMenuHandler(viewListener);
-        tableView.addContextMenuItem(confirmedActionId, "Update As Confirmed");
-        tableView.addContextMenuItem(draftedActionId, "Update As Drafted");
-        tableView.addContextMenuItem(closedActionId, "Update As Closed");
-        tableView.addContextMenuItem(reopenActionId, "Reopen Expense Category");
         tableView.addContextMenuItem(updateChartOfAccActionId, "Set Chart Of Accounts");
-        tableView.addContextMenuItem(exportSelectedActionId, "Export Expense Category");
+        tableView.addContextMenuItem(confirmedActionId, "Set As Confirmed");
+        tableView.addContextMenuItemSeparator();
+        tableView.addContextMenuItem(draftedActionId, "Set As Drafted");
+        tableView.addContextMenuItem(closedActionId, "Set As Closed");
+        tableView.addContextMenuItem(reopenActionId, "Reopen Expense Category");
+        tableView.addContextMenuItemSeparator();
+        tableView.addContextMenuItem(exportSelectedActionId, "Export As Xls");
+        tableView.addContextMenuItemSeparator();
         tableView.addContextMenuItem(deleteActionId, "Delete Expense Category");
         //
         basePanel = new VBox();
@@ -112,8 +116,17 @@ public class ExpenseCategoryView extends AbstractView implements ViewHolder {
     }
 
     private void updateStatus(String actionId) {
-        if (!confirmDialog("Update Expense Category Status",
-                "Are you really wish to change selected income category Status?")) {
+        String message = "Error : Unknown action id " + actionId;
+        if (confirmedActionId.equals(actionId)) {
+            message = "Are you really wish to change status as Confirmed?";
+        } else if (draftedActionId.equals(actionId)) {
+            message = "Are you really wish to change status as Drafted?";
+        } else if (closedActionId.equals(actionId)) {
+            message = "Are you really wish to change status as Closed?";
+        } else if (reopenActionId.equals(actionId)) {
+            message = "Are you really wish to reopen expense category?";
+        }
+        if (!confirmDialog(message)) {
             return;
         }
         if (confirmedActionId.equals(actionId)) {
@@ -122,6 +135,8 @@ public class ExpenseCategoryView extends AbstractView implements ViewHolder {
             expenseCategoryService.setAsDrafted(tableView.getSelectedItems());
         } else if (closedActionId.equals(actionId)) {
             expenseCategoryService.setAsClosed(tableView.getSelectedItems());
+        } else if (reopenActionId.equals(actionId)) {
+            expenseCategoryService.reopenExpenseCategory(tableView.getSelectedItems());
         }
         loadRecords();
     }
@@ -141,7 +156,17 @@ public class ExpenseCategoryView extends AbstractView implements ViewHolder {
     }
 
     private void updateChartOfAccounts() {
-       //
+        ChartOfAccountsDialog dialog = new ChartOfAccountsDialog(getApplicationControl(), getPrimaryStage());
+        dialog.setAccountTypes(AccountType.Expense);
+        dialog.showAndWait();
+        if (dialog.isCancelled()) {
+            return;
+        }
+        List<ExpenseCategory> dataList = tableView.getSelectedItems();
+        if (dataList != null) {
+            expenseCategoryService.updateChartOfAccounts(dialog.getSelected(), dataList);
+            loadRecords();
+        }
     }
 
     private void importFromExcelEvent() {
@@ -173,13 +198,8 @@ public class ExpenseCategoryView extends AbstractView implements ViewHolder {
         loadRecords();
     }
 
-    /*
-    id, code, name, status, currency, debit_account, credit_account, description
-    */
     private void exportToExcel(final String actionId) {
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyMMddHHmm");
-        String fileName = simpleDateFormat.format(new Date());
-        fileName = "expense-category" + fileName + ".xls";
+        String fileName = DataConverter.getUniqueFileName("expense-category", "xls");
         File file = FileHelper.showSaveFileDialogExcel(fileName, getPrimaryStage());
         if (file == null) {
             return;

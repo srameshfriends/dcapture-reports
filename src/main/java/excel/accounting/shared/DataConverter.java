@@ -1,5 +1,6 @@
 package excel.accounting.shared;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import excel.accounting.entity.AccountType;
 import excel.accounting.entity.Status;
 import org.apache.commons.lang3.StringUtils;
@@ -96,6 +97,18 @@ public class DataConverter {
         return getBigDecimal(cell, 4);
     }
 
+    public static Boolean getBoolean(Cell cell) {
+        if (CellType.BOOLEAN.equals(cell.getCellTypeEnum())) {
+            return cell.getBooleanCellValue();
+        } else if (CellType.STRING.equals(cell.getCellTypeEnum())) {
+            String value = cell.getStringCellValue();
+            if (value != null && value.toLowerCase().equals("true")) {
+                return Boolean.TRUE;
+            }
+        }
+        return false;
+    }
+
     private static BigDecimal getBigDecimal(Cell cell, int precision) {
         BigDecimal bigDecimal = new BigDecimal(getDouble(cell));
         return bigDecimal.setScale(precision, BigDecimal.ROUND_HALF_UP);
@@ -159,5 +172,11 @@ public class DataConverter {
         process.getOutputStream().close();
         Scanner scanner = new Scanner(process.getInputStream());
         return scanner.next();
+    }
+
+    public static String getUniqueFileName(String fileName, String extension) {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyMMdd-HHmm");
+        String suffix = simpleDateFormat.format(new Date());
+        return fileName + "-" + suffix + "." + extension;
     }
 }

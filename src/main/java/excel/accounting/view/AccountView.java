@@ -5,6 +5,7 @@ import excel.accounting.dialog.CurrencyDialog;
 import excel.accounting.dialog.EnumSelectionDialog;
 import excel.accounting.entity.Account;
 import excel.accounting.entity.AccountType;
+import excel.accounting.shared.DataConverter;
 import excel.accounting.ui.*;
 import excel.accounting.poi.ReadExcelData;
 import excel.accounting.poi.WriteExcelData;
@@ -20,8 +21,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 import java.io.File;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -63,14 +62,16 @@ public class AccountView extends AbstractView implements ViewHolder {
         tableView.addTextColumn("status", "Status").setMinWidth(80);
         tableView.addSelectionChangeListener(viewListener);
         tableView.setContextMenuHandler(viewListener);
-        tableView.addContextMenuItem(draftedActionId, "Set As Drafted");
+        tableView.addContextMenuItem(updateCurrencyActionId, "Set Currency");
+        tableView.addContextMenuItem(updateAccountTypeActionId, "Set Account Type");
         tableView.addContextMenuItem(confirmedActionId, "Set As Confirmed");
+        tableView.addContextMenuItemSeparator();
+        tableView.addContextMenuItem(draftedActionId, "Set As Drafted");
         tableView.addContextMenuItem(closedActionId, "Set As Closed");
         tableView.addContextMenuItem(reopenActionId, "Reopen Account");
-        tableView.addContextMenuItem(updateAccountTypeActionId, "Set Account Type");
-        tableView.addContextMenuItem(updateCurrencyActionId, "Set Currency");
-
-        tableView.addContextMenuItem(exportSelectedActionId, "Export Accounts");
+        tableView.addContextMenuItemSeparator();
+        tableView.addContextMenuItem(exportSelectedActionId, "Export As xls");
+        tableView.addContextMenuItemSeparator();
         tableView.addContextMenuItem(deleteActionId, "Delete Accounts");
         //
         basePanel = new VBox();
@@ -82,8 +83,8 @@ public class AccountView extends AbstractView implements ViewHolder {
         final String importActionId = "importAction", refreshActionId = "refreshAction";
         Button refreshBtn, importBtn, exportBtn;
         refreshBtn = createButton(refreshActionId, "Refresh", event -> loadRecords());
-        importBtn = createButton(importActionId, "Import", event -> importFromExcelEvent());
-        exportBtn = createButton(exportActionId, "Export", event -> exportToExcelEvent(exportActionId));
+        importBtn = createButton(importActionId, "Import", event -> importFromExcel());
+        exportBtn = createButton(exportActionId, "Export", event -> exportToExcel(exportActionId));
         //
         HBox box = new HBox();
         box.setSpacing(12);
@@ -121,15 +122,15 @@ public class AccountView extends AbstractView implements ViewHolder {
     private void updateStatus(String actionId) {
         String message = "Error : Unknown action id " + actionId;
         if (confirmedActionId.equals(actionId)) {
-            message = "Are you really wish to change status as Confirmed?";
+            message = "Are you really wish to Confirmed?";
         } else if (draftedActionId.equals(actionId)) {
-            message = "Are you really wish to change status as Drafted?";
+            message = "Are you really wish to Drafted?";
         } else if (closedActionId.equals(actionId)) {
-            message = "Are you really wish to change status as Closed?";
+            message = "Are you really wish to Closed?";
         } else if (reopenActionId.equals(actionId)) {
-            message = "Are you really wish to reopen accounts?";
+            message = "Are you really wish to Reopen?";
         }
-        if (!confirmDialog("Status Update", message)) {
+        if (!confirmDialog(message)) {
             return;
         }
         if (confirmedActionId.equals(actionId)) {
@@ -145,7 +146,7 @@ public class AccountView extends AbstractView implements ViewHolder {
     }
 
     private void deleteEvent() {
-        if (!confirmDialog("Delete?", "Are you really wish to delete selected accounts?")) {
+        if (!confirmDialog("Are you really wish to delete?")) {
             return;
         }
         accountService.deleteAccount(tableView.getSelectedItems());
@@ -164,7 +165,7 @@ public class AccountView extends AbstractView implements ViewHolder {
     private void updateCurrency() {
         CurrencyDialog dialog = new CurrencyDialog(getApplicationControl(), getPrimaryStage());
         dialog.showAndWait();
-        if (dialog.isCancelled() || dialog.getSelected() == null) {
+        if (dialog.isCancelled()) {
             return;
         }
         List<Account> accountList = tableView.getSelectedItems();
@@ -188,7 +189,7 @@ public class AccountView extends AbstractView implements ViewHolder {
         }
     }
 
-    private void importFromExcelEvent() {
+    private void importFromExcel() {
         setMessage("");
         File file = FileHelper.showOpenFileDialogExcel(getPrimaryStage());
         if (file == null) {
@@ -204,10 +205,8 @@ public class AccountView extends AbstractView implements ViewHolder {
         loadRecords();
     }
 
-    private void exportToExcelEvent(final String actionId) {
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyMMddHHmm");
-        String fileName = simpleDateFormat.format(new Date());
-        fileName = "accounts" + fileName + ".xls";
+    private void exportToExcel(final String actionId) {
+        String fileName = DataConverter.getUniqueFileName("accounts", "xls");
         File file = FileHelper.showSaveFileDialogExcel(fileName, getPrimaryStage());
         if (file == null) {
             return;
@@ -234,7 +233,7 @@ public class AccountView extends AbstractView implements ViewHolder {
                 break;
             case exportActionId:
             case exportSelectedActionId:
-                exportToExcelEvent(actionId);
+                exportToExcel(actionId);
                 break;
             case confirmedActionId:
             case draftedActionId:

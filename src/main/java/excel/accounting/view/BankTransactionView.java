@@ -111,8 +111,7 @@ public class BankTransactionView extends AbstractView implements ViewHolder {
     }
 
     private void statusChangedEvent(String actionId) {
-        if (!confirmDialog("Update Transaction Status",
-                "Are you really wish to change selected transaction Status?")) {
+        if (!confirmDialog("Are you really wish to change Status?")) {
             return;
         }
         if (confirmedActionId.equals(actionId)) {

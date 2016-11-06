@@ -45,7 +45,12 @@ public abstract class AbstractDialog implements EventHandler<ActionEvent> {
     }
 
     private void createBasePanel() {
+        StyleBuilder titleStyle = new StyleBuilder();
+        titleStyle.color("#0000ff");
+        titleStyle.padding(8);
+        titleStyle.fontSize(14);
         Label titleLabel = new Label(getTitle());
+        titleLabel.setStyle(titleStyle.toString());
         basePanel = new VBox();
         StyleBuilder styleBuilder = new StyleBuilder();
         styleBuilder.padding(8);

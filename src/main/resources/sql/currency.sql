@@ -2,7 +2,7 @@
 --
 --createTable
 CREATE TABLE IF NOT EXISTS entity.currency (code VARCHAR(8),
- name VARCHAR(128), decimal_precision INTEGER, symbol VARCHAR(8), status VARCHAR(32), PRIMARY KEY (code));
+ name VARCHAR(128), decimal_precision INTEGER, symbol VARCHAR(8), status VARCHAR(16), PRIMARY KEY (code));
 --loadAll
 SELECT code, name, decimal_precision, symbol, status FROM entity.currency ORDER BY code;
 --findByCode

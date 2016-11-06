@@ -2,7 +2,7 @@
 --
 --createIncomeCategory
 CREATE TABLE IF NOT EXISTS entity.income_category (code VARCHAR(8),
-name VARCHAR(128), description VARCHAR(512), status VARCHAR(32), PRIMARY KEY (code));
+name VARCHAR(128), description VARCHAR(512), status VARCHAR(16), PRIMARY KEY (code));
 --loadAll
 SELECT code, name, description, status FROM entity.income_category ORDER BY code;
 --findCodeList

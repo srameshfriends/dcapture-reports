@@ -2,7 +2,7 @@
 --
 --createExpenseCategory
 CREATE TABLE IF NOT EXISTS entity.expense_category (code VARCHAR(8), name VARCHAR(128),
- chartof_accounts VARCHAR(8), description VARCHAR(256), status VARCHAR(32), PRIMARY KEY (code));
+ chartof_accounts VARCHAR(8), description VARCHAR(256), status VARCHAR(16), PRIMARY KEY (code));
 --loadAll
 SELECT code, name, chartof_accounts, description, status FROM entity.expense_category ORDER BY code;
 --findCodeList

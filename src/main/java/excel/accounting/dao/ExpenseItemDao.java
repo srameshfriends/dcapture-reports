@@ -43,6 +43,7 @@ public class ExpenseItemDao extends AbstractDao<ExpenseItem> implements RowColum
         item.setStatus(DataConverter.getStatus(columns[6]));
         item.setExpenseCategory((String) columns[7]);
         item.setExpenseAccount((String) columns[8]);
+        item.setPaid((Boolean) columns[9]);
         return item;
     }
 

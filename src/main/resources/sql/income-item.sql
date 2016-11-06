@@ -2,7 +2,7 @@
 --
 --createIncomeItem
 CREATE TABLE IF NOT EXISTS entity.income_item (id INTEGER auto_increment, income_date DATE,
-description VARCHAR(512), currency VARCHAR(8), amount DECIMAL, status VARCHAR(32),
+description VARCHAR(512), currency VARCHAR(8), amount DECIMAL, status VARCHAR(16),
 income_category VARCHAR(8), income_account VARCHAR(8), PRIMARY KEY (id));
 --foreignKeyCurrency
 ALTER TABLE entity.income_item ADD FOREIGN KEY (currency) REFERENCES entity.currency(code);

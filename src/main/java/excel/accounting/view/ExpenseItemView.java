@@ -2,11 +2,14 @@ package excel.accounting.view;
 
 import excel.accounting.dialog.AccountDialog;
 import excel.accounting.dialog.CurrencyDialog;
+import excel.accounting.dialog.ExpenseCategoryDialog;
 import excel.accounting.entity.AccountType;
+import excel.accounting.entity.ExpenseCategory;
 import excel.accounting.entity.ExpenseItem;
 import excel.accounting.poi.ReadExcelData;
 import excel.accounting.poi.WriteExcelData;
 import excel.accounting.service.ExpenseItemService;
+import excel.accounting.shared.DataConverter;
 import excel.accounting.shared.FileHelper;
 import excel.accounting.ui.*;
 import javafx.collections.FXCollections;
@@ -19,9 +22,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 import java.io.File;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -36,6 +37,7 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
     private final String draftedActionId = "draftedAction", confirmedActionId = "confirmedAction";
     private final String updateCurrencyActionId = "updateCurrencyAction";
     private final String updateAccountActionId = "updateAccountAction";
+    private final String updateCategoryActionId = "updateCategoryAction";
 
     private ReadableTableView<ExpenseItem> tableView;
     private ExpenseItemService expenseItemService;
@@ -55,18 +57,25 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
         tableView.addTextColumn("expenseDate", "Expense Date").setPrefWidth(100);
         tableView.addTextColumn("referenceNumber", "Reference Num").setPrefWidth(160);
         tableView.addTextColumn("description", "Description").setPrefWidth(380);
+        tableView.addTextColumn("expenseCategory", "Category").setMinWidth(120);
         tableView.addTextColumn("currency", "Currency").setMinWidth(80);
         tableView.addTextColumn("amount", "Amount").setMinWidth(140);
-        tableView.addTextColumn("expenseAccount", "Expense Account").setMinWidth(120);
+        tableView.addTextColumn("expenseAccount", "Account").setMinWidth(120);
+        tableView.addBooleanColumn("paid", "Paid").setMinWidth(60);
         tableView.addTextColumn("status", "Status").setMinWidth(100);
         tableView.addSelectionChangeListener(viewListener);
         tableView.setContextMenuHandler(viewListener);
-        tableView.addContextMenuItem(draftedActionId, "Set As Drafted");
-        tableView.addContextMenuItem(confirmedActionId, "Set As Confirmed");
-        tableView.addContextMenuItem(exportSelectedActionId, "Export Expense Items");
-        tableView.addContextMenuItem(deleteActionId, "Delete Expense Items");
+
+        tableView.addContextMenuItem(updateCategoryActionId, "Update Category");
         tableView.addContextMenuItem(updateCurrencyActionId, "Update Currency");
-        tableView.addContextMenuItem(updateAccountActionId, "Update Expense Account");
+        tableView.addContextMenuItem(updateAccountActionId, "Update Account");
+        tableView.addContextMenuItem(confirmedActionId, "Set As Confirmed");
+        tableView.addContextMenuItemSeparator();
+        tableView.addContextMenuItem(draftedActionId, "Set As Drafted");
+        tableView.addContextMenuItemSeparator();
+        tableView.addContextMenuItem(exportSelectedActionId, "Export as xls");
+        tableView.addContextMenuItemSeparator();
+        tableView.addContextMenuItem(deleteActionId, "Delete Expense items");
         //
         basePanel = new VBox();
         basePanel.getChildren().addAll(createToolbar(), tableView.getTableView());
@@ -116,11 +125,11 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
     private void updateStatus(String actionId) {
         String message = "";
         if (confirmedActionId.equals(actionId)) {
-            message = "Are you really wish to set as confirmed?";
+            message = "Are you really wish to Confirmed?";
         } else if (draftedActionId.equals(actionId)) {
-            message = "Are you really wish to set as drafted?";
+            message = "Are you really wish to Drafted?";
         }
-        if (!confirmDialog("Confirmation", message)) {
+        if (!confirmDialog(message)) {
             return;
         }
         if (confirmedActionId.equals(actionId)) {
@@ -159,8 +168,6 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
         for (ExpenseItem expenseItem : dataList) {
             if (expenseItemService.isValidInsert(expenseItem)) {
                 validList.add(expenseItem);
-            } else {
-                System.out.println("Not Valid");
             }
         }
         if (validList.isEmpty()) {
@@ -183,9 +190,7 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
     }
 
     private void exportToExcel(final String actionId) {
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyMMddHHmm");
-        String fileName = simpleDateFormat.format(new Date());
-        fileName = "expense-item" + fileName + ".xls";
+        String fileName = DataConverter.getUniqueFileName("expense-item", "xls");
         File file = FileHelper.showSaveFileDialogExcel(fileName, getPrimaryStage());
         if (file == null) {
             return;
@@ -227,6 +232,20 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
         loadRecords();
     }
 
+    private void updateExpenseCategory() {
+        List<ExpenseItem> expenseItemList = tableView.getSelectedItems();
+        if (expenseItemList.isEmpty()) {
+            return;
+        }
+        ExpenseCategoryDialog dialog = new ExpenseCategoryDialog(getApplicationControl(), getPrimaryStage());
+        dialog.showAndWait();
+        if (dialog.isCancelled()) {
+            return;
+        }
+        expenseItemService.updateExpenseCategory(dialog.getSelected(), expenseItemList);
+        loadRecords();
+    }
+
     private void onRowSelectionChanged(boolean isRowSelected) {
         tableView.setDisable(!isRowSelected, exportSelectedActionId, draftedActionId, confirmedActionId);
     }
@@ -249,6 +268,9 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
                 break;
             case updateAccountActionId:
                 updateExpenseAccount();
+                break;
+            case updateCategoryActionId:
+                updateExpenseCategory();
                 break;
         }
     }

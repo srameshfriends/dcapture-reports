@@ -2,7 +2,7 @@
 --
 --createTable
 CREATE TABLE IF NOT EXISTS entity.chartof_accounts (code VARCHAR(8),
-name VARCHAR(128), account_type VARCHAR(32), status VARCHAR(32), currency VARCHAR(8), balance DECIMAL,
+name VARCHAR(128), account_type VARCHAR(32), status VARCHAR(16), currency VARCHAR(8), balance DECIMAL,
 description VARCHAR(512), PRIMARY KEY (code));
 --foreignKeyCurrency
 ALTER TABLE entity.chartof_accounts ADD FOREIGN KEY (currency) REFERENCES entity.currency(code);
