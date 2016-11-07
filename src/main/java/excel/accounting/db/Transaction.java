@@ -166,7 +166,6 @@ public class Transaction {
                     statement.setBoolean(entry.getKey(), false);
                 }
             } else {
-                System.out.println(parameter.getClass());
                 statement.setString(entry.getKey(), parameter.toString());
             }
         }
