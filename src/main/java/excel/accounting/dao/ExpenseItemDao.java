@@ -5,10 +5,10 @@ import excel.accounting.db.QueryBuilder;
 import excel.accounting.db.RowColumnsToEntity;
 import excel.accounting.entity.ExpenseItem;
 import excel.accounting.shared.DataConverter;
-import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Expense Item Dao
@@ -35,16 +35,22 @@ public class ExpenseItemDao extends AbstractDao<ExpenseItem> implements RowColum
     public ExpenseItem getEntity(String queryName, Object[] columns) {
         ExpenseItem item = new ExpenseItem();
         item.setCode((String) columns[0]);
-        item.setExpenseDate((Date) columns[1]);
-        item.setReferenceNumber((String) columns[2]);
-        item.setDescription((String) columns[3]);
-        item.setCurrency((String) columns[4]);
-        item.setAmount((BigDecimal) columns[5]);
-        item.setStatus(DataConverter.getStatus(columns[6]));
-        item.setExpenseCategory((String) columns[7]);
-        item.setExpenseAccount((String) columns[8]);
-        item.setPaid((Boolean) columns[9]);
+        item.setGroupCode((String) columns[1]);
+        item.setExpenseDate((Date) columns[2]);
+        item.setReferenceNumber((String) columns[3]);
+        item.setDescription((String) columns[4]);
+        item.setCurrency((String) columns[5]);
+        item.setAmount((BigDecimal) columns[6]);
+        item.setStatus(DataConverter.getStatus(columns[7]));
+        item.setExpenseCategory((String) columns[8]);
+        item.setAccount((String) columns[9]);
+        item.setPaidStatus(DataConverter.getPaidStatus(columns[10]));
         return item;
+    }
+
+    public List<ExpenseItem> loadAll() {
+        QueryBuilder queryBuilder = getQueryBuilder("loadAll");
+        return getDataReader().findRowDataList(queryBuilder, this);
     }
 
     public int findLastSequence() {

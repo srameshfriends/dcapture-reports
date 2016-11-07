@@ -8,6 +8,7 @@ import excel.accounting.shared.DataConverter;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Exchange Rate Dao
@@ -15,12 +16,22 @@ import java.util.Date;
 public class ExchangeRateDao extends AbstractDao<ExchangeRate> implements RowColumnsToEntity<ExchangeRate> {
     @Override
     protected String getTableName() {
-        return "exchange_rate";
+        return "entity.exchange_rate";
     }
 
     @Override
     protected String getSqlFileName() {
         return "exchange-rate";
+    }
+
+    public List<ExchangeRate> loadAll() {
+        QueryBuilder queryBuilder = getQueryBuilder("loadAll");
+        return getDataReader().findRowDataList(queryBuilder, this);
+    }
+
+    public List<String> findCodeList() {
+        QueryBuilder queryBuilder = getQueryBuilder("findCodeList");
+        return getDataReader().findString(queryBuilder);
     }
 
     @Override
@@ -33,7 +44,7 @@ public class ExchangeRateDao extends AbstractDao<ExchangeRate> implements RowCol
     @Override
     public ExchangeRate getEntity(String queryName, Object[] columns) {
         ExchangeRate item = new ExchangeRate();
-        item.setId((Integer) columns[0]);
+        item.setCode((String) columns[0]);
         item.setFetchFrom((String) columns[1]);
         item.setAsOfDate((Date) columns[2]);
         item.setCurrency((String) columns[3]);
@@ -43,5 +54,11 @@ public class ExchangeRateDao extends AbstractDao<ExchangeRate> implements RowCol
         item.setBuyingRate((BigDecimal) columns[7]);
         item.setStatus(DataConverter.getStatus(columns[8]));
         return item;
+    }
+
+    public int findLastSequence() {
+        QueryBuilder builder = getQueryBuilder("findLastSequence");
+        String value = (String) getDataReader().findSingleObject(builder);
+        return value == null ? 0 : DataConverter.getInteger(value.substring(2));
     }
 }

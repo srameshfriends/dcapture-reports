@@ -1,10 +1,10 @@
 package excel.accounting.view;
 
+import excel.accounting.dao.ExpenseItemDao;
 import excel.accounting.dialog.AccountDialog;
 import excel.accounting.dialog.CurrencyDialog;
 import excel.accounting.dialog.ExpenseCategoryDialog;
 import excel.accounting.entity.AccountType;
-import excel.accounting.entity.ExpenseCategory;
 import excel.accounting.entity.ExpenseItem;
 import excel.accounting.poi.ReadExcelData;
 import excel.accounting.poi.WriteExcelData;
@@ -22,7 +22,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -38,8 +37,8 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
     private final String updateCurrencyActionId = "updateCurrencyAction";
     private final String updateAccountActionId = "updateAccountAction";
     private final String updateCategoryActionId = "updateCategoryAction";
-
     private ReadableTableView<ExpenseItem> tableView;
+    private ExpenseItemDao expenseItemDao;
     private ExpenseItemService expenseItemService;
     private VBox basePanel;
 
@@ -51,18 +50,20 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
     @Override
     public Node createControl() {
         ViewListener viewListener = new ViewListener();
+        expenseItemDao = (ExpenseItemDao) getService("expenseItemDao");
         expenseItemService = (ExpenseItemService) getService("expenseItemService");
         tableView = new ReadableTableView<ExpenseItem>().create();
         tableView.addTextColumn("code", "Item Code").setPrefWidth(90);
+        tableView.addTextColumn("groupCode", "Group Code").setPrefWidth(90);
         tableView.addTextColumn("expenseDate", "Expense Date").setPrefWidth(100);
         tableView.addTextColumn("referenceNumber", "Reference Num").setPrefWidth(160);
         tableView.addTextColumn("description", "Description").setPrefWidth(380);
         tableView.addTextColumn("expenseCategory", "Category").setMinWidth(120);
         tableView.addTextColumn("currency", "Currency").setMinWidth(80);
         tableView.addTextColumn("amount", "Amount").setMinWidth(140);
-        tableView.addTextColumn("expenseAccount", "Account").setMinWidth(120);
-        tableView.addBooleanColumn("paid", "Paid").setMinWidth(60);
+        tableView.addTextColumn("account", "Account").setMinWidth(120);
         tableView.addTextColumn("status", "Status").setMinWidth(100);
+        tableView.addEnumColumn("paidStatus", "Paid").setMinWidth(60);
         tableView.addSelectionChangeListener(viewListener);
         tableView.setContextMenuHandler(viewListener);
 
@@ -86,7 +87,7 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
         final String importActionId = "importAction", refreshActionId = "refreshAction";
         Button refreshBtn, importBtn, exportBtn;
         refreshBtn = createButton(refreshActionId, "Refresh", event -> loadRecords());
-        importBtn = createButton(importActionId, "Import", event -> importFromExcelEvent());
+        importBtn = createButton(importActionId, "Import", event -> importFromExcel());
         exportBtn = createButton(exportActionId, "Export", event -> exportToExcel(exportActionId));
         //
         HBox box = new HBox();
@@ -146,7 +147,7 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
     }
 
     private void loadRecords() {
-        List<ExpenseItem> categoryList = expenseItemService.loadAll();
+        List<ExpenseItem> categoryList = expenseItemDao.loadAll();
         if (categoryList == null || categoryList.isEmpty()) {
             return;
         }
@@ -154,7 +155,7 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
         tableView.setItems(observableList);
     }
 
-    private void importFromExcelEvent() {
+    private void importFromExcel() {
         File file = FileHelper.showOpenFileDialogExcel(getPrimaryStage());
         if (file == null) {
             return;
@@ -162,31 +163,10 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
         ReadExcelData<ExpenseItem> readExcelData = new ReadExcelData<>("", file, expenseItemService);
         List<ExpenseItem> dataList = readExcelData.readRowData(expenseItemService.getColumnNames().length, true);
         if (dataList.isEmpty()) {
-            return;
+            showErrorMessage("Valid expense items not found");
+        } else if (expenseItemService.insertExpenseItem(dataList)) {
+            loadRecords();
         }
-        List<ExpenseItem> validList = new ArrayList<>();
-        for (ExpenseItem expenseItem : dataList) {
-            if (expenseItemService.isValidInsert(expenseItem)) {
-                validList.add(expenseItem);
-            }
-        }
-        if (validList.isEmpty()) {
-            showErrorMessage("Valid Expense items not found");
-            return;
-        }
-        List<String> existingCodeList = expenseItemService.findExpenseCodeList();
-        dataList = new ArrayList<>();
-        for (ExpenseItem expenseItem : validList) {
-            if (!existingCodeList.contains(expenseItem.getCode())) {
-                dataList.add(expenseItem);
-            }
-        }
-        if (dataList.isEmpty()) {
-            showErrorMessage("Valid expense items are already exists");
-            return;
-        }
-        expenseItemService.insertExpenseItem(dataList);
-        loadRecords();
     }
 
     private void exportToExcel(final String actionId) {
@@ -200,7 +180,7 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
             List<ExpenseItem> selected = tableView.getSelectedItems();
             writeExcelData.writeRowData(selected);
         } else {
-            writeExcelData.writeRowData(expenseItemService.loadAll());
+            writeExcelData.writeRowData(expenseItemDao.loadAll());
         }
     }
 

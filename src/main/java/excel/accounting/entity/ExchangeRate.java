@@ -10,19 +10,18 @@ import java.util.Date;
  * @since Oct, 2016
  */
 public class ExchangeRate {
-    private int id;
-    private String fetchFrom, currency, exchangeCurrency;
+    private String code, fetchFrom, currency, exchangeCurrency;
     private Date asOfDate;
     private Status status;
     private int unit;
     private BigDecimal sellingRate, buyingRate;
 
-    public int getId() {
-        return id;
+    public String getCode() {
+        return code;
     }
 
-    public void setId(int id) {
-        this.id = id;
+    public void setCode(String code) {
+        this.code = code;
     }
 
     public String getFetchFrom() {

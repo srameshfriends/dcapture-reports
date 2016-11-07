@@ -9,9 +9,7 @@ import excel.accounting.db.Transaction;
 import excel.accounting.entity.*;
 import excel.accounting.poi.ExcelTypeConverter;
 import excel.accounting.dao.ExpenseItemDao;
-import excel.accounting.shared.DataConverter;
-import excel.accounting.shared.DataValidator;
-import excel.accounting.shared.StringRules;
+import excel.accounting.shared.*;
 import org.apache.poi.ss.usermodel.Cell;
 
 import java.util.ArrayList;
@@ -66,21 +64,6 @@ public class ExpenseItemService extends AbstractService implements
         return expenseItemDao;
     }
 
-    public boolean isValidInsert(ExpenseItem expenseItem) {
-        return !(expenseItem.getCode() == null || expenseItem.getExpenseDate() == null ||
-                expenseItem.getDescription() == null || !DataValidator.isMoreThenZero(expenseItem.getAmount()));
-    }
-
-    public List<ExpenseItem> loadAll() {
-        QueryBuilder queryBuilder = getQueryBuilder("loadAll");
-        return getDataReader().findRowDataList(queryBuilder, getExpenseItemDao());
-    }
-
-    public List<String> findExpenseCodeList() {
-        QueryBuilder queryBuilder = getQueryBuilder("findExpenseCodeList");
-        return getDataReader().findString(queryBuilder);
-    }
-
     private void updateStatus(List<ExpenseItem> itemList) {
         QueryBuilder queryBuilder = getQueryBuilder("updateStatus");
         Transaction transaction = createTransaction();
@@ -109,7 +92,7 @@ public class ExpenseItemService extends AbstractService implements
     }
 
     private boolean confirmValidate(ExpenseItem expenseItem) {
-        return !(expenseItem.getCurrency() == null || expenseItem.getExpenseAccount() == null ||
+        return !(expenseItem.getCurrency() == null || expenseItem.getAccount() == null ||
                 expenseItem.getExpenseCategory() == null);
     }
 
@@ -136,9 +119,8 @@ public class ExpenseItemService extends AbstractService implements
                 !DataValidator.isMoreThenZero(item.getAmount()));
     }
 
-    public void insertExpenseItem(List<ExpenseItem> itemList) {
-        setMessage("Expense date, description and amount should not be empty");
-        //
+    public boolean insertExpenseItem(List<ExpenseItem> itemList) {
+        setMessage("");
         int sequence = getExpenseItemDao().findLastSequence();
         List<ExpenseItem> validList = new ArrayList<>();
         for (ExpenseItem expenseItem : itemList) {
@@ -148,7 +130,7 @@ public class ExpenseItemService extends AbstractService implements
         }
         if (validList.isEmpty()) {
             setMessage("Valid accounts not found");
-            return;
+            return false;
         }
         List<String> currencyList = getCurrencyDao().findCodeList();
         List<String> accountList = getAccountDao().findCodeList();
@@ -157,14 +139,20 @@ public class ExpenseItemService extends AbstractService implements
         QueryBuilder queryBuilder = getQueryBuilder("insertExpenseItem");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
+        StringRules rules = new StringRules();
+        rules.setFirstCharAlphaOnly(true);
+        rules.setMinMaxLength(2, 6);
+        rules.setRulesType(RulesType.Alphanumeric);
         for (ExpenseItem expenseItem : validList) {
-            sequence += 1;
-            expenseItem.setCode(DataConverter.getSequence("EI", sequence));
+            if(!rules.isValid(expenseItem.getCode())) {
+                sequence += 1;
+                expenseItem.setCode(EntitySequence.getExpenseItemCode(sequence));
+            }
             if (expenseItem.getCurrency() != null && !currencyList.contains(expenseItem.getCurrency())) {
                 expenseItem.setCurrency(null);
             }
-            if (expenseItem.getExpenseAccount() != null && !accountList.contains(expenseItem.getExpenseAccount())) {
-                expenseItem.setExpenseAccount(null);
+            if (expenseItem.getAccount() != null && !accountList.contains(expenseItem.getAccount())) {
+                expenseItem.setAccount(null);
             }
             if (expenseItem.getExpenseCategory() != null && !categoryList.contains(expenseItem.getExpenseCategory())) {
                 expenseItem.setCurrency(null);
@@ -172,6 +160,7 @@ public class ExpenseItemService extends AbstractService implements
             transaction.addBatch(getColumnsMap("insertExpenseItem", expenseItem));
         }
         executeBatch(transaction);
+        return true;
     }
 
     public void deleteExpenseItem(List<ExpenseItem> itemList) {
@@ -194,7 +183,7 @@ public class ExpenseItemService extends AbstractService implements
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (ExpenseItem expenseItem : expenseItemList) {
-            expenseItem.setExpenseAccount(expenseCode);
+            expenseItem.setAccount(expenseCode);
             transaction.addBatch(getColumnsMap("updateExpenseAccount", expenseItem));
         }
         executeBatch(transaction);
@@ -236,15 +225,16 @@ public class ExpenseItemService extends AbstractService implements
         Map<Integer, Object> map = new HashMap<>();
         if ("insertExpenseItem".equals(queryName)) {
             map.put(1, type.getCode());
-            map.put(2, type.getExpenseDate());
-            map.put(3, type.getReferenceNumber());
-            map.put(4, type.getDescription());
-            map.put(5, type.getCurrency());
-            map.put(6, type.getAmount());
-            map.put(7, Status.Drafted.toString());
-            map.put(8, type.getExpenseCategory());
-            map.put(9, type.getExpenseAccount());
-            map.put(10, type.getPaid());
+            map.put(2, type.getGroupCode());
+            map.put(3, type.getExpenseDate());
+            map.put(4, type.getReferenceNumber());
+            map.put(5, type.getDescription());
+            map.put(6, type.getCurrency());
+            map.put(7, type.getAmount());
+            map.put(8, Status.Drafted);
+            map.put(9, type.getExpenseCategory());
+            map.put(10, type.getAccount());
+            map.put(11, PaidStatus.Unpaid);
         } else if ("deleteExpenseItem".equals(queryName)) {
             map.put(1, type.getCode());
         } else if ("updateStatus".equals(queryName)) {
@@ -254,7 +244,7 @@ public class ExpenseItemService extends AbstractService implements
             map.put(1, type.getCurrency());
             map.put(2, type.getCode());
         } else if ("updateExpenseAccount".equals(queryName)) {
-            map.put(1, type.getExpenseAccount());
+            map.put(1, type.getAccount());
             map.put(2, type.getCode());
         } else if ("updateExpenseCategory".equals(queryName)) {
             map.put(1, type.getExpenseCategory());
@@ -265,39 +255,41 @@ public class ExpenseItemService extends AbstractService implements
 
     @Override
     public String[] getColumnNames() {
-        return new String[]{"Expense Code", "Expense Date", "Reference", "Description", "Currency", "Amount", "Status",
-                "Category", "Account", "Paid Info"};
+        return new String[]{"Expense Code", "Group Code", "Expense Date", "Reference", "Description", "Currency",
+                "Amount", "Status", "Category", "Account", "Paid"};
     }
 
     @Override
     public ExpenseItem getExcelType(String type, Cell[] array) {
         ExpenseItem item = new ExpenseItem();
         item.setCode(DataConverter.getString(array[0]));
-        item.setExpenseDate(DataConverter.getDate(array[1]));
-        item.setReferenceNumber(DataConverter.getString(array[2]));
-        item.setDescription(DataConverter.getString(array[3]));
-        item.setCurrency(DataConverter.getString(array[4]));
-        item.setAmount(DataConverter.getBigDecimal(array[5]));
-        item.setStatus(DataConverter.getStatus(array[6]));
-        item.setExpenseCategory(DataConverter.getString(array[7]));
-        item.setExpenseAccount(DataConverter.getString(array[8]));
-        item.setPaid(DataConverter.getBoolean(array[9]));
+        item.setGroupCode(DataConverter.getString(array[1]));
+        item.setExpenseDate(DataConverter.getDate(array[2]));
+        item.setReferenceNumber(DataConverter.getString(array[3]));
+        item.setDescription(DataConverter.getString(array[4]));
+        item.setCurrency(DataConverter.getString(array[5]));
+        item.setAmount(DataConverter.getBigDecimal(array[6]));
+        item.setStatus(DataConverter.getStatus(array[7]));
+        item.setExpenseCategory(DataConverter.getString(array[8]));
+        item.setAccount(DataConverter.getString(array[9]));
+        item.setPaidStatus(DataConverter.getPaidStatus(array[10]));
         return item;
     }
 
     @Override
     public Object[] getExcelRow(String type, ExpenseItem item) {
-        Object[] cellData = new Object[10];
+        Object[] cellData = new Object[11];
         cellData[0] = item.getCode();
-        cellData[1] = item.getExpenseDate();
-        cellData[2] = item.getReferenceNumber();
-        cellData[3] = item.getDescription();
-        cellData[4] = item.getCurrency();
-        cellData[5] = item.getAmount();
-        cellData[6] = item.getStatus();
-        cellData[7] = item.getExpenseCategory();
-        cellData[8] = item.getExpenseAccount();
-        cellData[9] = item.getPaid();
+        cellData[1] = item.getGroupCode();
+        cellData[2] = item.getExpenseDate();
+        cellData[3] = item.getReferenceNumber();
+        cellData[4] = item.getDescription();
+        cellData[5] = item.getCurrency();
+        cellData[6] = item.getAmount();
+        cellData[7] = item.getStatus();
+        cellData[8] = item.getExpenseCategory();
+        cellData[9] = item.getAccount();
+        cellData[10] = item.getPaidStatus();
         return cellData;
     }
 

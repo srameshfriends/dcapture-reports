@@ -2,6 +2,7 @@ package excel.accounting.shared;
 
 import com.sun.org.apache.xpath.internal.operations.Bool;
 import excel.accounting.entity.AccountType;
+import excel.accounting.entity.PaidStatus;
 import excel.accounting.entity.Status;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
@@ -37,22 +38,12 @@ public class DataConverter {
         return 0;
     }
 
-    public static String getSequence(String prefix, int sequence) {
-        String value = "";
-        if (10 > sequence) {
-            value = "000";
-        } else if (9 < sequence && 100 > sequence) {
-            value = "00";
-        } else if (99 < sequence && 1000 > sequence) {
-            value = "0";
-        } else if (999 < sequence && 10000 > sequence) {
-            value = "";
-        }
-        return value + prefix + sequence;
-    }
-
     public static Status getStatus(Object status) {
         return status == null ? Status.Drafted : getEnum(Status.class, status.toString());
+    }
+
+    public static PaidStatus getPaidStatus(Object paidStatus) {
+        return paidStatus == null ? null : getEnum(PaidStatus.class, paidStatus.toString());
     }
 
     public static AccountType getAccountType(Object accountType) {
@@ -115,12 +106,12 @@ public class DataConverter {
     }
 
     public static Date getDate(Cell cell) {
-        if (HSSFDateUtil.isCellDateFormatted(cell)) {
-            return cell.getDateCellValue();
-        } else if (CellType.NUMERIC.equals(cell.getCellTypeEnum())) {
+        if (CellType.NUMERIC.equals(cell.getCellTypeEnum())) {
             Double decimal = cell.getNumericCellValue();
             long dateTime = decimal.longValue();
             return dateTime == 0 ? null : new Date(dateTime);
+        } else if (HSSFDateUtil.isCellDateFormatted(cell)) {
+            return cell.getDateCellValue();
         } else {
             try {
                 String value = cell.getStringCellValue();

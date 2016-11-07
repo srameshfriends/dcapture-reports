@@ -7,10 +7,11 @@ import java.util.Date;
  * Payment
  */
 public class Payment {
-    private String code, description, expenseItem, expenseCurrency, paymentCurrency, paymentAccount;
-    private int paymentIndex;
+    private String code, dataType, dataCode, description, currency, account;
+    private int instalment;
     private Date paymentDate;
-    private BigDecimal exchangeRate, expenseAmount, paymentAmount;
+    private int exchangeUnit;
+    private BigDecimal exchangeRate, amount;
     private Status status;
 
     public String getCode() {
@@ -21,6 +22,14 @@ public class Payment {
         this.code = code;
     }
 
+    public String getDataType() {
+        return dataType;
+    }
+
+    public void setDataType(String dataType) {
+        this.dataType = dataType;
+    }
+
     public String getDescription() {
         return description;
     }
@@ -29,36 +38,20 @@ public class Payment {
         this.description = description;
     }
 
-    public String getExpenseItem() {
-        return expenseItem;
+    public String getDataCode() {
+        return dataCode;
     }
 
-    public void setExpenseItem(String expenseItem) {
-        this.expenseItem = expenseItem;
+    public void setDataCode(String dataCode) {
+        this.dataCode = dataCode;
     }
 
-    public String getExpenseCurrency() {
-        return expenseCurrency;
+    public int getInstalment() {
+        return instalment;
     }
 
-    public void setExpenseCurrency(String expenseCurrency) {
-        this.expenseCurrency = expenseCurrency;
-    }
-
-    public String getPaymentCurrency() {
-        return paymentCurrency;
-    }
-
-    public void setPaymentCurrency(String paymentCurrency) {
-        this.paymentCurrency = paymentCurrency;
-    }
-
-    public int getPaymentIndex() {
-        return paymentIndex;
-    }
-
-    public void setPaymentIndex(int paymentIndex) {
-        this.paymentIndex = paymentIndex;
+    public void setInstalment(int instalment) {
+        this.instalment = instalment;
     }
 
     public Date getPaymentDate() {
@@ -77,28 +70,36 @@ public class Payment {
         this.exchangeRate = exchangeRate;
     }
 
-    public BigDecimal getExpenseAmount() {
-        return expenseAmount;
+    public BigDecimal getAmount() {
+        return amount;
     }
 
-    public void setExpenseAmount(BigDecimal expenseAmount) {
-        this.expenseAmount = expenseAmount;
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
     }
 
-    public BigDecimal getPaymentAmount() {
-        return paymentAmount;
+    public String getCurrency() {
+        return currency;
     }
 
-    public void setPaymentAmount(BigDecimal paymentAmount) {
-        this.paymentAmount = paymentAmount;
+    public void setCurrency(String currency) {
+        this.currency = currency;
     }
 
-    public String getPaymentAccount() {
-        return paymentAccount;
+    public int getExchangeUnit() {
+        return exchangeUnit;
     }
 
-    public void setPaymentAccount(String paymentAccount) {
-        this.paymentAccount = paymentAccount;
+    public void setExchangeUnit(int exchangeUnit) {
+        this.exchangeUnit = exchangeUnit;
+    }
+
+    public String getAccount() {
+        return account;
+    }
+
+    public void setAccount(String account) {
+        this.account = account;
     }
 
     public Status getStatus() {

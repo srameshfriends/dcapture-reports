@@ -11,10 +11,10 @@ import java.util.Date;
  */
 public class ExpenseItem {
     private Date expenseDate;
-    private String code, referenceNumber, description, currency, expenseCategory, expenseAccount;
-    private BigDecimal amount;
+    private String code, groupCode, referenceNumber, description, currency, expenseCategory, account;
+    private BigDecimal amount, paidAmount;
     private Status status;
-    private Boolean paid;
+    private PaidStatus paidStatus;
 
     public String getCode() {
         return code;
@@ -22,6 +22,14 @@ public class ExpenseItem {
 
     public void setCode(String code) {
         this.code = code;
+    }
+
+    public String getGroupCode() {
+        return groupCode;
+    }
+
+    public void setGroupCode(String groupCode) {
+        this.groupCode = groupCode;
     }
 
     public Date getExpenseDate() {
@@ -56,6 +64,14 @@ public class ExpenseItem {
         this.amount = amount;
     }
 
+    public BigDecimal getPaidAmount() {
+        return paidAmount;
+    }
+
+    public void setPaidAmount(BigDecimal paidAmount) {
+        this.paidAmount = paidAmount;
+    }
+
     public String getCurrency() {
         return currency;
     }
@@ -80,19 +96,19 @@ public class ExpenseItem {
         this.expenseCategory = expenseCategory;
     }
 
-    public String getExpenseAccount() {
-        return expenseAccount;
+    public String getAccount() {
+        return account;
     }
 
-    public void setExpenseAccount(String expenseAccount) {
-        this.expenseAccount = expenseAccount;
+    public void setAccount(String account) {
+        this.account = account;
     }
 
-    public Boolean getPaid() {
-        return paid;
+    public PaidStatus getPaidStatus() {
+        return paidStatus;
     }
 
-    public void setPaid(Boolean paid) {
-        this.paid = paid;
+    public void setPaidStatus(PaidStatus paidStatus) {
+        this.paidStatus = paidStatus;
     }
 }

@@ -8,7 +8,6 @@ import excel.accounting.entity.Payment;
 import excel.accounting.entity.Status;
 import excel.accounting.poi.ExcelTypeConverter;
 import excel.accounting.shared.DataConverter;
-import excel.accounting.shared.DataValidator;
 import excel.accounting.shared.StringRules;
 import org.apache.poi.ss.usermodel.Cell;
 
@@ -65,8 +64,8 @@ public class PaymentService extends AbstractService implements ExcelTypeConverte
     public void insertPayment(List<Payment> paymentList) {
         List<Payment> validList = new ArrayList<>();
         int index = 0;
-        for(Payment payment : paymentList) {
-            if(insertValid(index + 1, payment)) {
+        for (Payment payment : paymentList) {
+            if (insertValid(index + 1, payment)) {
                 validList.add(payment);
             }
             index += 1;
@@ -145,17 +144,17 @@ public class PaymentService extends AbstractService implements ExcelTypeConverte
         Map<Integer, Object> map = new HashMap<>();
         if ("insertPayment".equals(queryName)) {
             map.put(1, payment.getCode());
-            map.put(2, payment.getPaymentIndex());
-            map.put(3, payment.getPaymentDate());
-            map.put(4, payment.getDescription());
-            map.put(5, payment.getExpenseItem());
-            map.put(6, payment.getExpenseCurrency());
-            map.put(7, payment.getExpenseAmount());
-            map.put(8, payment.getExchangeRate());
-            map.put(9, payment.getPaymentCurrency());
-            map.put(10, payment.getPaymentAmount());
-            map.put(11, payment.getPaymentAccount());
-            map.put(12, Status.Drafted.toString());
+            map.put(2, payment.getDataType());
+            map.put(3, payment.getDataCode());
+            map.put(4, payment.getPaymentDate());
+            map.put(5, payment.getInstalment());
+            map.put(6, payment.getDescription());
+            map.put(7, payment.getCurrency());
+            map.put(8, payment.getAmount());
+            map.put(9, payment.getAccount());
+            map.put(10, payment.getExchangeRate());
+            map.put(11, payment.getExchangeUnit());
+            map.put(12, Status.Drafted);
         } else if ("deletePayment".equals(queryName)) {
             map.put(1, payment.getCode());
         } else if ("updateStatus".equals(queryName)) {
@@ -167,24 +166,24 @@ public class PaymentService extends AbstractService implements ExcelTypeConverte
 
     @Override
     public String[] getColumnNames() {
-        return new String[]{"Code", "Instalment", "Date", "Description", "Expense Item", "Expense Currency",
-                "Expense Amount", "Exchange Rate", "Payment Currency", "Payment Amount", "Payment Account", "Status"};
+        return new String[]{"Code", "Type", "Reference", "Date", "Instalment", "Description", "Currency",
+                "Amount", "Account", "Exchange Rate", "Exchange Unit", "Status"};
     }
 
     @Override
     public Payment getExcelType(String type, Cell[] array) {
         Payment payment = new Payment();
         payment.setCode(DataConverter.getString(array[0]));
-        payment.setPaymentIndex(DataConverter.getInteger(array[1]));
-        payment.setPaymentDate(DataConverter.getDate(array[2]));
-        payment.setDescription(DataConverter.getString(array[3]));
-        payment.setExpenseItem(DataConverter.getString(array[4]));
-        payment.setExpenseCurrency(DataConverter.getString(array[5]));
-        payment.setExpenseAmount(DataConverter.getBigDecimal(array[6]));
-        payment.setExchangeRate(DataConverter.getBigDecimal(array[7]));
-        payment.setPaymentCurrency(DataConverter.getString(array[8]));
-        payment.setPaymentAmount(DataConverter.getBigDecimal(array[9]));
-        payment.setPaymentAccount(DataConverter.getString(array[10]));
+        payment.setDataType(DataConverter.getString(array[1]));
+        payment.setDataCode(DataConverter.getString(array[2]));
+        payment.setPaymentDate(DataConverter.getDate(array[3]));
+        payment.setInstalment(DataConverter.getInteger(array[4]));
+        payment.setDescription(DataConverter.getString(array[5]));
+        payment.setCurrency(DataConverter.getString(array[6]));
+        payment.setAmount(DataConverter.getBigDecimal(array[7]));
+        payment.setAccount(DataConverter.getString(array[8]));
+        payment.setExchangeRate(DataConverter.getBigDecimal(array[9]));
+        payment.setExchangeUnit(DataConverter.getInteger(array[10]));
         payment.setStatus(DataConverter.getStatus(array[11]));
         return payment;
     }
@@ -193,16 +192,16 @@ public class PaymentService extends AbstractService implements ExcelTypeConverte
     public Object[] getExcelRow(String type, Payment payment) {
         Object[] objects = new Object[12];
         objects[0] = payment.getCode();
-        objects[1] = payment.getPaymentIndex();
-        objects[2] = payment.getPaymentDate();
-        objects[3] = payment.getDescription();
-        objects[4] = payment.getExpenseItem();
-        objects[5] = payment.getExpenseCurrency();
-        objects[6] = payment.getExpenseAmount();
-        objects[7] = payment.getExchangeRate();
-        objects[8] = payment.getPaymentCurrency();
-        objects[9] = payment.getPaymentAmount();
-        objects[10] = payment.getPaymentAccount();
+        objects[1] = payment.getDataType();
+        objects[2] = payment.getDataCode();
+        objects[3] = payment.getPaymentDate();
+        objects[4] = payment.getInstalment();
+        objects[5] = payment.getDescription();
+        objects[6] = payment.getCurrency();
+        objects[7] = payment.getAmount();
+        objects[8] = payment.getAccount();
+        objects[9] = payment.getExchangeRate();
+        objects[10] = payment.getExchangeUnit();
         objects[11] = payment.getStatus().toString();
         return objects;
     }

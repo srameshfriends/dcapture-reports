@@ -8,6 +8,7 @@ import excel.accounting.shared.DataConverter;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
+import java.util.StringJoiner;
 
 /**
  * Payment Dao
@@ -37,16 +38,16 @@ public class PaymentDao extends AbstractDao<Payment> implements RowColumnsToEnti
     public Payment getEntity(String queryName, Object[] columns) {
         Payment payment = new Payment();
         payment.setCode((String) columns[0]);
-        payment.setPaymentIndex((Integer) columns[1]);
-        payment.setPaymentDate((Date) columns[2]);
-        payment.setDescription((String) columns[3]);
-        payment.setExpenseItem((String) columns[4]);
-        payment.setExpenseCurrency((String) columns[5]);
-        payment.setExpenseAmount((BigDecimal) columns[6]);
-        payment.setExchangeRate((BigDecimal) columns[7]);
-        payment.setPaymentCurrency((String) columns[8]);
-        payment.setPaymentAmount((BigDecimal) columns[9]);
-        payment.setPaymentAccount((String) columns[10]);
+        payment.setDataType((String) columns[1]);
+        payment.setDataCode((String) columns[2]);
+        payment.setInstalment((Integer) columns[3]);
+        payment.setPaymentDate((Date) columns[4]);
+        payment.setDescription((String) columns[5]);
+        payment.setCurrency((String) columns[6]);
+        payment.setAmount((BigDecimal) columns[7]);
+        payment.setAccount((String) columns[8]);
+        payment.setExchangeRate((BigDecimal) columns[9]);
+        payment.setExchangeUnit((Integer) columns[10]);
         payment.setStatus(DataConverter.getStatus(columns[11]));
         return payment;
     }

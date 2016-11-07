@@ -1,9 +1,11 @@
 package excel.accounting.view;
 
+import excel.accounting.dao.ExchangeRateDao;
 import excel.accounting.entity.ExchangeRate;
 import excel.accounting.poi.ReadExcelData;
 import excel.accounting.poi.WriteExcelData;
 import excel.accounting.service.ExchangeRateService;
+import excel.accounting.shared.DataConverter;
 import excel.accounting.shared.FileHelper;
 import excel.accounting.ui.*;
 import javafx.collections.FXCollections;
@@ -16,9 +18,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 import java.io.File;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -30,10 +29,10 @@ import java.util.List;
 public class ExchangeRateView extends AbstractView implements ViewHolder {
     private final String exportActionId = "exportAction", deleteActionId = "deleteAction";
     private final String exportSelectedActionId = "exportSelectedAction";
-    private final String confirmedActionId = "confirmedAction";
-    private final String closedActionId = "closedAction", draftedActionId = "draftedAction";
+    private final String confirmedActionId = "confirmedAction", draftedActionId = "draftedAction";
 
     private ReadableTableView<ExchangeRate> tableView;
+    private ExchangeRateDao exchangeRateDao;
     private ExchangeRateService exchangeRateService;
     private VBox basePanel;
 
@@ -45,9 +44,10 @@ public class ExchangeRateView extends AbstractView implements ViewHolder {
     @Override
     public Node createControl() {
         ViewListener viewListener = new ViewListener();
+        exchangeRateDao = (ExchangeRateDao) getService("exchangeRateDao");
         exchangeRateService = (ExchangeRateService) getService("exchangeRateService");
         tableView = new ReadableTableView<ExchangeRate>().create();
-        tableView.addIntegerColumn("id", "Id").setPrefWidth(60);
+        tableView.addTextColumn("code", "Code").setPrefWidth(60);
         tableView.addTextColumn("fetchFrom", "Reference From").setPrefWidth(200);
         tableView.addDateColumn("asOfDate", "Date").setPrefWidth(100);
         tableView.addTextColumn("currency", "Currency").setMinWidth(80);
@@ -55,13 +55,15 @@ public class ExchangeRateView extends AbstractView implements ViewHolder {
         tableView.addIntegerColumn("unit", "Rate Unit").setMinWidth(80);
         tableView.addDecimalColumn("sellingRate", "Selling Rate").setMinWidth(100);
         tableView.addDecimalColumn("buyingRate", "Buying Rate").setMinWidth(100);
-        tableView.addTextColumn("status", "Status").setMinWidth(100);
+        tableView.addEnumColumn("status", "Status").setMinWidth(100);
         tableView.addSelectionChangeListener(viewListener);
         tableView.setContextMenuHandler(viewListener);
-        tableView.addContextMenuItem(draftedActionId, "Update As Drafted");
-        tableView.addContextMenuItem(confirmedActionId, "Update As Confirmed");
-        tableView.addContextMenuItem(closedActionId, "Update As Closed");
+        tableView.addContextMenuItem(confirmedActionId, "Set As Confirmed");
+        tableView.addContextMenuItemSeparator();
+        tableView.addContextMenuItem(draftedActionId, "Set As Drafted");
+        tableView.addContextMenuItemSeparator();
         tableView.addContextMenuItem(exportSelectedActionId, "Export Exchange Rate");
+        tableView.addContextMenuItemSeparator();
         tableView.addContextMenuItem(deleteActionId, "Delete Exchange Rate");
         //
         basePanel = new VBox();
@@ -73,8 +75,8 @@ public class ExchangeRateView extends AbstractView implements ViewHolder {
         final String importActionId = "importAction", refreshActionId = "refreshAction";
         Button refreshBtn, importBtn, exportBtn;
         refreshBtn = createButton(refreshActionId, "Refresh", event -> loadRecords());
-        importBtn = createButton(importActionId, "Import", event -> importFromExcelEvent());
-        exportBtn = createButton(exportActionId, "Export", event -> exportToExcelEvent(exportActionId));
+        importBtn = createButton(importActionId, "Import", event -> importFromExcel());
+        exportBtn = createButton(exportActionId, "Export", event -> exportToExcel(exportActionId));
         //
         HBox box = new HBox();
         box.setSpacing(12);
@@ -109,27 +111,31 @@ public class ExchangeRateView extends AbstractView implements ViewHolder {
         basePanel.setPrefHeight(height);
     }
 
-    private void statusChangedEvent(String actionId) {
-        if (!confirmDialog("Are you really wish to change status?")) {
+    private void updateStatus(String actionId) {
+        String message = "";
+        if (confirmedActionId.equals(actionId)) {
+            message = "Are you really wish to Confirmed?";
+        } else if (draftedActionId.equals(actionId)) {
+            message = "Are you really wish to Drafted?";
+        }
+        if (!confirmDialog(message)) {
             return;
         }
         if (confirmedActionId.equals(actionId)) {
             exchangeRateService.setAsConfirmed(tableView.getSelectedItems());
         } else if (draftedActionId.equals(actionId)) {
             exchangeRateService.setAsDrafted(tableView.getSelectedItems());
-        } else if (closedActionId.equals(actionId)) {
-            exchangeRateService.setAsClosed(tableView.getSelectedItems());
         }
         loadRecords();
     }
 
-    private void deleteEvent() {
+    private void deleteExchangeRate() {
         exchangeRateService.deleteExchangeRate(tableView.getSelectedItems());
         loadRecords();
     }
 
     private void loadRecords() {
-        List<ExchangeRate> exchangeRateList = exchangeRateService.loadAll();
+        List<ExchangeRate> exchangeRateList = exchangeRateDao.loadAll();
         if (exchangeRateList == null || exchangeRateList.isEmpty()) {
             return;
         }
@@ -137,7 +143,7 @@ public class ExchangeRateView extends AbstractView implements ViewHolder {
         tableView.setItems(observableList);
     }
 
-    private void importFromExcelEvent() {
+    private void importFromExcel() {
         File file = FileHelper.showOpenFileDialogExcel(getPrimaryStage());
         if (file == null) {
             return;
@@ -145,31 +151,16 @@ public class ExchangeRateView extends AbstractView implements ViewHolder {
         ReadExcelData<ExchangeRate> readExcelData = new ReadExcelData<>("", file, exchangeRateService);
         List<ExchangeRate> dataList = readExcelData.readRowData(exchangeRateService.getColumnNames().length, true);
         if (dataList.isEmpty()) {
+            showErrorMessage("Valid exchange rate not found");
             return;
         }
-        List<Integer> existingIdList = exchangeRateService.findIdList();
-        List<ExchangeRate> updateList = new ArrayList<>();
-        List<ExchangeRate> insertList = new ArrayList<>();
-        for (ExchangeRate exchangeRate : dataList) {
-            if (existingIdList.contains(exchangeRate.getId())) {
-                updateList.add(exchangeRate);
-            } else {
-                insertList.add(exchangeRate);
-            }
+        if (exchangeRateService.insertExchangeRate(dataList)) {
+            loadRecords();
         }
-        if (!updateList.isEmpty()) {
-            exchangeRateService.updateExchangeRate(updateList);
-        }
-        if (!insertList.isEmpty()) {
-            exchangeRateService.insertExchangeRate(insertList);
-        }
-        loadRecords();
     }
 
-    private void exportToExcelEvent(final String actionId) {
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyMMddHHmm");
-        String fileName = simpleDateFormat.format(new Date());
-        fileName = "exchange-rate" + fileName + ".xls";
+    private void exportToExcel(final String actionId) {
+        String fileName = DataConverter.getUniqueFileName("exchange-rate", "xls");
         File file = FileHelper.showSaveFileDialogExcel(fileName, getPrimaryStage());
         if (file == null) {
             return;
@@ -179,28 +170,26 @@ public class ExchangeRateView extends AbstractView implements ViewHolder {
             List<ExchangeRate> selected = tableView.getSelectedItems();
             writeExcelData.writeRowData(selected);
         } else {
-            writeExcelData.writeRowData(exchangeRateService.loadAll());
+            writeExcelData.writeRowData(exchangeRateDao.loadAll());
         }
     }
 
     private void onRowSelectionChanged(boolean isRowSelected) {
-        tableView.setDisable(!isRowSelected, exportSelectedActionId, draftedActionId, confirmedActionId,
-                closedActionId);
+        tableView.setDisable(!isRowSelected, exportSelectedActionId, draftedActionId, confirmedActionId);
     }
 
     private void performActionEvent(final String actionId) {
         switch (actionId) {
             case deleteActionId:
-                deleteEvent();
+                deleteExchangeRate();
                 break;
             case exportActionId:
             case exportSelectedActionId:
-                exportToExcelEvent(actionId);
+                exportToExcel(actionId);
                 break;
             case confirmedActionId:
             case draftedActionId:
-            case closedActionId:
-                statusChangedEvent(actionId);
+                updateStatus(actionId);
                 break;
         }
     }

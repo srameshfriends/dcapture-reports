@@ -96,8 +96,8 @@ public abstract class AbstractDialog implements EventHandler<ActionEvent> {
         if(basePanel == null) {
             createBasePanel();
         }
-        onOpenEvent();
         dialogStage.show();
+        onOpenEvent();
     }
 
     public void showAndWait() {
