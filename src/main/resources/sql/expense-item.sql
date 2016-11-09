@@ -12,7 +12,11 @@ ALTER TABLE entity.expense_item ADD FOREIGN KEY (expense_category) REFERENCES en
 ALTER TABLE entity.expense_item ADD FOREIGN KEY (expense_account) REFERENCES entity.account(code);
 --loadAll
 SELECT code, group_code, expense_date, reference_number, description, currency, amount, status, expense_category,
- expense_account, paid_status FROM entity.expense_item ORDER BY expense_date, code;
+ expense_account, paid_status FROM entity.expense_item ORDER BY code;
+--searchExpenseItems
+SELECT code, group_code, expense_date, reference_number, description, currency, amount, status, expense_category,
+ expense_account, paid_status FROM entity.expense_item WHERE status =($status) AND paid_status IN ($paidStatus)
+ $searchText;
 --findExpenseCodeList
 SELECT code FROM entity.expense_item;
 --insertExpenseItem

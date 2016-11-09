@@ -18,4 +18,8 @@ public enum Status {
     public String getTitle() {
         return title;
     }
+
+    public static Status[] getConfirmed() {
+        return new Status[]{Status.Confirmed};
+    }
 }

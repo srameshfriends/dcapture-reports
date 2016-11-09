@@ -1,8 +1,9 @@
 package excel.accounting.dialog;
 
 import excel.accounting.dao.AccountDao;
-import excel.accounting.entity.Account;
-import excel.accounting.entity.AccountType;
+import excel.accounting.dao.ExpenseItemDao;
+import excel.accounting.entity.*;
+import excel.accounting.shared.ApplicationControl;
 import excel.accounting.ui.ReadableTableView;
 import excel.accounting.ui.SearchTextField;
 import javafx.collections.FXCollections;
@@ -10,9 +11,10 @@ import javafx.collections.ObservableList;
 import javafx.scene.Parent;
 import javafx.scene.control.Label;
 import javafx.scene.control.SelectionMode;
-import javafx.scene.layout.HBox;
+import javafx.scene.control.SplitPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 
 import java.util.List;
 
@@ -24,9 +26,23 @@ import java.util.List;
  */
 public class ExpensePayableDialog extends AbstractDialog {
     private AccountDao accountDao;
-    private ReadableTableView<Account> expenseTable, incomeTable;
+    private ExpenseItemDao expenseItemDao;
+    private ReadableTableView<ExpenseItem> expenseTable;
+    private ReadableTableView<Account> accountTable;
+
     private SearchTextField expenseSearchField, bankCashSearchField;
     private Label messageLabel;
+
+    public ExpensePayableDialog(ApplicationControl control, Stage primaryStage) {
+        initialize(control, primaryStage);
+    }
+
+    public void setExpenseItems(List<ExpenseItem> expenseItems) {
+        if (expenseItems != null) {
+            ObservableList<ExpenseItem> observableList = FXCollections.observableArrayList(expenseItems);
+            expenseTable.setItems(observableList);
+        }
+    }
 
     @Override
     protected String getTitle() {
@@ -45,8 +61,9 @@ public class ExpensePayableDialog extends AbstractDialog {
 
     private void loadExpenseAccounts() {
         String searchText = expenseSearchField.getText();
-        List<Account> accountList = accountDao.findByAccountTypes(searchText, AccountType.Expense);
-        ObservableList<Account> observableList = FXCollections.observableArrayList(accountList);
+        List<ExpenseItem> expenseItemList = expenseItemDao.searchExpenseItems(searchText, Status.getConfirmed(),
+                PaidStatus.getUnAndPartialPaid());
+        ObservableList<ExpenseItem> observableList = FXCollections.observableArrayList(expenseItemList);
         expenseTable.setItems(observableList);
     }
 
@@ -54,59 +71,25 @@ public class ExpensePayableDialog extends AbstractDialog {
         String searchText = bankCashSearchField.getText();
         List<Account> accountList = accountDao.findByAccountTypes(searchText, AccountType.Cash, AccountType.Bank);
         ObservableList<Account> observableList = FXCollections.observableArrayList(accountList);
-        incomeTable.setItems(observableList);
-    }
-
-    @Override
-    protected void onOpenEvent() {
-        loadExpenseAccounts();
-        loadBankCashAccounts();
+        accountTable.setItems(observableList);
     }
 
     @Override
     protected void onCloseEvent() {
-        messageLabel.setText("");
-        Account bankAccount = incomeTable.getSelectedItem();
-        Account expenseAccount = expenseTable.getSelectedItem();
-        if (bankAccount == null) {
-            messageLabel.setText("Bank Account should not be empty");
-            return;
-        }
-        if (expenseAccount == null) {
-            messageLabel.setText("Expense Account should not be empty");
-            return;
-        }
         hide();
     }
 
-    public Account getExpenseAccount() {
-        return expenseTable.getSelectedItem();
-    }
-
-    public Account getIncomeAccount() {
-        return incomeTable.getSelectedItem();
-    }
-
-    private ReadableTableView<Account> createExpenseTable() {
-        ReadableTableView<Account> tableView = new ReadableTableView<Account>().create();
-        tableView.setSelectionMode(SelectionMode.SINGLE);
-        tableView.addTextColumn("accountNumber", "Account Number").setPrefWidth(100);
-        tableView.addTextColumn("name", "Name").setPrefWidth(240);
-        tableView.addTextColumn("currency", "Currency").setMinWidth(40);
-        return tableView;
-    }
-
-    private ReadableTableView<Account> createBankTable() {
-        ReadableTableView<Account> tableView = new ReadableTableView<Account>().create();
-        tableView.setSelectionMode(SelectionMode.SINGLE);
-        tableView.addTextColumn("accountNumber", "Account Number").setPrefWidth(100);
-        tableView.addTextColumn("name", "Name").setPrefWidth(240);
-        tableView.addTextColumn("currency", "Currency").setMinWidth(40);
-        return tableView;
-    }
-
     private Pane createExpenseControl() {
-        expenseTable = createExpenseTable();
+        expenseTable = new ReadableTableView<ExpenseItem>().create();
+        expenseTable.setSelectionMode(SelectionMode.SINGLE);
+        expenseTable.addTextColumn("code", "Code").setPrefWidth(100);
+        expenseTable.addTextColumn("groupCode", "Group Code").setPrefWidth(100);
+        expenseTable.addTextColumn("referenceNumber", "Reference").setPrefWidth(120);
+        expenseTable.addTextColumn("description", "Description").setPrefWidth(220);
+        expenseTable.addTextColumn("currency", "Currency").setPrefWidth(80);
+        expenseTable.addDecimalColumn("amount", "amount").setMinWidth(60);
+        expenseTable.addDecimalColumn("paidAmount", "Paid Amount").setMinWidth(60);
+
         expenseSearchField = new SearchTextField();
         expenseSearchField.setActionHandler(actionId -> loadExpenseAccounts());
         VBox vBox = new VBox();
@@ -115,22 +98,28 @@ public class ExpensePayableDialog extends AbstractDialog {
         return vBox;
     }
 
-    private Pane createBankCashControl() {
-        incomeTable = createBankTable();
+    private Pane createAccountControl() {
+        accountTable = new ReadableTableView<Account>().create();
+        accountTable.setSelectionMode(SelectionMode.SINGLE);
+        accountTable.addTextColumn("accountNumber", "Account Number").setPrefWidth(100);
+        accountTable.addTextColumn("name", "Name").setPrefWidth(240);
+        accountTable.addTextColumn("currency", "Currency").setMinWidth(40);
         bankCashSearchField = new SearchTextField();
         bankCashSearchField.setActionHandler(actionId -> loadBankCashAccounts());
         VBox vBox = new VBox();
         vBox.setSpacing(24);
-        vBox.getChildren().addAll(bankCashSearchField, incomeTable.getTableView());
+        vBox.getChildren().addAll(bankCashSearchField, accountTable.getTableView());
         return vBox;
     }
 
     @Override
     protected Parent create() {
         accountDao = (AccountDao) getBean("accountDao");
+        expenseItemDao = (ExpenseItemDao) getBean("expenseItemDao");
         messageLabel = new Label();
-        HBox basePanel = new HBox();
-        basePanel.getChildren().addAll(createExpenseControl(), createBankCashControl());
+        SplitPane splitPane = new SplitPane(createExpenseControl(), createAccountControl());
+        VBox basePanel = new VBox();
+        basePanel.getChildren().addAll(messageLabel, splitPane);
         addAction("actionOkay", "Okay");
         addAction("actionCancel", "Cancel");
         return basePanel;

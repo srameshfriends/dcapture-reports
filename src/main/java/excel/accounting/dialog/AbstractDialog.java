@@ -76,7 +76,7 @@ public abstract class AbstractDialog implements EventHandler<ActionEvent> {
         return applicationControl.getDataProcessor().getQueryBuilder(sqlFileName, queryName);
     }
 
-    void setCancelled(boolean cancelled) {
+    protected void setCancelled(boolean cancelled) {
         this.cancelled = cancelled;
     }
 
@@ -108,7 +108,7 @@ public abstract class AbstractDialog implements EventHandler<ActionEvent> {
         dialogStage.showAndWait();
     }
 
-    void hide() {
+    public void hide() {
         dialogStage.hide();
     }
 
@@ -120,7 +120,7 @@ public abstract class AbstractDialog implements EventHandler<ActionEvent> {
         onActionEvent(button.getId());
     }
 
-    Button addAction(String actionId, String title) {
+    public Button addAction(String actionId, String title) {
         Button button = new Button(title);
         button.setId(actionId);
         button.setOnAction(this);

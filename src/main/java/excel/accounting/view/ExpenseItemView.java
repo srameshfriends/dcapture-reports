@@ -4,6 +4,7 @@ import excel.accounting.dao.ExpenseItemDao;
 import excel.accounting.dialog.AccountDialog;
 import excel.accounting.dialog.CurrencyDialog;
 import excel.accounting.dialog.ExpenseCategoryDialog;
+import excel.accounting.dialog.ExpensePayableDialog;
 import excel.accounting.entity.AccountType;
 import excel.accounting.entity.ExpenseItem;
 import excel.accounting.poi.ReadExcelData;
@@ -35,8 +36,9 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
     private final String exportSelectedActionId = "exportSelectedAction";
     private final String draftedActionId = "draftedAction", confirmedActionId = "confirmedAction";
     private final String updateCurrencyActionId = "updateCurrencyAction";
-    private final String updateAccountActionId = "updateAccountAction";
+    private final String updateAccountActionId = "updateAccountAction", updatePaymentActionId = "updatePaymentAction";
     private final String updateCategoryActionId = "updateCategoryAction";
+
     private ReadableTableView<ExpenseItem> tableView;
     private ExpenseItemDao expenseItemDao;
     private ExpenseItemService expenseItemService;
@@ -71,6 +73,7 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
         tableView.addContextMenuItem(updateCurrencyActionId, "Update Currency");
         tableView.addContextMenuItem(updateAccountActionId, "Update Account");
         tableView.addContextMenuItem(confirmedActionId, "Set As Confirmed");
+        tableView.addContextMenuItem(updatePaymentActionId, "Add Payment");
         tableView.addContextMenuItemSeparator();
         tableView.addContextMenuItem(draftedActionId, "Set As Drafted");
         tableView.addContextMenuItemSeparator();
@@ -226,6 +229,15 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
         loadRecords();
     }
 
+    private void addPayments() {
+        List<ExpenseItem> expenseItemList = tableView.getSelectedItems();
+        if (expenseItemList.isEmpty()) {
+            return;
+        }
+        ExpensePayableDialog dialog = new ExpensePayableDialog(getApplicationControl(), getPrimaryStage());
+        dialog.showAndWait();
+    }
+
     private void onRowSelectionChanged(boolean isRowSelected) {
         tableView.setDisable(!isRowSelected, exportSelectedActionId, draftedActionId, confirmedActionId);
     }
@@ -248,6 +260,9 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
                 break;
             case updateAccountActionId:
                 updateExpenseAccount();
+                break;
+            case updatePaymentActionId:
+                addPayments();
                 break;
             case updateCategoryActionId:
                 updateExpenseCategory();

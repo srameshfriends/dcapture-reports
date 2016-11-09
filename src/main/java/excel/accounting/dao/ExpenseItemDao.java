@@ -1,9 +1,7 @@
 package excel.accounting.dao;
 
-import excel.accounting.db.AbstractDao;
-import excel.accounting.db.QueryBuilder;
-import excel.accounting.db.RowColumnsToEntity;
-import excel.accounting.entity.ExpenseItem;
+import excel.accounting.db.*;
+import excel.accounting.entity.*;
 import excel.accounting.shared.DataConverter;
 
 import java.math.BigDecimal;
@@ -50,6 +48,27 @@ public class ExpenseItemDao extends AbstractDao<ExpenseItem> implements RowColum
 
     public List<ExpenseItem> loadAll() {
         QueryBuilder queryBuilder = getQueryBuilder("loadAll");
+        return getDataReader().findRowDataList(queryBuilder, this);
+    }
+
+    public List<ExpenseItem> searchExpenseItems(String searchText, Status[] status, PaidStatus[] paidStatuses) {
+        QueryBuilder queryBuilder = getQueryBuilder("searchExpenseItems");
+        //
+        InClauseQuery statusQuery = new InClauseQuery(status);
+        queryBuilder.addInClauseQuery("$status", statusQuery);
+        //
+        InClauseQuery accountTypeQuery = null;
+        if(paidStatuses != null) {
+            accountTypeQuery = new InClauseQuery(paidStatuses);
+        }
+        queryBuilder.addInClauseQuery("$paidStatus", accountTypeQuery);
+        //
+        SearchTextQuery searchTextQuery = null;
+        if (SearchTextQuery.isValid(searchText)) {
+            searchTextQuery = new SearchTextQuery(searchText);
+            searchTextQuery.add("code", "group_code", "reference_number", "description");
+        }
+        queryBuilder.addSearchTextQuery("$searchText", searchTextQuery);
         return getDataReader().findRowDataList(queryBuilder, this);
     }
 

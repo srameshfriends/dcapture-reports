@@ -6,13 +6,20 @@ import excel.accounting.entity.Account;
 import excel.accounting.entity.AccountType;
 import excel.accounting.entity.ExpenseItem;
 import excel.accounting.entity.Status;
+import excel.accounting.forms.AbstractFormDialog;
+import excel.accounting.forms.BigDecimalBinder;
+import excel.accounting.forms.TextBinder;
 import excel.accounting.service.PaymentService;
 import excel.accounting.ui.ReadableTableView;
 import excel.accounting.ui.SearchTextField;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.control.SplitPane;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 import java.util.List;
@@ -20,7 +27,7 @@ import java.util.List;
 /**
  * Expense Item Payment Dialog
  */
-public class ExpenseItemPaymentDialog extends AbstractDialog {
+public class ExpenseItemPaymentDialog extends AbstractFormDialog {
     private ReadableTableView<ExpenseItem> expenseItemTableView;
     private ReadableTableView<Account> accountTableView;
     private SearchTextField accountSearchField;
@@ -44,6 +51,7 @@ public class ExpenseItemPaymentDialog extends AbstractDialog {
         }
         ObservableList<ExpenseItem> dataList = FXCollections.observableArrayList(expenseItemList);
         expenseItemTableView.setItems(dataList);
+        loadAccounts();
     }
 
     @Override
@@ -63,15 +71,17 @@ public class ExpenseItemPaymentDialog extends AbstractDialog {
         expenseItemTableView.addTextColumn("currency", "Currency").setMinWidth(80);
         expenseItemTableView.addTextColumn("amount", "Amount").setMinWidth(140);
         //
+        HBox box = new HBox();
+        box.getChildren().addAll(createAccountTable(), createAmountPane());
         VBox basePanel = new VBox();
-        basePanel.setSpacing(24);
-        basePanel.getChildren().addAll(expenseItemTableView.getTableView());
+        basePanel.getChildren().addAll(expenseItemTableView.getTableView(), box);
+        //
         addAction("actionOkay", "Okay");
         addAction("actionCancel", "Cancel");
         return basePanel;
     }
 
-    private Node createBankAccounts() {
+    private VBox createAccountTable() {
         accountDao = (AccountDao) getBean("accountDao");
         accountSearchField = new SearchTextField();
         accountSearchField.setActionHandler(actionId -> loadAccounts());
@@ -86,8 +96,15 @@ public class ExpenseItemPaymentDialog extends AbstractDialog {
         return panel;
     }
 
-    private Node createAccounts() {
-        return null;
+    private Node createAmountPane() {
+        TextBinder description = textBinder("description", "Description");
+        BigDecimalBinder amount = bigDecimalField("amount", "Amount");
+        GridPane gridPane = new GridPane();
+        gridPane.add(description.getLabel(), 0, 0);
+        gridPane.add(description.getField(), 1, 0);
+        gridPane.add(amount.getLabel(), 0, 1);
+        gridPane.add(amount.getField(), 1, 1);
+        return gridPane;
     }
 
     private void loadAccounts() {

@@ -59,7 +59,7 @@ public class AccountView extends AbstractView implements ViewHolder {
         tableView.addEnumColumn("accountType", "Account Type").setMinWidth(120);
         tableView.addTextColumn("currency", "Currency").setMinWidth(60);
         tableView.addDecimalColumn("balance", "Account Balance").setMinWidth(160);
-        tableView.addTextColumn("status", "Status").setMinWidth(80);
+        tableView.addEnumColumn("status", "Status").setMinWidth(80);
         tableView.addSelectionChangeListener(viewListener);
         tableView.setContextMenuHandler(viewListener);
         tableView.addContextMenuItem(updateCurrencyActionId, "Set Currency");

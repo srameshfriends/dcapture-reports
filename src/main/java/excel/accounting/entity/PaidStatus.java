@@ -20,4 +20,8 @@ public enum PaidStatus {
     public String getTitle() {
         return title;
     }
+
+    public static PaidStatus[] getUnAndPartialPaid() {
+        return new PaidStatus[]{Unpaid, PartiallyPaid};
+    }
 }
