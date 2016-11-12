@@ -2,7 +2,7 @@ package excel.accounting.service;
 
 import excel.accounting.db.*;
 import excel.accounting.shared.ApplicationControl;
-import excel.accounting.shared.HasAppsControl;
+import excel.accounting.shared.AbstractControl;
 
 import java.sql.SQLException;
 
@@ -12,42 +12,16 @@ import java.sql.SQLException;
  * @author Ramesh
  * @since Oct 2016
  */
-public abstract class AbstractService implements HasAppsControl, HasDataProcessor {
-    private ApplicationControl applicationControl;
-    private DataReader dataReader;
+public abstract class AbstractService extends AbstractControl {
 
-    @Override
-    public void setApplicationControl(ApplicationControl control) {
-        this.applicationControl = control;
-        dataReader = new DataReader(applicationControl.getDataProcessor());
-    }
-
-    protected void setMessage(String message) {
-        applicationControl.setMessage(message);
-    }
-
-    @Override
-    public DataReader getDataReader() {
-        return dataReader;
-    }
-
-    @Override
-    public Transaction createTransaction() {
-        return new Transaction(applicationControl.getDataProcessor());
+    protected final Transaction createTransaction() {
+        return new Transaction(getApplicationControl().getConnectionPool());
     }
 
     protected abstract String getSqlFileName();
 
     protected QueryBuilder getQueryBuilder(String queryName) {
-        return applicationControl.getDataProcessor().getQueryBuilder(getSqlFileName(), queryName);
-    }
-
-    protected ApplicationControl getApplicationControl() {
-        return applicationControl;
-    }
-
-    protected Object getBean(String name) {
-        return applicationControl.getBean(name);
+        return getDataProcessor().getQueryBuilder(getSqlFileName(), queryName);
     }
 
     protected void executeBatch(Transaction transaction) {

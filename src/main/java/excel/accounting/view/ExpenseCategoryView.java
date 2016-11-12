@@ -156,7 +156,9 @@ public class ExpenseCategoryView extends AbstractView implements ViewHolder {
     }
 
     private void updateChartOfAccounts() {
-        ChartOfAccountsDialog dialog = new ChartOfAccountsDialog(getApplicationControl(), getPrimaryStage());
+        ChartOfAccountsDialog dialog = new ChartOfAccountsDialog();
+        dialog.setApplicationControl(getApplicationControl());
+        dialog.start(getPrimaryStage());
         dialog.setAccountTypes(AccountType.Expense);
         dialog.showAndWait();
         if (dialog.isCancelled()) {

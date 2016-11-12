@@ -1,46 +1,29 @@
 package excel.accounting.db;
 
-import excel.accounting.shared.ApplicationControl;
-import excel.accounting.shared.HasAppsControl;
+import excel.accounting.shared.AbstractControl;
 
 /**
  * Table Relation
  */
-public abstract class AbstractDao<T> implements HasAppsControl {
-    private ApplicationControl applicationControl;
-    private DataReader dataReader;
-
-    @Override
-    public void setApplicationControl(ApplicationControl control) {
-        applicationControl = control;
-        dataReader = new DataReader(control.getDataProcessor());
-    }
+public abstract class AbstractDao<T> extends AbstractControl {
 
     protected abstract String getTableName();
 
     protected abstract String getSqlFileName();
 
-    protected DataReader getDataReader() {
-        return dataReader;
-    }
-
-    protected void setMessage(String message) {
-        applicationControl.setMessage(message);
-    }
-
     protected abstract T getReferenceRow(String code);
 
     protected QueryBuilder getQueryBuilder(String templateName) {
-        return applicationControl.getDataProcessor().getQueryBuilder(getSqlFileName(), templateName);
+        return getDataProcessor().getQueryBuilder(getSqlFileName(), templateName);
     }
 
     public String isEntityReferenceUsed(String code) {
-        EntityReference reference = applicationControl.getDataProcessor().getUsedEntityReference(getTableName(), code);
+        EntityReference reference = getDataProcessor().getUsedEntityReference(getTableName(), code);
         if(reference == null) {
             return null;
         }
-        String tbl = applicationControl.getMessage(reference.getTable());
-        String col = applicationControl.getMessage(reference.getTable() + "." + reference.getColumn());
-        return applicationControl.getMessage("entity.reference.used", code, tbl, col);
+        String tbl = getApplicationControl().getMessage(reference.getTable());
+        String col = getApplicationControl().getMessage(reference.getTable() + "." + reference.getColumn());
+        return getApplicationControl().getMessage("entity.reference.used", code, tbl, col);
     }
 }

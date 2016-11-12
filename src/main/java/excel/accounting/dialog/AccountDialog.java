@@ -4,14 +4,12 @@ import excel.accounting.dao.AccountDao;
 import excel.accounting.entity.Account;
 import excel.accounting.entity.AccountType;
 import excel.accounting.entity.Status;
-import excel.accounting.shared.ApplicationControl;
 import excel.accounting.ui.ReadableTableView;
 import excel.accounting.ui.SearchTextField;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Parent;
 import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
 
 import java.util.List;
 
@@ -24,8 +22,7 @@ public class AccountDialog extends AbstractDialog {
     private AccountDao accountDao;
     private AccountType[] accTypes;
 
-    public AccountDialog(ApplicationControl control, Stage primaryStage, AccountType... accountTypes) {
-        initialize(control, primaryStage);
+    public AccountDialog(AccountType... accountTypes) {
         setAccountTypes(accountTypes);
     }
 

@@ -1,7 +1,7 @@
 package excel.accounting.ui;
 
 import excel.accounting.dialog.SessionDialog;
-import excel.accounting.shared.ApplicationControl;
+import excel.accounting.shared.AbstractControl;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -12,7 +12,6 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
-import org.apache.log4j.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,11 +19,9 @@ import java.util.Map;
 /**
  * ViewController
  */
-public class ViewManager implements ActionHandler {
-    private static final Logger logger = Logger.getLogger(ViewManager.class);
+public class ViewManager extends AbstractControl implements ActionHandler {
     private final int height = 768, menuWidth = 240, headerSpace = 44;
     private double contentWidth, contentHeight;
-    private ApplicationControl applicationControl;
     private Map<ViewConfig, ViewHolder> viewRegister;
     private Map<String, Node> nodeRegister;
     private SplitPane basePanel;
@@ -41,22 +38,18 @@ public class ViewManager implements ActionHandler {
         return primaryStage;
     }
 
-    private ApplicationControl getApplicationControl() {
-        return applicationControl;
-    }
-
-    public void start(ApplicationControl control, Stage primaryStage) {
+    public void start(Stage primaryStage) {
         final int width = 1024;
         viewRegister = new HashMap<>();
         nodeRegister = new HashMap<>();
-        this.applicationControl = control;
         this.primaryStage = primaryStage;
         this.primaryStage.setWidth(width);
         this.primaryStage.setHeight(height);
         this.primaryStage.widthProperty().addListener((arg0, arg1, arg2) -> onWidthChanged((Double) arg2));
         this.primaryStage.heightProperty().addListener((arg0, arg1, arg2) -> onHeightChanged((Double) arg2));
         sessionDialog = new SessionDialog();
-        sessionDialog.initialize(control, primaryStage);
+        sessionDialog.setApplicationControl(getApplicationControl());
+        sessionDialog.start(primaryStage);
         sessionDialog.setActionHandler(this);
         //
         StyleBuilder titleStyle = new StyleBuilder();
@@ -69,7 +62,7 @@ public class ViewManager implements ActionHandler {
         titleLabel.setMinHeight(30);
         titleLabel.setMaxHeight(30);
         TextField messagePanel = createLogPanel();
-        applicationControl.setMessagePanel(messagePanel);
+        getApplicationControl().setMessagePanel(messagePanel);
         //
         contentPane = new BorderPane();
         contentPane.setTop(titleLabel);
@@ -83,7 +76,7 @@ public class ViewManager implements ActionHandler {
         scene.setFill(Color.GHOSTWHITE);
         //
         primaryStage.setScene(scene);
-        primaryStage.setTitle(control.getName());
+        primaryStage.setTitle(getApplicationControl().getName());
         primaryStage.show();
         onWidthChanged(width);
         onHeightChanged(height);
@@ -168,11 +161,11 @@ public class ViewManager implements ActionHandler {
     }
 
     public void showView(String name) {
-        if (!applicationControl.isAuthenticated()) {
+        if (!getApplicationControl().isAuthenticated()) {
             sessionDialog.show(name);
             return;
         }
-        applicationControl.setMessage("");
+        setMessage("");
         ViewConfig viewConfig = getViewConfig(name);
         if (viewConfig == null) {
             throw new NullPointerException("View config not found " + name);
@@ -191,7 +184,7 @@ public class ViewManager implements ActionHandler {
         if (currentView != null && !currentView.canCloseView()) {
             return;
         }
-        String userName = applicationControl.getUserName() == null ? "" : applicationControl.getUserName();
+        String userName = getApplicationControl().getUserName() == null ? "" : getApplicationControl().getUserName();
         titleLabel.setText(viewConfig.getTitle() + " \t \t " + userName);
         contentPane.setCenter(node);
         currentView = holder;

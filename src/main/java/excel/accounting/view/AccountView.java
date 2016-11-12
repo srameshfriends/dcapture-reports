@@ -163,7 +163,9 @@ public class AccountView extends AbstractView implements ViewHolder {
     }
 
     private void updateCurrency() {
-        CurrencyDialog dialog = new CurrencyDialog(getApplicationControl(), getPrimaryStage());
+        CurrencyDialog dialog = new CurrencyDialog();
+        dialog.setApplicationControl(getApplicationControl());
+        dialog.start(getPrimaryStage());
         dialog.showAndWait();
         if (dialog.isCancelled()) {
             return;
@@ -176,7 +178,9 @@ public class AccountView extends AbstractView implements ViewHolder {
     }
 
     private void updateAccountType() {
-        EnumSelectionDialog<AccountType> dialog = new EnumSelectionDialog<>(getApplicationControl(), getPrimaryStage());
+        EnumSelectionDialog<AccountType> dialog = new EnumSelectionDialog<>();
+        dialog.setApplicationControl(getApplicationControl());
+        dialog.start(getPrimaryStage());
         dialog.setValueList(AccountType.values());
         dialog.showAndWait();
         if (dialog.isCancelled()) {

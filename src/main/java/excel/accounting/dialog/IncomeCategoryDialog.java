@@ -3,14 +3,12 @@ package excel.accounting.dialog;
 import excel.accounting.entity.IncomeCategory;
 import excel.accounting.entity.Status;
 import excel.accounting.service.IncomeCategoryService;
-import excel.accounting.shared.ApplicationControl;
 import excel.accounting.ui.ReadableTableView;
 import excel.accounting.ui.SearchTextField;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Parent;
 import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
 
 import java.util.List;
 
@@ -21,10 +19,6 @@ public class IncomeCategoryDialog extends AbstractDialog {
     private ReadableTableView<IncomeCategory> tableView;
     private SearchTextField searchTextField;
     private IncomeCategoryService incomeCategoryService;
-
-    public IncomeCategoryDialog(ApplicationControl control, Stage primaryStage) {
-        initialize(control, primaryStage);
-    }
 
     @Override
     protected void onActionEvent(final String actionId) {

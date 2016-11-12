@@ -1,12 +1,10 @@
 package excel.accounting.db;
 
-import excel.accounting.model.ApplicationConfig;
 import excel.accounting.shared.FileHelper;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.h2.jdbcx.JdbcConnectionPool;
 import org.h2.tools.Server;
-
 import java.io.File;
 import java.nio.file.Path;
 import java.sql.*;
@@ -15,21 +13,32 @@ import java.util.*;
 /**
  * Data Processor
  */
-public class DataProcessor {
+public class DataProcessor implements Runnable {
     private static final Logger logger = Logger.getLogger(DataProcessor.class);
-    private JdbcConnectionPool jdbcConnectionPool;
+    private final JdbcConnectionPool jdbcConnectionPool;
     private Map<String, Map<String, String>> namedQueryMap;
     private Map<String, List<EntityReference>> entityReferenceMap;
 
-    public void startDatabase(ApplicationConfig config) throws Exception {
-        namedQueryMap = new HashMap<>();
-        entityReferenceMap = new HashMap<>();
-        jdbcConnectionPool = JdbcConnectionPool.create(config.getDatabaseUrl(), config.getDatabaseUser(),
-                config.getDatabasePassword());
-        addNamedQueries();
-        executeTableForwardQuery();
-        executeReferenceForwardQuery();
-        printEntityReference();
+    public DataProcessor(JdbcConnectionPool jdbcConnectionPool) {
+        this.jdbcConnectionPool = jdbcConnectionPool;
+    }
+
+    @Override
+    public void run() {
+        try {
+            namedQueryMap = new HashMap<>();
+            entityReferenceMap = new HashMap<>();
+            addNamedQueries();
+            executeTableForwardQuery();
+            executeReferenceForwardQuery();
+        } catch (Exception ex) {
+            if (logger.isDebugEnabled()) {
+                ex.printStackTrace();
+            }
+            if (logger.isTraceEnabled()) {
+                logger.trace(ex.getMessage());
+            }
+        }
     }
 
     private String getSchema() {
@@ -55,7 +64,7 @@ public class DataProcessor {
     private void executeTableForwardQuery() throws Exception {
         Connection connection = getConnection();
         Statement statement = connection.createStatement();
-        statement.executeUpdate("CREATE SCHEMA IF NOT EXISTS " + getSchema() + ";");
+        statement.executeUpdate("create schema if not exists " + getSchema() + ";");
         for (Map<String, String> queryMap : namedQueryMap.values()) {
             for (String query : queryMap.values()) {
                 if (query.startsWith("create table ")) {
@@ -117,17 +126,6 @@ public class DataProcessor {
 
     List<EntityReference> getEntityReferenceList(String tableName) {
         return entityReferenceMap.get(tableName);
-    }
-
-    @Deprecated
-    private void printEntityReference() {
-        for (Map.Entry<String, List<EntityReference>> entry : entityReferenceMap.entrySet()) {
-            System.out.println("------------- " + entry.getKey() + " -------------");
-            for (EntityReference entity : entry.getValue()) {
-                System.out.println("Table : " + entity.getTable() + " Column : " + entity.getColumn() +
-                        " Ref Tbl : " + entity.getReferenceTable() + " Ref Col : " + entity.getReferenceColumn());
-            }
-        }
     }
 
     EntityReference getUsedEntityReference(String schemaTable, String code) {

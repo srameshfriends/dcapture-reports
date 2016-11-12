@@ -192,12 +192,14 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
         if (expenseItemList.isEmpty()) {
             return;
         }
-        CurrencyDialog currencyDialog = new CurrencyDialog(getApplicationControl(), getPrimaryStage());
-        currencyDialog.showAndWait();
-        if (currencyDialog.isCancelled()) {
+        CurrencyDialog dialog = new CurrencyDialog();
+        dialog.setApplicationControl(getApplicationControl());
+        dialog.start(getPrimaryStage());
+        dialog.showAndWait();
+        if (dialog.isCancelled()) {
             return;
         }
-        expenseItemService.updateCurrency(currencyDialog.getSelected(), expenseItemList);
+        expenseItemService.updateCurrency(dialog.getSelected(), expenseItemList);
         loadRecords();
     }
 
@@ -206,7 +208,9 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
         if (expenseItemList.isEmpty()) {
             return;
         }
-        AccountDialog dialog = new AccountDialog(getApplicationControl(), getPrimaryStage(), AccountType.Expense);
+        AccountDialog dialog = new AccountDialog(AccountType.Expense);
+        dialog.setApplicationControl(getApplicationControl());
+        dialog.start(getPrimaryStage());
         dialog.showAndWait();
         if (dialog.isCancelled()) {
             return;
@@ -220,7 +224,9 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
         if (expenseItemList.isEmpty()) {
             return;
         }
-        ExpenseCategoryDialog dialog = new ExpenseCategoryDialog(getApplicationControl(), getPrimaryStage());
+        ExpenseCategoryDialog dialog = new ExpenseCategoryDialog();
+        dialog.setApplicationControl(getApplicationControl());
+        dialog.start(getPrimaryStage());
         dialog.showAndWait();
         if (dialog.isCancelled()) {
             return;
@@ -234,7 +240,9 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
         if (expenseItemList.isEmpty()) {
             return;
         }
-        ExpensePayableDialog dialog = new ExpensePayableDialog(getApplicationControl(), getPrimaryStage());
+        ExpensePayableDialog dialog = new ExpensePayableDialog();
+        dialog.setApplicationControl(getApplicationControl());
+        dialog.start(getPrimaryStage());
         dialog.showAndWait();
     }
 

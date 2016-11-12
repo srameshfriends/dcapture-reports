@@ -16,7 +16,8 @@ public class Main extends Application {
     public void start(Stage primaryStage) throws Exception {
         applicationControl = ApplicationControl.instance();
         viewManager = new ViewManager();
-        viewManager.start(applicationControl, primaryStage);
+        viewManager.setApplicationControl(applicationControl);
+        viewManager.start(primaryStage);
         Registry.registerBean(applicationControl);
         Registry.registerView(viewManager);
         primaryStage.setOnCloseRequest(event -> onApplicationCloseEvent());

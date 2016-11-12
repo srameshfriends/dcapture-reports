@@ -1,12 +1,10 @@
 package excel.accounting.dialog;
 
-import excel.accounting.shared.ApplicationControl;
 import javafx.scene.Parent;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,10 +19,6 @@ import java.util.List;
 public class EnumSelectionDialog<T> extends AbstractDialog {
     private ToggleGroup toggleGroup;
     private List<T> valueList;
-
-    public EnumSelectionDialog(ApplicationControl control, Stage primaryStage) {
-        initialize(control, primaryStage);
-    }
 
     @SafeVarargs
     public final void setValueList(T... enumArray) {

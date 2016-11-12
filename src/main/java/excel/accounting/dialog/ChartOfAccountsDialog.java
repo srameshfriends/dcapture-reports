@@ -27,8 +27,7 @@ public class ChartOfAccountsDialog extends AbstractDialog {
     private ChartOfAccountsDao chartOfAccountsDao;
     private AccountType[] accTypes;
 
-    public ChartOfAccountsDialog(ApplicationControl control, Stage primaryStage, AccountType... accountTypes) {
-        initialize(control, primaryStage);
+    public ChartOfAccountsDialog(AccountType... accountTypes) {
         setAccountTypes(accountTypes);
     }
 

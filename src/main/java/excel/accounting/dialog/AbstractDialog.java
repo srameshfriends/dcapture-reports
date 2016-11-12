@@ -1,7 +1,7 @@
 package excel.accounting.dialog;
 
 import excel.accounting.db.*;
-import excel.accounting.shared.ApplicationControl;
+import excel.accounting.shared.AbstractControl;
 import excel.accounting.ui.StyleBuilder;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -24,17 +24,13 @@ import java.sql.SQLException;
  * @author Ramesh
  * @since Oct, 2016
  */
-public abstract class AbstractDialog implements EventHandler<ActionEvent> {
-    private ApplicationControl applicationControl;
-    private DataReader dataReader;
+public abstract class AbstractDialog extends AbstractControl implements EventHandler<ActionEvent> {
     private Stage dialogStage;
     private boolean cancelled;
     private HBox actionBar;
     private VBox basePanel;
 
-    public void initialize(ApplicationControl control, Stage primaryStage) {
-        this.applicationControl = control;
-        dataReader = new DataReader(applicationControl.getDataProcessor());
+    public void start(Stage primaryStage) {
         dialogStage = new Stage();
         dialogStage.initModality(Modality.WINDOW_MODAL);
         dialogStage.initOwner(primaryStage);
@@ -60,20 +56,12 @@ public abstract class AbstractDialog implements EventHandler<ActionEvent> {
         dialogStage.setScene(new Scene(basePanel));
     }
 
-    protected void setMessage(String message) {
-        applicationControl.setMessage(message);
-    }
-
-    protected DataReader getDataReader() {
-        return dataReader;
-    }
-
     protected Transaction createTransaction() {
-        return new Transaction(applicationControl.getDataProcessor());
+        return new Transaction(getApplicationControl().getConnectionPool());
     }
 
     protected QueryBuilder getQueryBuilder(String sqlFileName, String queryName) {
-        return applicationControl.getDataProcessor().getQueryBuilder(sqlFileName, queryName);
+        return getDataProcessor().getQueryBuilder(sqlFileName, queryName);
     }
 
     protected void setCancelled(boolean cancelled) {
@@ -82,14 +70,6 @@ public abstract class AbstractDialog implements EventHandler<ActionEvent> {
 
     public boolean isCancelled() {
         return cancelled;
-    }
-
-    ApplicationControl getApplicationControl() {
-        return applicationControl;
-    }
-
-    protected Object getBean(String name) {
-        return applicationControl.getBean(name);
     }
 
     void show() {

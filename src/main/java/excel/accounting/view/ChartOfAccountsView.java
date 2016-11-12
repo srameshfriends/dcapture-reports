@@ -163,7 +163,9 @@ public class ChartOfAccountsView extends AbstractView implements ViewHolder {
     }
 
     private void changeCurrencyEvent() {
-        CurrencyDialog dialog = new CurrencyDialog(getApplicationControl(), getPrimaryStage());
+        CurrencyDialog dialog = new CurrencyDialog();
+        dialog.setApplicationControl(getApplicationControl());
+        dialog.start(getPrimaryStage());
         dialog.showAndWait();
         if (dialog.isCancelled() || dialog.getSelected() == null) {
             return;
@@ -176,7 +178,9 @@ public class ChartOfAccountsView extends AbstractView implements ViewHolder {
     }
 
     private void changeAccountTypeEvent() {
-        EnumSelectionDialog<AccountType> dialog = new EnumSelectionDialog<>(getApplicationControl(), getPrimaryStage());
+        EnumSelectionDialog<AccountType> dialog = new EnumSelectionDialog<>();
+        dialog.setApplicationControl(getApplicationControl());
+        dialog.start(getPrimaryStage());
         dialog.setValueList(AccountType.values());
         dialog.showAndWait();
         if (dialog.isCancelled()) {

@@ -2,9 +2,10 @@ package excel.accounting.shared;
 
 import com.google.gson.Gson;
 import excel.accounting.db.DataProcessor;
-import excel.accounting.db.EntityReferenceFactory;
+import excel.accounting.db.OrmProcessor;
 import excel.accounting.model.ApplicationConfig;
 import javafx.scene.control.TextField;
+import org.h2.jdbcx.JdbcConnectionPool;
 
 import java.io.FileInputStream;
 import java.io.FileReader;
@@ -21,6 +22,8 @@ public class ApplicationControl {
     private static ApplicationControl applicationControl;
     private ApplicationConfig applicationConfig;
     private DataProcessor dataProcessor;
+    private OrmProcessor ormProcessor;
+    private JdbcConnectionPool connectionPool;
     private String userName, userCode;
     private Map<String, Object> beanMap;
     private TextField messagePanel;
@@ -102,8 +105,16 @@ public class ApplicationControl {
         return applicationConfig;
     }
 
-    public DataProcessor getDataProcessor() {
+    DataProcessor getDataProcessor() {
         return dataProcessor;
+    }
+
+    public JdbcConnectionPool getConnectionPool() {
+        return connectionPool;
+    }
+
+    public OrmProcessor getOrmProcessor() {
+        return ormProcessor;
     }
 
     public String getName() {
@@ -114,13 +125,19 @@ public class ApplicationControl {
         if (!applicationConfig.isDevelopmentMode()) {
             DataProcessor.main();
         }
-        dataProcessor = new DataProcessor();
-        dataProcessor.startDatabase(applicationConfig);
+        connectionPool = JdbcConnectionPool.create(applicationConfig.getDatabaseUrl(),
+                applicationConfig.getDatabaseUser(), applicationConfig.getDatabasePassword());
+        dataProcessor = new DataProcessor(connectionPool);
+        dataProcessor.run();
+        ormProcessor = new OrmProcessor(connectionPool);
+        ormProcessor.setSchema(getSchema());
+        ormProcessor.setPackageArray(getEntityPackages());
+        ormProcessor.run();
     }
 
     public void addBean(String name, Object service) {
-        if (service instanceof HasAppsControl) {
-            ((HasAppsControl) service).setApplicationControl(this);
+        if (service instanceof AbstractControl) {
+            ((AbstractControl) service).setApplicationControl(this);
         }
         beanMap.put(name, service);
     }
@@ -131,5 +148,13 @@ public class ApplicationControl {
 
     public void close() {
         dataProcessor.close();
+    }
+
+    private String getSchema() {
+        return "excel";
+    }
+
+    private String[] getEntityPackages() {
+        return new String[]{"excel.accounting.entity"};
     }
 }

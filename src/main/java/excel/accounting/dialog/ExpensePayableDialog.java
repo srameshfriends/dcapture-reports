@@ -3,7 +3,6 @@ package excel.accounting.dialog;
 import excel.accounting.dao.AccountDao;
 import excel.accounting.dao.ExpenseItemDao;
 import excel.accounting.entity.*;
-import excel.accounting.shared.ApplicationControl;
 import excel.accounting.ui.ReadableTableView;
 import excel.accounting.ui.SearchTextField;
 import javafx.collections.FXCollections;
@@ -14,7 +13,6 @@ import javafx.scene.control.SelectionMode;
 import javafx.scene.control.SplitPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
 
 import java.util.List;
 
@@ -32,10 +30,6 @@ public class ExpensePayableDialog extends AbstractDialog {
 
     private SearchTextField expenseSearchField, bankCashSearchField;
     private Label messageLabel;
-
-    public ExpensePayableDialog(ApplicationControl control, Stage primaryStage) {
-        initialize(control, primaryStage);
-    }
 
     public void setExpenseItems(List<ExpenseItem> expenseItems) {
         if (expenseItems != null) {

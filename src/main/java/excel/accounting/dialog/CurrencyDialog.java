@@ -3,14 +3,12 @@ package excel.accounting.dialog;
 import excel.accounting.dao.CurrencyDao;
 import excel.accounting.entity.Currency;
 import excel.accounting.entity.Status;
-import excel.accounting.shared.ApplicationControl;
 import excel.accounting.ui.ReadableTableView;
 import excel.accounting.ui.SearchTextField;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Parent;
 import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
 
 import java.util.List;
 
@@ -21,10 +19,6 @@ public class CurrencyDialog extends AbstractDialog {
     private ReadableTableView<Currency> tableView;
     private SearchTextField searchTextField;
     private CurrencyDao currencyDao;
-
-    public CurrencyDialog(ApplicationControl control, Stage primaryStage) {
-        initialize(control, primaryStage);
-    }
 
     @Override
     protected void onActionEvent(final String actionId) {

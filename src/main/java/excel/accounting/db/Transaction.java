@@ -1,6 +1,7 @@
 package excel.accounting.db;
 
 import org.apache.log4j.Logger;
+import org.h2.jdbcx.JdbcConnectionPool;
 
 import java.math.BigDecimal;
 import java.sql.*;
@@ -14,18 +15,18 @@ import java.util.*;
  */
 public class Transaction {
     private static final Logger logger = Logger.getLogger(Transaction.class);
-    private final DataProcessor dataProcessor;
+    private final JdbcConnectionPool connectionPool;
     private Connection connection;
     private Map<QueryBuilder, PreparedStatement> statementMap;
     private PreparedStatement batchStatement;
 
-    public Transaction(DataProcessor dataProcessor) {
-        this.dataProcessor = dataProcessor;
+    public Transaction(JdbcConnectionPool connectionPool) {
+        this.connectionPool = connectionPool;
     }
 
     private Connection getConnection() throws SQLException {
         if (connection == null) {
-            connection = dataProcessor.getConnection();
+            connection = connectionPool.getConnection();
             connection.setAutoCommit(false);
         }
         return connection;
@@ -149,7 +150,7 @@ public class Transaction {
                 statement.setBoolean(entry.getKey(), (Boolean) parameter);
             } else if (parameter instanceof java.util.Date) {
                 statement.setDate(entry.getKey(), toSqlDate((java.util.Date) parameter));
-            } else if(parameter instanceof  DataType) {
+            } else if (parameter instanceof DataType) {
                 DataType dataType = (DataType) parameter;
                 if (DataType.DateType.equals(dataType)) {
                     statement.setDate(entry.getKey(), null);
