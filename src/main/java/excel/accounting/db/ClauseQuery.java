@@ -10,15 +10,20 @@ import java.util.List;
  * @author Ramesh
  * @since Oct, 2016
  */
-public class InClauseQuery {
+public class ClauseQuery {
+    private String query;
     private List<Object> parameterList;
 
-    public InClauseQuery(Object... parameters) {
-        parameterList = new ArrayList<>();
-        add(parameters);
+    public ClauseQuery() {
+        this("");
     }
 
-    public void add(Object... parameters) {
+    public ClauseQuery(String query) {
+        this.query = query;
+        parameterList = new ArrayList<>();
+    }
+
+    public void addParameter(Object parameters) {
         Collections.addAll(parameterList, parameters);
     }
 

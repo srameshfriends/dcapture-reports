@@ -1,5 +1,8 @@
 package excel.accounting.entity;
 
+import javax.persistence.Column;
+import javax.persistence.JoinColumn;
+import javax.persistence.Table;
 import java.math.BigDecimal;
 import java.util.Date;
 
@@ -9,21 +12,24 @@ import java.util.Date;
  * @author Ramesh
  * @since Oct, 2016
  */
-public class IncomeItem {
-    private int id;
+@Table(name = "income_item")
+public class IncomeItem extends DocumentRecord {
+
+    @Column(name = "income_date")
     private Date incomeDate;
-    private String description, currency, incomeCategory, incomeAccount;;
+
+    private String description;
+
+    @JoinColumn(name = "currency", table = "currency")
+    private String currency;
+
+    @JoinColumn(name = "income_category", table = "income_category")
+    private String incomeCategory;
+
+    @JoinColumn(name = "account", table = "account")
+    private String account;
 
     private BigDecimal amount;
-    private Status status;
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
 
     public Date getIncomeDate() {
         return incomeDate;
@@ -57,14 +63,6 @@ public class IncomeItem {
         this.currency = currency;
     }
 
-    public Status getStatus() {
-        return status;
-    }
-
-    public void setStatus(Status status) {
-        this.status = status;
-    }
-
     public String getIncomeCategory() {
         return incomeCategory;
     }
@@ -73,11 +71,11 @@ public class IncomeItem {
         this.incomeCategory = incomeCategory;
     }
 
-    public String getIncomeAccount() {
-        return incomeAccount;
+    public String getAccount() {
+        return account;
     }
 
-    public void setIncomeAccount(String incomeAccount) {
-        this.incomeAccount = incomeAccount;
+    public void setAccount(String account) {
+        this.account = account;
     }
 }

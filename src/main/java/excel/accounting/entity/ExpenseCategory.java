@@ -1,38 +1,21 @@
 package excel.accounting.entity;
 
+import javax.persistence.JoinColumn;
+import javax.persistence.Table;
+
 /**
  * Expense Category
  *
  * @author Ramesh
  * @since Oct, 2016
  */
-public class ExpenseCategory {
-    private String code, name, chartOfAccounts, description;
-    private Status status;
+@Table(name = "expense_category")
+public class ExpenseCategory extends MasterRecord {
 
-    public String getCode() {
-        return code;
-    }
+    private String description;
 
-    public void setCode(String code) {
-        this.code = code;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getChartOfAccounts() {
-        return chartOfAccounts;
-    }
-
-    public void setChartOfAccounts(String chartOfAccounts) {
-        this.chartOfAccounts = chartOfAccounts;
-    }
+    @JoinColumn(name = "currency", table = "currency")
+    private String currency;
 
     public String getDescription() {
         return description;
@@ -42,11 +25,11 @@ public class ExpenseCategory {
         this.description = description;
     }
 
-    public Status getStatus() {
-        return status;
+    public String getCurrency() {
+        return currency;
     }
 
-    public void setStatus(Status status) {
-        this.status = status;
+    public void setCurrency(String currency) {
+        this.currency = currency;
     }
 }

@@ -43,7 +43,7 @@ public class AssetDao extends AbstractDao<Asset> implements RowColumnsToEntity<A
         asset.setCost((BigDecimal) columns[7]);
         asset.setStatus(DataConverter.getStatus(columns[8]));
         asset.setUnits((BigDecimal) columns[9]);
-        asset.setReferenceNumber((String) columns[10]);
+        asset.setReference((String) columns[10]);
         asset.setCategory((String) columns[11]);
         return asset;
     }

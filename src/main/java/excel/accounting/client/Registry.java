@@ -17,7 +17,6 @@ abstract class Registry {
     static void registerView(ViewManager manager) {
         // Register
         manager.addView(new CurrencyView());
-        manager.addView(new ChartOfAccountsView());
         manager.addView(new AccountView());
         // Income
         manager.addView(new IncomeCategoryView());
@@ -45,7 +44,6 @@ abstract class Registry {
         control.addBean("exchangeRateService", new ExchangeRateService());
         control.addBean("assetService", new AssetService());
         control.addBean("systemSettingService", new SystemSettingService());
-        control.addBean("chartOfAccountsService", new ChartOfAccountsService());
         control.addBean("paymentService", new PaymentService());
         //
         control.addBean("currencyDao", new CurrencyDao());
@@ -56,7 +54,6 @@ abstract class Registry {
         control.addBean("expenseItemDao", new ExpenseItemDao());
         control.addBean("assetDao", new AssetDao());
         control.addBean("systemSettingDao", new SystemSettingDao());
-        control.addBean("chartOfAccountsDao", new ChartOfAccountsDao());
         control.addBean("paymentDao", new PaymentDao());
     }
 }

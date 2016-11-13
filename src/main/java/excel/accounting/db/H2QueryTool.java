@@ -161,9 +161,9 @@ class H2QueryTool implements QueryTool {
             }
         } else if (BigDecimal.class.equals(type)) {
             column.setSqlType(JDBCType.DECIMAL);
-        } else if (Integer.class.equals(type)) {
+        } else if (Integer.class.equals(type) || int.class.equals(type)) {
             column.setSqlType(JDBCType.INTEGER);
-        } else if (Boolean.class.equals(type)) {
+        } else if (Boolean.class.equals(type) || boolean.class.equals(type)) {
             column.setSqlType(JDBCType.BOOLEAN);
         } else if (Double.class.equals(type)) {
             column.setSqlType(JDBCType.DOUBLE);
@@ -195,21 +195,30 @@ class H2QueryTool implements QueryTool {
             return "date";
         } else if (BigDecimal.class.equals(type)) {
             return "decimal";
-        } else if (Integer.class.equals(type)) {
+        } else if (int.class.equals(type)) {
             return "integer";
-        } else if (Boolean.class.equals(type)) {
+        } else if (boolean.class.equals(type)) {
             return "boolean";
-        } else if (Double.class.equals(type)) {
+        } else if (double.class.equals(type)) {
             return "double";
         } else if (Enum.class.isAssignableFrom(type)) {
             return "varchar(" + getEnumLength() + ")";
-        } else if (Long.class.equals(type)) {
+        } else if (long.class.equals(type)) {
             return "bigint";
         } else if (Short.class.equals(type)) {
             return "smallint";
         } else if (Byte.class.equals(type)) {
             return "binary";
+        } else if(Integer.class.equals(type)) {
+            return "integer";
+        } else if(Boolean.class.equals(type)) {
+            return "boolean";
+        } else if (Double.class.equals(type)) {
+            return "double";
+        } else if (Long.class.equals(type)) {
+            return "bigint";
         }
+        System.out.println(column.getType());
         throw new IllegalArgumentException("Unknown data type " + column.getFieldName());
     }
 

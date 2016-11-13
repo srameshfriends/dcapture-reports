@@ -148,11 +148,11 @@ public class BankTransactionView extends AbstractView implements ViewHolder {
         if (dataList.isEmpty()) {
             return;
         }
-        List<Integer> existingIdList = bankTransactionService.findIdList();
+        List<String> existingCodeList = bankTransactionService.findCodeList();
         List<BankTransaction> updateList = new ArrayList<>();
         List<BankTransaction> insertList = new ArrayList<>();
         for (BankTransaction bankTransaction : dataList) {
-            if (existingIdList.contains(bankTransaction.getId())) {
+            if (existingCodeList.contains(bankTransaction.getCode())) {
                 updateList.add(bankTransaction);
             } else {
                 insertList.add(bankTransaction);

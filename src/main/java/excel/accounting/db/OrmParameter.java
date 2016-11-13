@@ -10,6 +10,12 @@ public class OrmParameter {
     private final Object parameter;
     private final SQLType sqlType;
 
+    public OrmParameter(int index, Object parameter) {
+        this.index = index;
+        this.parameter = parameter;
+        this.sqlType = null;
+    }
+
     public OrmParameter(int index, Object parameter, SQLType sqlType) {
         this.index = index;
         this.parameter = parameter;

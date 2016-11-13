@@ -32,9 +32,10 @@ public class IncomeCategoryService extends AbstractService implements ExcelTypeC
     }
 
     public List<IncomeCategory> searchIncomeCategory(String searchText, Status... statuses) {
-        InClauseQuery inClauseQuery = new InClauseQuery(statuses);
+        ClauseQuery clauseQuery = new ClauseQuery("status");
+        clauseQuery.addParameter(statuses);
         QueryBuilder queryBuilder = getQueryBuilder("searchIncomeCategory");
-        queryBuilder.addInClauseQuery("$status", inClauseQuery);
+        queryBuilder.addInClauseQuery("$status", clauseQuery);
         SearchTextQuery searchTextQuery = null;
         if (SearchTextQuery.isValid(searchText)) {
             searchTextQuery = new SearchTextQuery(searchText);
@@ -122,8 +123,7 @@ public class IncomeCategoryService extends AbstractService implements ExcelTypeC
         category.setName((String) columns[1]);
         category.setStatus(DataConverter.getStatus(columns[2]));
         category.setCurrency((String) columns[3]);
-        category.setIncomeAccount((String) columns[4]);
-        category.setDescription((String) columns[5]);
+        category.setDescription((String) columns[4]);
         return category;
     }
 
@@ -145,7 +145,6 @@ public class IncomeCategoryService extends AbstractService implements ExcelTypeC
             map.put(2, entity.getName());
             map.put(3, Status.Drafted.toString());
             map.put(4, entity.getCurrency());
-            map.put(5, entity.getIncomeAccount());
             map.put(6, entity.getDescription());
         } else if ("deleteIncomeCategory".equals(queryName)) {
             map.put(1, entity.getCode());
@@ -156,7 +155,6 @@ public class IncomeCategoryService extends AbstractService implements ExcelTypeC
             map.put(1, entity.getCode());
             map.put(2, entity.getName());
             map.put(3, entity.getCurrency());
-            map.put(4, entity.getIncomeAccount());
             map.put(5, entity.getDescription());
             map.put(6, entity.getCode());
         }
@@ -181,7 +179,6 @@ public class IncomeCategoryService extends AbstractService implements ExcelTypeC
         category.setName(DataConverter.getString(array[1]));
         category.setStatus(DataConverter.getStatus(array[2]));
         category.setCurrency(DataConverter.getString(array[3]));
-        category.setIncomeAccount(DataConverter.getString(array[4]));
         category.setDescription(DataConverter.getString(array[5]));
         return category;
     }
@@ -196,7 +193,6 @@ public class IncomeCategoryService extends AbstractService implements ExcelTypeC
         cellData[1] = category.getName();
         cellData[2] = category.getStatus().toString();
         cellData[3] = category.getCurrency();
-        cellData[4] = category.getIncomeAccount();
         cellData[5] = category.getDescription();
         return cellData;
     }

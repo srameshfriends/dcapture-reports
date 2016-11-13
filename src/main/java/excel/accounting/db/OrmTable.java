@@ -2,6 +2,7 @@ package excel.accounting.db;
 
 import javax.persistence.Entity;
 import java.lang.reflect.Field;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -16,6 +17,7 @@ public class OrmTable {
     private List<OrmColumn> columnList;
     private OrmColumn primaryColumn;
     private Map<OrmTable, OrmColumn> referenceMap;
+    private Map<String, String> columnFieldMap;
 
     public OrmTable(String name, Class<?> type) {
         this.name = name;
@@ -47,15 +49,25 @@ public class OrmTable {
     }
 
     public OrmColumn getPrimaryColumn() {
-        if(primaryColumn == null) {
-            for(OrmColumn column : columnList) {
-                if(column.isPrimaryKey()) {
+        if (primaryColumn == null) {
+            for (OrmColumn column : columnList) {
+                if (column.isPrimaryKey()) {
                     primaryColumn = column;
                     break;
                 }
             }
         }
         return primaryColumn;
+    }
+
+    public Map<String, String> getColumnFieldMap() {
+        if (columnFieldMap == null) {
+            columnFieldMap = new HashMap<>();
+            for (OrmColumn column : getColumnList()) {
+                columnFieldMap.put(column.getName(), column.getFieldName());
+            }
+        }
+        return columnFieldMap;
     }
 
     @Override
@@ -70,6 +82,6 @@ public class OrmTable {
 
     @Override
     public boolean equals(Object obj) {
-        return obj != null && obj instanceof OrmTable && ((OrmTable)obj).getName().equals(getName());
+        return obj != null && obj instanceof OrmTable && ((OrmTable) obj).getName().equals(getName());
     }
 }

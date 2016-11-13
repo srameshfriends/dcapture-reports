@@ -227,7 +227,7 @@ public class ExpenseItemService extends AbstractService implements
             map.put(1, type.getCode());
             map.put(2, type.getGroupCode());
             map.put(3, type.getExpenseDate());
-            map.put(4, type.getReferenceNumber());
+            map.put(4, type.getReference());
             map.put(5, type.getDescription());
             map.put(6, type.getCurrency());
             map.put(7, type.getAmount());
@@ -265,7 +265,7 @@ public class ExpenseItemService extends AbstractService implements
         item.setCode(DataConverter.getString(array[0]));
         item.setGroupCode(DataConverter.getString(array[1]));
         item.setExpenseDate(DataConverter.getDate(array[2]));
-        item.setReferenceNumber(DataConverter.getString(array[3]));
+        item.setReference(DataConverter.getString(array[3]));
         item.setDescription(DataConverter.getString(array[4]));
         item.setCurrency(DataConverter.getString(array[5]));
         item.setAmount(DataConverter.getBigDecimal(array[6]));
@@ -282,7 +282,7 @@ public class ExpenseItemService extends AbstractService implements
         cellData[0] = item.getCode();
         cellData[1] = item.getGroupCode();
         cellData[2] = item.getExpenseDate();
-        cellData[3] = item.getReferenceNumber();
+        cellData[3] = item.getReference();
         cellData[4] = item.getDescription();
         cellData[5] = item.getCurrency();
         cellData[6] = item.getAmount();

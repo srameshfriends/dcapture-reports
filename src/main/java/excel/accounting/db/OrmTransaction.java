@@ -1,48 +1,61 @@
 package excel.accounting.db;
 
+import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.log4j.Logger;
-import org.h2.jdbcx.JdbcConnectionPool;
 
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.sql.*;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.sql.Date;
+import java.util.*;
 
 /**
  * Orm Transaction
  */
 public class OrmTransaction {
     private static final Logger logger = Logger.getLogger(OrmTransaction.class);
-    private final JdbcConnectionPool connectionPool;
-    private Map<OrmQuery, PreparedStatement> statementMap;
-    private Connection connection;
-    private PreparedStatement batchStatement;
+    private final OrmProcessor processor;
+    private List<OrmQuery> ormQueryList;
 
-    OrmTransaction(JdbcConnectionPool connectionPool) {
-        this.connectionPool = connectionPool;
+    public OrmTransaction(OrmProcessor processor) {
+        this.processor = processor;
+        ormQueryList = new ArrayList<>();
     }
 
-    void execute(OrmQuery ormQuery) throws SQLException {
-        if (batchStatement != null) {
-            throw new RuntimeException("Batch transaction is enabled, should not be use execute");
+    public void insert(Object object) throws Exception {
+        OrmTable table = processor.getTable(object.getClass());
+        if (table == null) {
+            throw new RuntimeException(object.getClass() + " this is not a valid entity");
         }
-        if (statementMap == null) {
-            statementMap = new HashMap<>();
+        OrmQuery ormQuery = new OrmQuery();
+        ormQuery.setQuery(processor.getQueryTool().insertPreparedQuery(table));
+        List<OrmParameter> parameterList = new ArrayList<>();
+        ormQuery.setParameterList(parameterList);
+        int index = 1;
+        for (OrmColumn ormColumn : table.getColumnList()) {
+            Object fieldValue = getFieldObject(object, ormColumn.getFieldName());
+            OrmParameter parameter = new OrmParameter(index, fieldValue, ormColumn.getSqlType());
+            parameterList.add(parameter);
+            index += 1;
         }
-        PreparedStatement statement = getConnection().prepareStatement(ormQuery.getQuery());
-        addParameter(statement, ormQuery.getParameterList());
-        statementMap.put(ormQuery, statement);
+        ormQueryList.add(ormQuery);
     }
 
-    private void addParameter(PreparedStatement statement, List<OrmParameter> parameterList) throws SQLException {
+    private Object getFieldObject(Object obj, String fieldName) throws Exception {
+        try {
+            return PropertyUtils.getProperty(obj, fieldName);
+        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+            throw new SQLException(e.getMessage());
+        }
+    }
+
+    private void addParameter(PreparedStatement statement, List<OrmParameter> parameterList) throws Exception {
         for (OrmParameter param : parameterList) {
             addParameter(statement, param);
         }
     }
 
-    private void addParameter(PreparedStatement statement, OrmParameter orm) throws SQLException {
+    private void addParameter(PreparedStatement statement, OrmParameter orm) throws Exception {
         Object param = orm.getParameter();
         if (param instanceof String) {
             statement.setString(orm.getIndex(), (String) param);
@@ -58,7 +71,9 @@ public class OrmTransaction {
             statement.setString(orm.getIndex(), param.toString());
         } else {
             SQLType dataType = orm.getSqlType();
-            if (JDBCType.VARCHAR.equals(dataType)) {
+            if(dataType == null) {
+                statement.setString(orm.getIndex(), param.toString());
+            } else if (JDBCType.VARCHAR.equals(dataType)) {
                 statement.setString(orm.getIndex(), null);
             } else if (JDBCType.DATE.equals(dataType)) {
                 statement.setDate(orm.getIndex(), null);
@@ -80,19 +95,47 @@ public class OrmTransaction {
         return new Date(sqlDate.getTime());
     }
 
-    public void commit() {
-        if (batchStatement != null) {
-            throw new RuntimeException("Batch transaction is disabled!");
+    public void commitBatch() throws Exception {
+        if (ormQueryList.isEmpty()) {
+            return;
         }
+        Connection connection = null;
         try {
-            for (PreparedStatement statement : statementMap.values()) {
+            connection = processor.getConnection();
+            PreparedStatement statement = connection.prepareStatement(ormQueryList.get(0).getQuery());
+            for (OrmQuery ormQuery : ormQueryList) {
+                addParameter(statement, ormQuery.getParameterList());
+                statement.addBatch();
+            }
+            connection.commit();
+            close(statement);
+            close(connection);
+            ormQueryList = new ArrayList<>();
+        } catch (SQLException ex) {
+            rollback(connection);
+            if (logger.isDebugEnabled()) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    public void commit() throws Exception {
+        if (ormQueryList.isEmpty()) {
+            return;
+        }
+        Connection connection = null;
+        try {
+            List<PreparedStatement> statementList = new ArrayList<>();
+            connection = processor.getConnection();
+            for (OrmQuery ormQuery : ormQueryList) {
+                PreparedStatement statement = connection.prepareStatement(ormQueryList.get(0).getQuery());
+                addParameter(statement, ormQuery.getParameterList());
+                statementList.add(statement);
                 statement.execute();
             }
             connection.commit();
-            close(statementMap.values());
+            close(statementList);
             close(connection);
-            statementMap = null;
-            connection = null;
         } catch (SQLException ex) {
             rollback(connection);
             if (logger.isDebugEnabled()) {
@@ -113,31 +156,37 @@ public class OrmTransaction {
         }
     }
 
-    private void close(Connection connection) {
+    private void close(PreparedStatement statement) {
         try {
-            connection.close();
+            statement.close();
         } catch (SQLException ex) {
             if (logger.isDebugEnabled()) {
                 ex.printStackTrace();
+            }
+        }
+    }
+
+    private void close(Connection connection) {
+        if (connection != null) {
+            try {
+                connection.close();
+            } catch (SQLException ex) {
+                if (logger.isDebugEnabled()) {
+                    ex.printStackTrace();
+                }
             }
         }
     }
 
     private void rollback(Connection connection) {
-        try {
-            connection.rollback();
-        } catch (SQLException ex) {
-            if (logger.isDebugEnabled()) {
-                ex.printStackTrace();
+        if (connection != null) {
+            try {
+                connection.rollback();
+            } catch (SQLException ex) {
+                if (logger.isDebugEnabled()) {
+                    ex.printStackTrace();
+                }
             }
         }
-    }
-
-    private Connection getConnection() throws SQLException {
-        if (connection == null) {
-            connection = connectionPool.getConnection();
-            connection.setAutoCommit(false);
-        }
-        return connection;
     }
 }

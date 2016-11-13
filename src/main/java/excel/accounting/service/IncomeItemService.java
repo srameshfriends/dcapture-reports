@@ -45,12 +45,9 @@ public class IncomeItemService extends AbstractService implements
         return getDataReader().findRowDataList(queryBuilder, getIncomeItemDao());
     }
 
-    /*
-    * find all id list
-    */
-    public List<Integer> findIdList() {
-        QueryBuilder queryBuilder = getQueryBuilder("findIdList");
-        return getDataReader().findInteger(queryBuilder);
+    public List<String> findCodeList() {
+        QueryBuilder queryBuilder = getQueryBuilder("findCodeList");
+        return getDataReader().findString(queryBuilder);
     }
 
     /**
@@ -142,16 +139,16 @@ public class IncomeItemService extends AbstractService implements
             map.put(4, type.getAmount());
             map.put(5, Status.Drafted.toString());
         } else if ("deleteIncomeItem".equals(queryName)) {
-            map.put(1, type.getId());
+            map.put(1, type.getCode());
         } else if ("updateStatus".equals(queryName)) {
             map.put(1, type.getStatus().toString());
-            map.put(2, type.getId());
+            map.put(2, type.getCode());
         } else if ("updateIncomeItem".equals(queryName)) {
             map.put(1, type.getIncomeDate());
             map.put(2, type.getDescription());
             map.put(3, type.getCurrency());
             map.put(4, type.getAmount());
-            map.put(5, type.getId());
+            map.put(5, type.getCode());
         }
         return map;
     }
@@ -170,7 +167,7 @@ public class IncomeItemService extends AbstractService implements
     @Override
     public IncomeItem getExcelType(String type, Cell[] array) {
         IncomeItem item = new IncomeItem();
-        item.setId(DataConverter.getInteger(array[0]));
+        item.setCode(DataConverter.getString(array[0]));
         item.setIncomeDate(DataConverter.getDate(array[1]));
         item.setDescription(DataConverter.getString(array[2]));
         item.setCurrency(DataConverter.getString(array[3]));
@@ -185,7 +182,7 @@ public class IncomeItemService extends AbstractService implements
     @Override
     public Object[] getExcelRow(String type, IncomeItem item) {
         Object[] cellData = new Object[6];
-        cellData[0] = item.getId();
+        cellData[0] = item.getCode();
         cellData[1] = item.getIncomeDate();
         cellData[2] = item.getDescription();
         cellData[3] = item.getCurrency();

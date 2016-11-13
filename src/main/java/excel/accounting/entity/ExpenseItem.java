@@ -1,5 +1,8 @@
 package excel.accounting.entity;
 
+import javax.persistence.Column;
+import javax.persistence.JoinColumn;
+import javax.persistence.Table;
 import java.math.BigDecimal;
 import java.util.Date;
 
@@ -9,20 +12,35 @@ import java.util.Date;
  * @author Ramesh
  * @since Oct, 2016
  */
-public class ExpenseItem {
+@Table(name = "expense_item")
+public class ExpenseItem extends MasterRecord {
+
+    @Column(name = "expense_date")
     private Date expenseDate;
-    private String code, groupCode, referenceNumber, description, currency, expenseCategory, account;
-    private BigDecimal amount, paidAmount;
-    private Status status;
+
+    @Column(name = "group_code")
+    private String groupCode;
+
+    private String reference;
+
+    private String description;
+
+    @JoinColumn(name = "currency", table = "currency")
+    private String currency;
+
+    @Column(name = "expense_category")
+    private String expenseCategory;
+
+    @JoinColumn(name = "account", table = "account")
+    private String account;
+
+    private BigDecimal amount;
+
+    @Column(name = "paid_amount")
+    private BigDecimal paidAmount;
+
+    @Column(name = "paid_status")
     private PaidStatus paidStatus;
-
-    public String getCode() {
-        return code;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
-    }
 
     public String getGroupCode() {
         return groupCode;
@@ -40,12 +58,12 @@ public class ExpenseItem {
         this.expenseDate = expenseDate;
     }
 
-    public String getReferenceNumber() {
-        return referenceNumber;
+    public String getReference() {
+        return reference;
     }
 
-    public void setReferenceNumber(String referenceNumber) {
-        this.referenceNumber = referenceNumber;
+    public void setReference(String reference) {
+        this.reference = reference;
     }
 
     public String getDescription() {
@@ -78,14 +96,6 @@ public class ExpenseItem {
 
     public void setCurrency(String currency) {
         this.currency = currency;
-    }
-
-    public Status getStatus() {
-        return status;
-    }
-
-    public void setStatus(Status status) {
-        this.status = status;
     }
 
     public String getExpenseCategory() {

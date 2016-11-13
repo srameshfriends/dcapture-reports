@@ -5,7 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.*;
 
 /**
- * Query Parameter
+ * Query
  */
 public class QueryBuilder {
     private StringBuilder selectBuilder, joinBuilder, whereBuilder, orderByBuilder;
@@ -63,10 +63,10 @@ public class QueryBuilder {
         whereBuilder.append(txt);
     }
 
-    public QueryBuilder addInClauseQuery(String replaceName, InClauseQuery inClauseQuery) {
-        replaceMap.put(replaceName, inClauseQuery == null ? "" : inClauseQuery.toString());
-        if(inClauseQuery != null) {
-            inClauseQuery.getParameterList().forEach(this::addParameter);
+    public QueryBuilder addInClauseQuery(String replaceName, ClauseQuery clauseQuery) {
+        replaceMap.put(replaceName, clauseQuery == null ? "" : clauseQuery.toString());
+        if(clauseQuery != null) {
+            clauseQuery.getParameterList().forEach(this::addParameter);
         }
         return QueryBuilder.this;
     }

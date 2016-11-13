@@ -6,8 +6,17 @@ import java.util.List;
  * Orm Query
  */
 public class OrmQuery {
+    private Class<?> entity;
     private String query;
     private List<OrmParameter> parameterList;
+
+    public Class<?> getEntity() {
+        return entity;
+    }
+
+    public void setEntity(Class<?> entity) {
+        this.entity = entity;
+    }
 
     public String getQuery() {
         return query;

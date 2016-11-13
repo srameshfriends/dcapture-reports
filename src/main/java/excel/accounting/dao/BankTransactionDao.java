@@ -33,7 +33,7 @@ public class BankTransactionDao extends AbstractDao<BankTransaction> implements 
     @Override
     public BankTransaction getEntity(String queryName, Object[] columns) {
         BankTransaction bankTransaction = new BankTransaction();
-        bankTransaction.setId((Integer) columns[0]);
+        bankTransaction.setCode((String) columns[0]);
         bankTransaction.setBank((String) columns[1]);
         bankTransaction.setTransactionDate((Date) columns[2]);
         bankTransaction.setTransactionIndex((Integer) columns[3]);

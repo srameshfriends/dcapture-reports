@@ -1,9 +1,6 @@
 package excel.accounting.dao;
 
-import excel.accounting.db.AbstractDao;
-import excel.accounting.db.InClauseQuery;
-import excel.accounting.db.QueryBuilder;
-import excel.accounting.db.RowColumnsToEntity;
+import excel.accounting.db.*;
 import excel.accounting.entity.SystemSetting;
 import excel.accounting.shared.DataConverter;
 
@@ -61,10 +58,10 @@ public class SystemSettingDao extends AbstractDao<SystemSetting> implements RowC
     }
 
     public List<SystemSetting> findByCodeArray(String... codeArray) {
-        QueryBuilder builder = getQueryBuilder("findByCodeArray");
-        InClauseQuery inClauseQuery = new InClauseQuery(codeArray);
-        builder.addInClauseQuery("$code", inClauseQuery);
-        return getDataReader().findRowDataList(builder, this);
+        SQLBuilder builder = createSQLQuery();
+        builder.select(SystemSetting.class);
+        builder.whereOrIn("code", codeArray);
+        return findAll(builder);
     }
 
     public List<SystemSetting> findByGroupCode(String groupCode) {

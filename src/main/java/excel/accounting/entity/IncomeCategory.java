@@ -1,46 +1,21 @@
 package excel.accounting.entity;
 
+import javax.persistence.JoinColumn;
+import javax.persistence.Table;
+
 /**
  * Income Category
  *
  * @author Ramesh
  * @since Oct, 2016
  */
-public class IncomeCategory {
-    private String code, name, currency, incomeAccount, description;
-    private Status status;
+@Table(name = "income_category")
+public class IncomeCategory extends MasterRecord {
 
-    public String getCode() {
-        return code;
-    }
+    private String description;
 
-    public void setCode(String code) {
-        this.code = code;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getCurrency() {
-        return currency;
-    }
-
-    public void setCurrency(String currency) {
-        this.currency = currency;
-    }
-
-    public String getIncomeAccount() {
-        return incomeAccount;
-    }
-
-    public void setIncomeAccount(String incomeAccount) {
-        this.incomeAccount = incomeAccount;
-    }
+    @JoinColumn(name = "currency", table = "currency")
+    private String currency;
 
     public String getDescription() {
         return description;
@@ -50,11 +25,11 @@ public class IncomeCategory {
         this.description = description;
     }
 
-    public Status getStatus() {
-        return status;
+    public String getCurrency() {
+        return currency;
     }
 
-    public void setStatus(Status status) {
-        this.status = status;
+    public void setCurrency(String currency) {
+        this.currency = currency;
     }
 }

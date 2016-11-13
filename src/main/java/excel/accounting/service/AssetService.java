@@ -135,7 +135,7 @@ public class AssetService extends AbstractService implements EntityToRowColumns<
             map.put(8, type.getCost());
             map.put(9, Status.Drafted.toString());
             map.put(10, type.getUnits());
-            map.put(11, type.getReferenceNumber());
+            map.put(11, type.getReference());
             map.put(12, type.getCategory());
         } else if ("deleteAsset".equals(queryName)) {
             map.put(1, type.getCode());
@@ -150,7 +150,7 @@ public class AssetService extends AbstractService implements EntityToRowColumns<
             map.put(8, type.getCost());
             map.put(9, Status.Drafted.toString());
             map.put(10, type.getUnits());
-            map.put(11, type.getReferenceNumber());
+            map.put(11, type.getReference());
             map.put(12, type.getCategory());
             map.put(13, type.getCode());
         } else if ("updateStatus".equals(queryName)) {
@@ -187,7 +187,7 @@ public class AssetService extends AbstractService implements EntityToRowColumns<
         asset.setCost(DataConverter.getBigDecimal(array[7]));
         asset.setStatus(DataConverter.getStatus(array[8]));
         asset.setUnits(DataConverter.getBigDecimal(array[9]));
-        asset.setReferenceNumber(DataConverter.getString(array[10]));
+        asset.setReference(DataConverter.getString(array[10]));
         asset.setCategory(DataConverter.getString(array[11]));
         return asset;
     }
@@ -209,7 +209,7 @@ public class AssetService extends AbstractService implements EntityToRowColumns<
         cellData[7] = asset.getCost();
         cellData[8] = asset.getStatus().toString();
         cellData[9] = asset.getUnits();
-        cellData[10] = asset.getReferenceNumber();
+        cellData[10] = asset.getReference();
         cellData[11] = asset.getCategory();
         return cellData;
     }

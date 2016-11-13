@@ -34,5 +34,4 @@ public abstract class AbstractControl {
     protected void setMessage(String message) {
         control.setMessage(message);
     }
-
 }

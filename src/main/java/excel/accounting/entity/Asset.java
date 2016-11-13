@@ -1,5 +1,8 @@
 package excel.accounting.entity;
 
+import javax.persistence.Column;
+import javax.persistence.JoinColumn;
+import javax.persistence.Table;
 import java.math.BigDecimal;
 import java.util.Date;
 
@@ -9,27 +12,35 @@ import java.util.Date;
  * @author Ramesh
  * @since Oct, 2016
  */
-public class Asset {
-    private String code, name, description, assetType, currency, referenceNumber, category;
-    private Date startDate, endDate;
-    private BigDecimal cost, units;
-    private Status status;
+@Table(name = "asset")
+public class Asset extends MasterRecord {
 
-    public String getCode() {
-        return code;
-    }
+    @Column(name = "description")
+    private String description;
 
-    public void setCode(String code) {
-        this.code = code;
-    }
+    @Column(name = "asset_type")
+    private String  assetType;
 
-    public String getName() {
-        return name;
-    }
+    @JoinColumn(name = "currency", table = "currency")
+    private String currency;
 
-    public void setName(String name) {
-        this.name = name;
-    }
+    @Column(name = "reference")
+    private String reference;
+
+    @Column(name = "category")
+    private String category;
+
+    @Column(name = "start_date")
+    private Date startDate;
+
+    @Column(name = "end_date")
+    private Date endDate;
+
+    @Column(name = "cost")
+    private BigDecimal cost;
+
+    @Column(name = "units")
+    private BigDecimal units;
 
     public String getDescription() {
         return description;
@@ -63,12 +74,12 @@ public class Asset {
         this.units = units;
     }
 
-    public String getReferenceNumber() {
-        return referenceNumber;
+    public String getReference() {
+        return reference;
     }
 
-    public void setReferenceNumber(String referenceNumber) {
-        this.referenceNumber = referenceNumber;
+    public void setReference(String reference) {
+        this.reference = reference;
     }
 
     public String getCategory() {
@@ -101,13 +112,5 @@ public class Asset {
 
     public void setCost(BigDecimal cost) {
         this.cost = cost;
-    }
-
-    public Status getStatus() {
-        return status;
-    }
-
-    public void setStatus(Status status) {
-        this.status = status;
     }
 }

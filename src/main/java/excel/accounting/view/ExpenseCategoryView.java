@@ -1,8 +1,6 @@
 package excel.accounting.view;
 
 import excel.accounting.dao.ExpenseCategoryDao;
-import excel.accounting.dialog.ChartOfAccountsDialog;
-import excel.accounting.entity.AccountType;
 import excel.accounting.entity.ExpenseCategory;
 import excel.accounting.poi.ReadExcelData;
 import excel.accounting.poi.WriteExcelData;
@@ -34,7 +32,6 @@ public class ExpenseCategoryView extends AbstractView implements ViewHolder {
     private final String exportSelectedActionId = "exportSelectedAction";
     private final String confirmedActionId = "confirmedAction", reopenActionId = "reopenAction";
     private final String closedActionId = "closedAction", draftedActionId = "draftedAction";
-    private final String updateChartOfAccActionId = "updateChartOfAccAction";
 
     private ReadableTableView<ExpenseCategory> tableView;
     private ExpenseCategoryDao expenseCategoryDao;
@@ -59,7 +56,6 @@ public class ExpenseCategoryView extends AbstractView implements ViewHolder {
         tableView.addTextColumn("status", "Status").setMinWidth(80);
         tableView.addSelectionChangeListener(viewListener);
         tableView.setContextMenuHandler(viewListener);
-        tableView.addContextMenuItem(updateChartOfAccActionId, "Set Chart Of Accounts");
         tableView.addContextMenuItem(confirmedActionId, "Set As Confirmed");
         tableView.addContextMenuItemSeparator();
         tableView.addContextMenuItem(draftedActionId, "Set As Drafted");
@@ -155,22 +151,6 @@ public class ExpenseCategoryView extends AbstractView implements ViewHolder {
         tableView.setItems(observableList);
     }
 
-    private void updateChartOfAccounts() {
-        ChartOfAccountsDialog dialog = new ChartOfAccountsDialog();
-        dialog.setApplicationControl(getApplicationControl());
-        dialog.start(getPrimaryStage());
-        dialog.setAccountTypes(AccountType.Expense);
-        dialog.showAndWait();
-        if (dialog.isCancelled()) {
-            return;
-        }
-        List<ExpenseCategory> dataList = tableView.getSelectedItems();
-        if (dataList != null) {
-            expenseCategoryService.updateChartOfAccounts(dialog.getSelected(), dataList);
-            loadRecords();
-        }
-    }
-
     private void importFromExcelEvent() {
         File file = FileHelper.showOpenFileDialogExcel(getPrimaryStage());
         if (file == null) {
@@ -235,9 +215,6 @@ public class ExpenseCategoryView extends AbstractView implements ViewHolder {
             case closedActionId:
             case reopenActionId:
                 updateStatus(actionId);
-                break;
-            case updateChartOfAccActionId:
-                updateChartOfAccounts();
                 break;
         }
     }

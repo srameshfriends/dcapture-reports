@@ -1,5 +1,8 @@
 package excel.accounting.entity;
 
+import javax.persistence.Column;
+import javax.persistence.JoinColumn;
+import javax.persistence.Table;
 import java.math.BigDecimal;
 import java.util.Date;
 
@@ -9,20 +12,28 @@ import java.util.Date;
  * @author Ramesh
  * @since Oct, 2016
  */
-public class ExchangeRate {
-    private String code, fetchFrom, currency, exchangeCurrency;
+@Table(name = "exchange_rate")
+public class ExchangeRate extends DocumentRecord {
+
+    @Column(name = "fetch_from")
+    private String fetchFrom;
+
+    @JoinColumn(name = "currency", table = "currency")
+    private String currency;
+
+    @JoinColumn(name = "exchange_currency", table = "currency")
+    private String exchangeCurrency;
+
+    @Column(name = "asof_date")
     private Date asOfDate;
-    private Status status;
+
     private int unit;
-    private BigDecimal sellingRate, buyingRate;
 
-    public String getCode() {
-        return code;
-    }
+    @Column(name = "selling_rate")
+    private BigDecimal sellingRate;
 
-    public void setCode(String code) {
-        this.code = code;
-    }
+    @Column(name = "buying_rate")
+    private BigDecimal buyingRate;
 
     public String getFetchFrom() {
         return fetchFrom;
@@ -54,14 +65,6 @@ public class ExchangeRate {
 
     public void setExchangeCurrency(String exchangeCurrency) {
         this.exchangeCurrency = exchangeCurrency;
-    }
-
-    public Status getStatus() {
-        return status;
-    }
-
-    public void setStatus(Status status) {
-        this.status = status;
     }
 
     public int getUnit() {

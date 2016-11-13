@@ -53,11 +53,11 @@ public class AccountDao extends AbstractDao<Account> implements RowColumnsToEnti
 
     public List<Account> searchAccount(String searchText, Status status, AccountType... accountTypes) {
         QueryBuilder queryBuilder = getQueryBuilder("searchAccount");
-        InClauseQuery statusQuery = new InClauseQuery(status);
+        ClauseQuery statusQuery = new ClauseQuery();
         queryBuilder.addInClauseQuery("$status", statusQuery);
-        InClauseQuery accountTypeQuery = null;
+        ClauseQuery accountTypeQuery = null;
         if(accountTypes != null) {
-            accountTypeQuery = new InClauseQuery(accountTypes);
+            accountTypeQuery = new ClauseQuery();
         }
         queryBuilder.addInClauseQuery("$accountType", accountTypeQuery);
         SearchTextQuery searchTextQuery = null;
@@ -70,9 +70,9 @@ public class AccountDao extends AbstractDao<Account> implements RowColumnsToEnti
     }
 
     public List<Account> findByAccountTypes(String searchText, AccountType... accountTypeArray) {
-        InClauseQuery inClauseQuery = new InClauseQuery(accountTypeArray);
+        ClauseQuery clauseQuery = new ClauseQuery();
         QueryBuilder queryBuilder = getQueryBuilder("findByAccountTypes");
-        queryBuilder.addInClauseQuery("$account_type", inClauseQuery);
+        queryBuilder.addInClauseQuery("$account_type", clauseQuery);
         SearchTextQuery searchTextQuery = null;
         if (SearchTextQuery.isValid(searchText)) {
             searchTextQuery = new SearchTextQuery(searchText);

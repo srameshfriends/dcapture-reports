@@ -42,9 +42,9 @@ public class BankTransactionService extends AbstractService implements
         return getDataReader().findRowDataList(queryBuilder, getBankTransactionDao());
     }
 
-    public List<Integer> findIdList() {
-        QueryBuilder queryBuilder = getQueryBuilder("findIdList");
-        return getDataReader().findInteger(queryBuilder);
+    public List<String> findCodeList() {
+        QueryBuilder queryBuilder = getQueryBuilder("findCodeList");
+        return getDataReader().findString(queryBuilder);
     }
 
     /**
@@ -113,18 +113,6 @@ public class BankTransactionService extends AbstractService implements
         executeBatch(transaction);
     }
 
-    /**
-     * insertBankTransaction
-     * bank, transaction_date, transaction_index, transaction_code, description, currency,
-     * credit_amount, debit_amount, status
-     * deleteBankTransaction
-     * find by id
-     * updateStatus
-     * set status find by id
-     * updateBankTransaction
-     * bank, transaction_date, transaction_index, transaction_code, description, currency, credit_amount, debit_amount
-     * By Id
-     */
     @Override
     public Map<Integer, Object> getColumnsMap(final String queryName, BankTransaction type) {
         Map<Integer, Object> map = new HashMap<>();
@@ -139,10 +127,10 @@ public class BankTransactionService extends AbstractService implements
             map.put(8, type.getDebitAmount());
             map.put(9, Status.Drafted.toString());
         } else if ("deleteBankTransaction".equals(queryName)) {
-            map.put(1, type.getId());
+            map.put(1, type.getCode());
         } else if ("updateStatus".equals(queryName)) {
             map.put(1, type.getStatus().toString());
-            map.put(2, type.getId());
+            map.put(2, type.getCode());
         } else if ("updateBankTransaction".equals(queryName)) {
             map.put(1, type.getBank());
             map.put(2, type.getTransactionDate());
@@ -152,29 +140,21 @@ public class BankTransactionService extends AbstractService implements
             map.put(6, type.getCurrency());
             map.put(7, type.getCreditAmount());
             map.put(8, type.getDebitAmount());
-            map.put(9, type.getId());
+            map.put(9, type.getCode());
         }
         return map;
     }
 
-    /**
-     * id, bank, transaction_date, transaction_index, transaction_code, description, currency,
-     * credit_amount, debit_amount, status
-     */
     @Override
     public String[] getColumnNames() {
         return new String[]{"id", "Bank Code", "Date", "Index", "Transaction Code", "Description", "Currency",
                 "Credit Account", "Debit Amount", "Status"};
     }
 
-    /**
-     * id, bank, transaction_index, transaction_date, transaction_code, description, currency,
-     * credit_amount, debit_amount, status
-     */
     @Override
     public BankTransaction getExcelType(String type, Cell[] array) {
         BankTransaction bankTransaction = new BankTransaction();
-        bankTransaction.setId(DataConverter.getInteger(array[0]));
+        bankTransaction.setCode(DataConverter.getString(array[0]));
         bankTransaction.setBank(DataConverter.getString(array[1]));
         bankTransaction.setTransactionDate(DataConverter.getDate(array[2]));
         bankTransaction.setTransactionIndex(DataConverter.getInteger(array[3]));
@@ -187,14 +167,10 @@ public class BankTransactionService extends AbstractService implements
         return bankTransaction;
     }
 
-    /**
-     * id, bank, transaction_index, transaction_date, transaction_code, description, currency,
-     * credit_amount, debit_amount, status
-     */
     @Override
     public Object[] getExcelRow(String type, BankTransaction bankTransaction) {
         Object[] cellData = new Object[10];
-        cellData[0] = bankTransaction.getId();
+        cellData[0] = bankTransaction.getCode();
         cellData[1] = bankTransaction.getBank();
         cellData[2] = bankTransaction.getTransactionDate();
         cellData[3] = bankTransaction.getTransactionIndex();

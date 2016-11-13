@@ -1,9 +1,7 @@
 package excel.accounting.service;
 
 import excel.accounting.dao.SystemSettingDao;
-import excel.accounting.db.EntityToRowColumns;
-import excel.accounting.db.QueryBuilder;
-import excel.accounting.db.Transaction;
+import excel.accounting.db.*;
 import excel.accounting.entity.SystemSetting;
 
 import java.util.HashMap;
@@ -32,13 +30,15 @@ public class SystemSettingService extends AbstractService implements EntityToRow
     }
 
     private void insertSystemSetting(List<SystemSetting> settingList) {
-        QueryBuilder queryBuilder = getQueryBuilder("insertSystemSetting");
-        Transaction transaction = createTransaction();
-        transaction.setBatchQuery(queryBuilder);
-        for (SystemSetting systemSetting : settingList) {
-            transaction.addBatch(getColumnsMap("insertSystemSetting", systemSetting));
+        OrmTransaction transaction = createOrmTransaction();
+        try {
+            for (SystemSetting systemSetting : settingList) {
+                transaction.insert(systemSetting);
+            }
+            transaction.commit();
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
-        executeBatch(transaction);
     }
 
     public void updateValue(List<SystemSetting> settingList) {

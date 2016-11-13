@@ -29,8 +29,8 @@ public class DataProcessor implements Runnable {
             namedQueryMap = new HashMap<>();
             entityReferenceMap = new HashMap<>();
             addNamedQueries();
-            executeTableForwardQuery();
-            executeReferenceForwardQuery();
+          //  executeTableForwardQuery();
+          //  executeReferenceForwardQuery();
         } catch (Exception ex) {
             if (logger.isDebugEnabled()) {
                 ex.printStackTrace();
@@ -106,9 +106,9 @@ public class DataProcessor implements Runnable {
     }
 
     private EntityReference createEntityReference(final String query) {
-        String table = StringUtils.substringBetween(query, "alter table", "add foreign key");
+        String table = StringUtils.substringBetween(query, "alter table", " foreign key");
         table = table.trim();
-        String column = StringUtils.substringBetween(query, "add foreign key", "references");
+        String column = StringUtils.substringBetween(query, " foreign key", "references");
         column = StringUtils.substringBetween(column, "(", ")");
         //
         int indexOf = query.indexOf("references");
@@ -121,7 +121,7 @@ public class DataProcessor implements Runnable {
     }
 
     private boolean isForeignKeyReferred(String query) {
-        return query.contains("alter table") && query.contains("add foreign key") && query.contains("references");
+        return query.contains("alter table") && query.contains(" foreign key") && query.contains("references");
     }
 
     List<EntityReference> getEntityReferenceList(String tableName) {

@@ -35,7 +35,7 @@ public class ExpenseItemDao extends AbstractDao<ExpenseItem> implements RowColum
         item.setCode((String) columns[0]);
         item.setGroupCode((String) columns[1]);
         item.setExpenseDate((Date) columns[2]);
-        item.setReferenceNumber((String) columns[3]);
+        item.setReference((String) columns[3]);
         item.setDescription((String) columns[4]);
         item.setCurrency((String) columns[5]);
         item.setAmount((BigDecimal) columns[6]);
@@ -54,12 +54,12 @@ public class ExpenseItemDao extends AbstractDao<ExpenseItem> implements RowColum
     public List<ExpenseItem> searchExpenseItems(String searchText, Status[] status, PaidStatus[] paidStatuses) {
         QueryBuilder queryBuilder = getQueryBuilder("searchExpenseItems");
         //
-        InClauseQuery statusQuery = new InClauseQuery(status);
+        ClauseQuery statusQuery = new ClauseQuery();
         queryBuilder.addInClauseQuery("$status", statusQuery);
         //
-        InClauseQuery accountTypeQuery = null;
+        ClauseQuery accountTypeQuery = null;
         if(paidStatuses != null) {
-            accountTypeQuery = new InClauseQuery(paidStatuses);
+            accountTypeQuery = new ClauseQuery();
         }
         queryBuilder.addInClauseQuery("$paidStatus", accountTypeQuery);
         //

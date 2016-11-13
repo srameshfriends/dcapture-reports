@@ -34,9 +34,9 @@ public class CurrencyDao extends AbstractDao<Currency> implements RowColumnsToEn
     }
 
     public List<Currency> searchCurrency(String searchText, Status status) {
-        InClauseQuery inClauseQuery = new InClauseQuery(status.toString());
+        ClauseQuery clauseQuery = new ClauseQuery(status.toString());
         QueryBuilder queryBuilder = getQueryBuilder("searchCurrency");
-        queryBuilder.addInClauseQuery("$status", inClauseQuery);
+        queryBuilder.addInClauseQuery("$status", clauseQuery);
         SearchTextQuery searchTextQuery = null;
         if (SearchTextQuery.isValid(searchText)) {
             searchTextQuery = new SearchTextQuery(searchText);

@@ -1,6 +1,5 @@
 package excel.accounting.service;
 
-import excel.accounting.dao.ChartOfAccountsDao;
 import excel.accounting.db.*;
 import excel.accounting.entity.*;
 import excel.accounting.poi.ExcelTypeConverter;
@@ -25,7 +24,6 @@ import java.util.stream.Collectors;
 public class ExpenseCategoryService extends AbstractService implements
         EntityToRowColumns<ExpenseCategory>, ExcelTypeConverter<ExpenseCategory> {
     private ExpenseCategoryDao expenseCategoryDao;
-    private ChartOfAccountsDao chartOfAccountsDao;
 
     private ExpenseCategoryDao getExpenseCategoryDao() {
         if (expenseCategoryDao == null) {
@@ -34,21 +32,13 @@ public class ExpenseCategoryService extends AbstractService implements
         return expenseCategoryDao;
     }
 
-    private ChartOfAccountsDao getChartOfAccountsDao() {
-        if (chartOfAccountsDao == null) {
-            chartOfAccountsDao = (ChartOfAccountsDao) getBean("chartOfAccountsDao");
-        }
-        return chartOfAccountsDao;
-    }
-
     @Override
     protected String getSqlFileName() {
         return "expense-category";
     }
 
     private boolean confirmValidate(ExpenseCategory expenseCategory) {
-        return !(expenseCategory.getCode() == null || expenseCategory.getName() == null ||
-                expenseCategory.getChartOfAccounts() == null);
+        return !(expenseCategory.getCode() == null || expenseCategory.getName() == null);
     }
 
     private boolean insertValidate(ExpenseCategory expenseCategory, StringRules rules) {
@@ -142,15 +132,10 @@ public class ExpenseCategoryService extends AbstractService implements
             setMessage("Valid expense category not found");
             return;
         }
-        List<String> chartOfAccountsList = getChartOfAccountsDao().findCodeList();
         QueryBuilder queryBuilder = getQueryBuilder("insertExpenseCategory");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (ExpenseCategory expenseCategory : validList) {
-            if (expenseCategory.getChartOfAccounts() != null && //
-                    !chartOfAccountsList.contains(expenseCategory.getChartOfAccounts())) {
-                expenseCategory.setChartOfAccounts(null);
-            }
             transaction.addBatch(getColumnsMap("insertExpenseCategory", expenseCategory));
         }
         executeBatch(transaction);
@@ -162,25 +147,6 @@ public class ExpenseCategoryService extends AbstractService implements
         transaction.setBatchQuery(queryBuilder);
         for (ExpenseCategory category : categoryList) {
             transaction.addBatch(getColumnsMap("updateExpenseCategory", category));
-        }
-        executeBatch(transaction);
-    }
-
-    public void updateChartOfAccounts(ChartOfAccounts chartOfAccounts, List<ExpenseCategory> dataList) {
-        List<ExpenseCategory> filteredList = filteredByStatus(Status.Drafted, dataList);
-        if (filteredList.isEmpty()) {
-            setMessage("Error : Drafted expense categories allowed modify chart of accounts");
-            return;
-        }
-        final String accountCode = chartOfAccounts == null ? null : chartOfAccounts.getCode();
-        for (ExpenseCategory expenseCategory : filteredList) {
-            expenseCategory.setChartOfAccounts(accountCode);
-        }
-        QueryBuilder queryBuilder = getQueryBuilder("updateChartOfAccounts");
-        Transaction transaction = createTransaction();
-        transaction.setBatchQuery(queryBuilder);
-        for (ExpenseCategory expenseCategory : filteredList) {
-            transaction.addBatch(getColumnsMap("updateChartOfAccounts", expenseCategory));
         }
         executeBatch(transaction);
     }
@@ -205,16 +171,12 @@ public class ExpenseCategoryService extends AbstractService implements
         if ("insertExpenseCategory".equals(queryName)) {
             map.put(1, type.getCode());
             map.put(2, type.getName());
-            map.put(3, type.getChartOfAccounts());
             map.put(4, type.getDescription());
             map.put(5, Status.Drafted.toString());
         } else if ("deleteExpenseCategory".equals(queryName)) {
             map.put(1, type.getCode());
         } else if ("updateStatus".equals(queryName)) {
             map.put(1, type.getStatus().toString());
-            map.put(2, type.getCode());
-        } else if ("updateChartOfAccounts".equals(queryName)) {
-            map.put(1, type.getChartOfAccounts());
             map.put(2, type.getCode());
         }
         return map;
@@ -230,7 +192,6 @@ public class ExpenseCategoryService extends AbstractService implements
         ExpenseCategory category = new ExpenseCategory();
         category.setCode(DataConverter.getString(array[0]));
         category.setName(DataConverter.getString(array[1]));
-        category.setChartOfAccounts(DataConverter.getString(array[2]));
         category.setDescription(DataConverter.getString(array[3]));
         category.setStatus(DataConverter.getStatus(array[4]));
         return category;
@@ -241,7 +202,6 @@ public class ExpenseCategoryService extends AbstractService implements
         Object[] cellData = new Object[5];
         cellData[0] = category.getCode();
         cellData[1] = category.getName();
-        cellData[2] = category.getChartOfAccounts();
         cellData[3] = category.getDescription();
         cellData[4] = category.getStatus();
         return cellData;

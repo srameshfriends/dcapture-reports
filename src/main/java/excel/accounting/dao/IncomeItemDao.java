@@ -39,7 +39,7 @@ public class IncomeItemDao extends AbstractDao<IncomeItem> implements RowColumns
     @Override
     public IncomeItem getEntity(String queryName, Object[] columns) {
         IncomeItem item = new IncomeItem();
-        item.setId((Integer) columns[0]);
+        item.setCode((String) columns[0]);
         item.setIncomeDate((Date) columns[1]);
         item.setDescription((String) columns[2]);
         item.setCurrency((String) columns[3]);

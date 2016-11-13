@@ -18,6 +18,10 @@ public abstract class AbstractService extends AbstractControl {
         return new Transaction(getApplicationControl().getConnectionPool());
     }
 
+    protected final OrmTransaction createOrmTransaction() {
+        return new OrmTransaction(getApplicationControl().getOrmProcessor());
+    }
+
     protected abstract String getSqlFileName();
 
     protected QueryBuilder getQueryBuilder(String queryName) {

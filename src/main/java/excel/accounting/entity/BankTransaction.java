@@ -1,5 +1,7 @@
 package excel.accounting.entity;
 
+import javax.persistence.Column;
+import javax.persistence.JoinColumn;
 import java.math.BigDecimal;
 import java.util.Date;
 
@@ -9,21 +11,28 @@ import java.util.Date;
  * @author Ramesh
  * @since Oct, 2016
  */
-public class BankTransaction {
-    private int id;
+public class BankTransaction extends DocumentRecord {
+    @Column(name = "transaction_date")
     private Date transactionDate;
-    private String bank, transactionCode, description, currency;
-    private BigDecimal creditAmount, debitAmount;
+
+    private String bank;
+
+    @Column(name = "transaction_code")
+    private String transactionCode;
+
+    private String description;
+
+    @JoinColumn(name = "currency", table = "currency")
+    private String currency;
+
+    @Column(name = "credit_amount")
+    private BigDecimal creditAmount;
+
+    @Column(name = "debit_amount")
+    private BigDecimal debitAmount;
+
+    @Column(name = "transaction_index")
     private int transactionIndex;
-    private Status status;
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
 
     public Date getTransactionDate() {
         return transactionDate;
@@ -39,14 +48,6 @@ public class BankTransaction {
 
     public void setBank(String bank) {
         this.bank = bank;
-    }
-
-    public int getTransactionIndex() {
-        return transactionIndex;
-    }
-
-    public void setTransactionIndex(int transactionIndex) {
-        this.transactionIndex = transactionIndex;
     }
 
     public String getTransactionCode() {
@@ -89,11 +90,11 @@ public class BankTransaction {
         this.debitAmount = debitAmount;
     }
 
-    public Status getStatus() {
-        return status;
+    public int getTransactionIndex() {
+        return transactionIndex;
     }
 
-    public void setStatus(Status status) {
-        this.status = status;
+    public void setTransactionIndex(int transactionIndex) {
+        this.transactionIndex = transactionIndex;
     }
 }

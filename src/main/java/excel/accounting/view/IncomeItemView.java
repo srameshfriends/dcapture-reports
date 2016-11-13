@@ -144,11 +144,11 @@ public class IncomeItemView extends AbstractView implements ViewHolder {
         if (dataList.isEmpty()) {
             return;
         }
-        List<Integer> existingIdList = incomeItemService.findIdList();
+        List<String> existingCodeList = incomeItemService.findCodeList();
         List<IncomeItem> updateList = new ArrayList<>();
         List<IncomeItem> insertList = new ArrayList<>();
         for (IncomeItem incomeItem : dataList) {
-            if (existingIdList.contains(incomeItem.getId())) {
+            if (existingCodeList.contains(incomeItem.getCode())) {
                 updateList.add(incomeItem);
             } else {
                 insertList.add(incomeItem);

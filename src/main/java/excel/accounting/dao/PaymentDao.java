@@ -8,7 +8,6 @@ import excel.accounting.shared.DataConverter;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
-import java.util.StringJoiner;
 
 /**
  * Payment Dao
@@ -59,7 +58,7 @@ public class PaymentDao extends AbstractDao<Payment> implements RowColumnsToEnti
 
     public List<Payment> searchPayment(String searchText, Status status) {
         QueryBuilder queryBuilder = getQueryBuilder("searchPayment");
-        InClauseQuery statusQuery = new InClauseQuery(status);
+        ClauseQuery statusQuery = new ClauseQuery();
         queryBuilder.addInClauseQuery("$status", statusQuery);
         SearchTextQuery searchTextQuery = null;
         if (SearchTextQuery.isValid(searchText)) {

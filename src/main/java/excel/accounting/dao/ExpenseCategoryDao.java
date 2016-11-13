@@ -43,9 +43,9 @@ public class ExpenseCategoryDao extends AbstractDao<ExpenseCategory> implements 
     }
 
     public List<ExpenseCategory> searchExpenseCategory(String searchText, Status... statuses) {
-        InClauseQuery inClauseQuery = new InClauseQuery(statuses);
+        ClauseQuery clauseQuery = new ClauseQuery();
         QueryBuilder queryBuilder = getQueryBuilder("searchExpenseCategory");
-        queryBuilder.addInClauseQuery("$status", inClauseQuery);
+        queryBuilder.addInClauseQuery("$status", clauseQuery);
         SearchTextQuery searchTextQuery = null;
         if (SearchTextQuery.isValid(searchText)) {
             searchTextQuery = new SearchTextQuery(searchText);
@@ -63,7 +63,6 @@ public class ExpenseCategoryDao extends AbstractDao<ExpenseCategory> implements 
         ExpenseCategory category = new ExpenseCategory();
         category.setCode((String) columns[0]);
         category.setName((String) columns[1]);
-        category.setChartOfAccounts((String) columns[2]);
         category.setDescription((String) columns[3]);
         category.setStatus(DataConverter.getStatus(columns[4]));
         return category;

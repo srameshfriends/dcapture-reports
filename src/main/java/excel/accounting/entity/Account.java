@@ -1,5 +1,8 @@
 package excel.accounting.entity;
 
+import javax.persistence.Column;
+import javax.persistence.JoinColumn;
+import javax.persistence.Table;
 import java.math.BigDecimal;
 
 /**
@@ -8,35 +11,18 @@ import java.math.BigDecimal;
  * @author Ramesh
  * @since Oct, 2016
  */
-public class Account {
-    private String code, name, currency, description;
+@Table(name = "account")
+public class Account extends MasterRecord {
+
+    @JoinColumn(name = "currency", table = "currency")
+    private String currency;
+
+    private String description;
+
     private BigDecimal balance;
-    private Status status;
+
+    @Column(name = "account_type")
     private AccountType accountType;
-
-    public String getCode() {
-        return code;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public Status getStatus() {
-        return status;
-    }
-
-    public void setStatus(Status status) {
-        this.status = status;
-    }
 
     public String getCurrency() {
         return currency;
@@ -46,20 +32,20 @@ public class Account {
         this.currency = currency;
     }
 
-    public BigDecimal getBalance() {
-        return balance;
-    }
-
-    public void setBalance(BigDecimal balance) {
-        this.balance = balance;
-    }
-
     public String getDescription() {
         return description;
     }
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public BigDecimal getBalance() {
+        return balance;
+    }
+
+    public void setBalance(BigDecimal balance) {
+        this.balance = balance;
     }
 
     public AccountType getAccountType() {

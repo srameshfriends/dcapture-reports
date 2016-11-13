@@ -1,5 +1,7 @@
 package excel.accounting.entity;
 
+import javax.persistence.Column;
+import javax.persistence.Table;
 import java.math.BigDecimal;
 import java.util.Date;
 
@@ -9,19 +11,25 @@ import java.util.Date;
  * @author Ramesh
  * @since Nov, 2016
  */
-public class SystemSetting {
-    private String code, groupCode, name, textValue;
+@Table(name = "system_setting")
+public class SystemSetting extends DocumentRecord {
+
+    @Column(name = "group_code")
+    private String groupCode;
+
+    private String name;
+
+    @Column(name = "text_value")
+    private String textValue;
+
+    @Column(name = "decimal_value")
     private BigDecimal decimalValue;
+
+    @Column(name = "date_value")
     private Date dateValue;
+
+    @Column(name = "bool_value")
     private Boolean boolValue;
-
-    public String getCode() {
-        return code;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
-    }
 
     public String getGroupCode() {
         return groupCode;
