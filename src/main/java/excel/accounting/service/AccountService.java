@@ -51,13 +51,15 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
     }
 
     private void updateStatus(List<Account> accountList) {
-        QueryBuilder queryBuilder = getQueryBuilder("updateStatus");
-        Transaction transaction = createTransaction();
-        transaction.setBatchQuery(queryBuilder);
-        for (Account account : accountList) {
-            transaction.addBatch(getColumnsMap("updateStatus", account));
+        OrmTransaction transaction = createOrmTransaction();
+        try {
+            for (Account account : accountList) {
+                transaction.update(account);
+            }
+            commitBatch(transaction);
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
-        executeBatch(transaction);
     }
 
     public void updateCurrency(Currency currency, List<Account> accountList) {

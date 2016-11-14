@@ -36,13 +36,15 @@ public class CurrencyService extends AbstractService implements EntityToRowColum
     }
 
     private void updateStatus(List<Currency> currencyList) {
-        QueryBuilder queryBuilder = getQueryBuilder("updateStatus");
-        Transaction transaction = createTransaction();
-        transaction.setBatchQuery(queryBuilder);
-        for (Currency currency : currencyList) {
-            transaction.addBatch(getColumnsMap("updateStatus", currency));
+        OrmTransaction transaction = createOrmTransaction();
+        try {
+            for (Currency currency : currencyList) {
+                transaction.update(currency);
+            }
+            commitBatch(transaction);
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
-        executeBatch(transaction);
     }
 
     public void setAsDrafted(List<Currency> currencyList) {
@@ -53,7 +55,7 @@ public class CurrencyService extends AbstractService implements EntityToRowColum
         }
         for (Currency currency : filteredList) {
             String errorMessage = getCurrencyDao().isEntityReferenceUsed(currency.getCode());
-            if(errorMessage != null) {
+            if (errorMessage != null) {
                 setMessage(errorMessage);
                 return;
             }
@@ -108,24 +110,21 @@ public class CurrencyService extends AbstractService implements EntityToRowColum
         rules.setMinMaxLength(3, 3);
         rules.setRulesType(RulesType.AlphaOnly);
         //
-        List<String> existingList = getCurrencyDao().findCodeList();
-        List<Currency> validList = new ArrayList<>();
-        for (Currency currency : currencyList) {
-            if (insertValid(currency, rules) && !existingList.contains(currency.getCode())) {
-                validList.add(currency);
-            }
-        }
-        if(validList.isEmpty()) {
+        List<Currency> validList = currencyList.stream().filter(currency ->
+                insertValid(currency, rules)).collect(Collectors.toList());
+        if (validList.isEmpty()) {
             setMessage("Valid currency not found");
             return;
         }
-        QueryBuilder queryBuilder = getQueryBuilder("insertCurrency");
-        Transaction transaction = createTransaction();
-        transaction.setBatchQuery(queryBuilder);
-        for (Currency currency : validList) {
-            transaction.addBatch(getColumnsMap("insertCurrency", currency));
+        OrmTransaction transaction = createOrmTransaction();
+        try {
+            for (Currency currency : validList) {
+                transaction.insert(currency);
+            }
+            transaction.commit();
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
-        executeBatch(transaction);
     }
 
     public void deleteCurrency(List<Currency> currencyList) {
@@ -134,23 +133,17 @@ public class CurrencyService extends AbstractService implements EntityToRowColum
             setMessage("Error : Only drafted currency allowed to delete");
             return;
         }
-        QueryBuilder queryBuilder = getQueryBuilder("deleteCurrency");
-        Transaction transaction = createTransaction();
-        transaction.setBatchQuery(queryBuilder);
-        for (Currency currency : filteredList) {
-            transaction.addBatch(getColumnsMap("deleteCurrency", currency));
+        OrmTransaction transaction = createOrmTransaction();
+        try {
+            for (Currency currency : filteredList) {
+                transaction.delete(currency);
+            }
+            commitBatch(transaction);
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
-        executeBatch(transaction);
     }
 
-    /**
-     * insertCurrency
-     * code, name, decimal_precision, symbol, status
-     * deleteCurrency
-     * find by code
-     * updateStatus
-     * set status find by code
-     */
     @Override
     public Map<Integer, Object> getColumnsMap(final String queryName, Currency entity) {
         Map<Integer, Object> map = new HashMap<>();
@@ -169,17 +162,11 @@ public class CurrencyService extends AbstractService implements EntityToRowColum
         return map;
     }
 
-    /**
-     * code, name, decimal_precision, symbol, status
-     */
     @Override
     public String[] getColumnNames() {
         return new String[]{"Code", "Name", "Precision", "Symbol", "Status"};
     }
 
-    /**
-     * code, name, precision, symbol, status
-     */
     @Override
     public Currency getExcelType(String type, Cell[] array) {
         Currency currency = new Currency();
@@ -191,9 +178,6 @@ public class CurrencyService extends AbstractService implements EntityToRowColum
         return currency;
     }
 
-    /**
-     * code, name, precision, symbol, status
-     */
     @Override
     public Object[] getExcelRow(String type, Currency currency) {
         Object[] cellData = new Object[5];

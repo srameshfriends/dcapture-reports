@@ -10,6 +10,14 @@ import java.util.*;
  */
 class H2QueryTool implements QueryTool {
     private String schema;
+    private Map<String, String> namedQueryMap;
+
+    Map<String, String> getNamedQueryMap() {
+        if (namedQueryMap == null) {
+            namedQueryMap = new HashMap<>();
+        }
+        return namedQueryMap;
+    }
 
     @Override
     public void setSchema(String schema) {
@@ -209,9 +217,9 @@ class H2QueryTool implements QueryTool {
             return "smallint";
         } else if (Byte.class.equals(type)) {
             return "binary";
-        } else if(Integer.class.equals(type)) {
+        } else if (Integer.class.equals(type)) {
             return "integer";
-        } else if(Boolean.class.equals(type)) {
+        } else if (Boolean.class.equals(type)) {
             return "boolean";
         } else if (Double.class.equals(type)) {
             return "double";
@@ -224,6 +232,10 @@ class H2QueryTool implements QueryTool {
 
     @Override
     public String insertPreparedQuery(OrmTable ormTable) {
+        String query = getNamedQueryMap().get("insert" + ormTable.getName());
+        if (query != null) {
+            return query;
+        }
         StringBuilder builder = new StringBuilder();
         builder.append("insert into ").append(getSchema()).append(".").append(ormTable.getName()).append(" (");
         String param = "";
@@ -234,18 +246,38 @@ class H2QueryTool implements QueryTool {
         param = param.substring(0, param.length() - 1);
         builder.replace(builder.length() - 1, builder.length(), ") values(");
         builder.append(param).append(");");
-        return builder.toString();
+        query = builder.toString();
+        getNamedQueryMap().put("insert" + ormTable.getName(), query);
+        return query;
     }
 
     @Override
-    public String selectQuery(OrmTable ormTable) {
-        StringBuilder builder = new StringBuilder();
-        builder.append("select ");
-        for (OrmColumn ormColumn : ormTable.getColumnList()) {
-            builder.append(ormColumn.getName()).append(",");
+    public String updatePreparedQuery(OrmTable ormTable) {
+        String query = getNamedQueryMap().get("update" + ormTable.getName());
+        if (query != null) {
+            return query;
         }
-        builder.replace(builder.length() - 1, builder.length(), " ");
-        builder.append(" from ").append(getSchema()).append(".").append(ormTable.getName()).append(" ");
-        return builder.toString();
+        StringBuilder builder = new StringBuilder();
+        builder.append("update ").append(getSchema()).append(".").append(ormTable.getName()).append(" set ");
+        for (OrmColumn ormColumn : ormTable.getColumnList()) {
+            builder.append(ormColumn.getName()).append(" = ?,");
+        }
+        builder.replace(builder.length() - 1, builder.length(), " where ");
+        OrmColumn ormColumn = ormTable.getPrimaryColumn();
+        builder.append(ormColumn.getName()).append(" = ?");
+        query = builder.toString();
+        getNamedQueryMap().put("update" + ormTable.getName(), query);
+        return query;
+    }
+
+    @Override
+    public String deletePreparedQuery(OrmTable ormTable) {
+        String query = getNamedQueryMap().get("delete" + ormTable.getName());
+        if (query == null) {
+            query = "delete from " + getSchema() + "." + ormTable.getName() + " where " +
+                    ormTable.getPrimaryColumn().getName() + " = ?";
+            getNamedQueryMap().put("delete" + ormTable.getName(), query);
+        }
+        return query;
     }
 }

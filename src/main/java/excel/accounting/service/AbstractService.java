@@ -14,6 +14,7 @@ import java.sql.SQLException;
  */
 public abstract class AbstractService extends AbstractControl {
 
+    @Deprecated
     protected final Transaction createTransaction() {
         return new Transaction(getApplicationControl().getConnectionPool());
     }
@@ -33,6 +34,22 @@ public abstract class AbstractService extends AbstractControl {
             transaction.executeBatch();
         } catch (SQLException ex) {
             setMessage(ex.getErrorCode() + " : " + ex.getMessage());
+        }
+    }
+
+    protected void commitBatch(OrmTransaction transaction) {
+        try {
+            transaction.commitBatch();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    protected void commit(OrmTransaction transaction) {
+        try {
+            transaction.commit();
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
     }
 }

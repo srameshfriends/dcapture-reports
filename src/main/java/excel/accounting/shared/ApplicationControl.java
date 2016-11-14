@@ -133,6 +133,7 @@ public class ApplicationControl {
         ormProcessor.setSchema(getSchema());
         ormProcessor.setPackageArray(getEntityPackages());
         ormProcessor.run();
+        ormProcessor.setOrmEnumParser(new OrmEnumParserImpl());
     }
 
     public void addBean(String name, Object service) {

@@ -41,6 +41,45 @@ public class OrmTransaction {
         ormQueryList.add(ormQuery);
     }
 
+    public void update(Object object) throws Exception {
+        OrmTable table = processor.getTable(object.getClass());
+        if (table == null) {
+            throw new RuntimeException(object.getClass() + " this is not a valid entity");
+        }
+        OrmQuery ormQuery = new OrmQuery();
+        ormQuery.setQuery(processor.getQueryTool().updatePreparedQuery(table));
+        List<OrmParameter> parameterList = new ArrayList<>();
+        ormQuery.setParameterList(parameterList);
+        Object fieldValue;
+        OrmParameter parameter;
+        int index = 1;
+        for (OrmColumn ormColumn : table.getColumnList()) {
+            fieldValue = getFieldObject(object, ormColumn.getFieldName());
+            parameter = new OrmParameter(index, fieldValue, ormColumn.getSqlType());
+            parameterList.add(parameter);
+            index += 1;
+        }
+        OrmColumn ormColumn = table.getPrimaryColumn();
+        fieldValue = getFieldObject(object, ormColumn.getFieldName());
+        parameterList.add(new OrmParameter(index, fieldValue, ormColumn.getSqlType()));
+        ormQueryList.add(ormQuery);
+    }
+
+    public void delete(Object object) throws Exception {
+        OrmTable table = processor.getTable(object.getClass());
+        if (table == null) {
+            throw new RuntimeException(object.getClass() + " this is not a valid entity");
+        }
+        OrmColumn ormColumn = table.getPrimaryColumn();
+        OrmQuery ormQuery = new OrmQuery();
+        ormQuery.setQuery(processor.getQueryTool().deletePreparedQuery(table));
+        List<OrmParameter> parameterList = new ArrayList<>();
+        ormQuery.setParameterList(parameterList);
+        Object fieldValue = getFieldObject(object, ormColumn.getFieldName());
+        parameterList.add(new OrmParameter(1, fieldValue, ormColumn.getSqlType()));
+        ormQueryList.add(ormQuery);
+    }
+
     private Object getFieldObject(Object obj, String fieldName) throws Exception {
         try {
             return PropertyUtils.getProperty(obj, fieldName);
@@ -71,7 +110,7 @@ public class OrmTransaction {
             statement.setString(orm.getIndex(), param.toString());
         } else {
             SQLType dataType = orm.getSqlType();
-            if(dataType == null) {
+            if (dataType == null) {
                 statement.setString(orm.getIndex(), param.toString());
             } else if (JDBCType.VARCHAR.equals(dataType)) {
                 statement.setString(orm.getIndex(), null);
@@ -101,12 +140,16 @@ public class OrmTransaction {
         }
         Connection connection = null;
         try {
+            final String query = ormQueryList.get(0).getQuery();
             connection = processor.getConnection();
-            PreparedStatement statement = connection.prepareStatement(ormQueryList.get(0).getQuery());
+            connection.setAutoCommit(false);
+            PreparedStatement statement = connection.prepareStatement(query);
+            logger.info(query);
             for (OrmQuery ormQuery : ormQueryList) {
                 addParameter(statement, ormQuery.getParameterList());
                 statement.addBatch();
             }
+            statement.executeBatch();
             connection.commit();
             close(statement);
             close(connection);

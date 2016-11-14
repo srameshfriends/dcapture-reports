@@ -16,8 +16,7 @@ public class OrmTable {
     private List<Field> fieldList;
     private List<OrmColumn> columnList;
     private OrmColumn primaryColumn;
-    private Map<OrmTable, OrmColumn> referenceMap;
-    private Map<String, String> columnFieldMap;
+    private Map<String, OrmColumn> columnMap;
 
     public OrmTable(String name, Class<?> type) {
         this.name = name;
@@ -60,14 +59,14 @@ public class OrmTable {
         return primaryColumn;
     }
 
-    public Map<String, String> getColumnFieldMap() {
-        if (columnFieldMap == null) {
-            columnFieldMap = new HashMap<>();
+    Map<String, OrmColumn> getColumnFieldMap() {
+        if (columnMap == null) {
+            columnMap = new HashMap<>();
             for (OrmColumn column : getColumnList()) {
-                columnFieldMap.put(column.getName(), column.getFieldName());
+                columnMap.put(column.getName(), column);
             }
         }
-        return columnFieldMap;
+        return columnMap;
     }
 
     @Override

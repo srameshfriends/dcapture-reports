@@ -20,5 +20,7 @@ interface QueryTool {
 
     String insertPreparedQuery(OrmTable ormTable);
 
-    String selectQuery(OrmTable ormTable);
+    String updatePreparedQuery(OrmTable ormTable);
+
+    String deletePreparedQuery(OrmTable ormTable);
 }

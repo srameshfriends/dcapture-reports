@@ -3,6 +3,7 @@ package excel.accounting.dao;
 import excel.accounting.db.*;
 import excel.accounting.entity.Currency;
 import excel.accounting.entity.Status;
+import excel.accounting.entity.SystemSetting;
 import excel.accounting.shared.DataConverter;
 
 import java.util.List;
@@ -29,8 +30,10 @@ public class CurrencyDao extends AbstractDao<Currency> implements RowColumnsToEn
     }
 
     public List<Currency> loadAll() {
-        QueryBuilder queryBuilder = getQueryBuilder("loadAll");
-        return getDataReader().findRowDataList(queryBuilder, this);
+        SQLBuilder builder = createSQLQuery();
+        builder.select(Currency.class);
+        builder.orderBy("code");
+        return getOrmReader().findAll(builder);
     }
 
     public List<Currency> searchCurrency(String searchText, Status status) {
@@ -47,8 +50,9 @@ public class CurrencyDao extends AbstractDao<Currency> implements RowColumnsToEn
     }
 
     public List<String> findCodeList() {
-        QueryBuilder queryBuilder = getQueryBuilder("findCodeList");
-        return getDataReader().findString(queryBuilder);
+        SQLBuilder builder = createSQLQuery();
+        builder.select("code").from(Currency.class);
+        return getOrmReader().findStringList(builder);
     }
 
     @Override

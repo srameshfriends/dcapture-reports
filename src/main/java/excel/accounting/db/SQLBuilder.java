@@ -12,7 +12,9 @@ public class SQLBuilder extends OrmQuery {
     private OrmProcessor processor;
     private List<String> selectList;
     private WhereQuery whereQuery;
-    private StringBuilder fromBuilder;
+    private StringBuilder fromBuilder, orderByBuilder, updateBuilder;
+    private List<Object> updateParameterList;
+    private String updateSchemaTable;
 
     public SQLBuilder() {
         selectList = new ArrayList<>();
@@ -22,6 +24,7 @@ public class SQLBuilder extends OrmQuery {
     public SQLBuilder(OrmProcessor processor) {
         this();
         this.processor = processor;
+        setSchema(processor.getSchema());
     }
 
     private WhereQuery getWhereQuery() {
@@ -31,14 +34,35 @@ public class SQLBuilder extends OrmQuery {
         return whereQuery;
     }
 
-    public void select(Class<?> selectTable) {
+    private StringBuilder getOrderByBuilder() {
+        if (orderByBuilder == null) {
+            orderByBuilder = new StringBuilder();
+        }
+        return orderByBuilder;
+    }
+
+    public SQLBuilder select(Class<?> selectTable) {
         OrmTable ormTable = processor.getTable(selectTable);
         selectList.addAll(ormTable.getColumnList().stream().map(OrmColumn::getName).collect(Collectors.toList()));
         fromBuilder.append(" ").append(processor.getSchema()).append(".").append(ormTable.getName());
+        setEntity(selectTable);
+        return SQLBuilder.this;
     }
 
-    public void select(String... columns) {
+    public SQLBuilder from(String tableWithSchema) {
+        fromBuilder.append(" ").append(tableWithSchema);
+        return SQLBuilder.this;
+    }
+
+    public SQLBuilder from(Class<?> tableClass) {
+        OrmTable ormTable = processor.getTable(tableClass);
+        fromBuilder.append(" ").append(getSchema()).append(".").append(ormTable.getName());
+        return SQLBuilder.this;
+    }
+
+    public SQLBuilder select(String... columns) {
         Collections.addAll(selectList, columns);
+        return SQLBuilder.this;
     }
 
     public void whereOrIn(String query, List<Object> parameters) {
@@ -55,6 +79,39 @@ public class SQLBuilder extends OrmQuery {
 
     public void whereAndIn(String query, Object[] parameters) {
         getWhereQuery().whereOrIn(query, parameters);
+    }
+
+    public void orderBy(String... columns) {
+        for (String col : columns) {
+            getOrderByBuilder().append(col).append(", ");
+        }
+    }
+
+    private StringBuilder getUpdateBuilder() {
+        if (updateBuilder == null) {
+            updateBuilder = new StringBuilder();
+        }
+        return updateBuilder;
+    }
+
+    private List<Object> getUpdateParameters() {
+        if (updateParameterList == null) {
+            updateParameterList = new ArrayList<>();
+        }
+        return updateParameterList;
+    }
+
+    public void updateColumn(String column, Object parameter) {
+        getUpdateBuilder().append(column).append(" = ?,");
+        getUpdateParameters().add(parameter);
+    }
+
+    public void update(String tableWithSchema) {
+        updateSchemaTable = tableWithSchema;
+    }
+
+    public String getUpdateQuery() {
+        return updateBuilder.substring(0, updateBuilder.length() - 1);
     }
 
     @Override
@@ -83,7 +140,12 @@ public class SQLBuilder extends OrmQuery {
         if (whereQuery != null) {
             sb.append(whereQuery.toString());
         }
-        setQuery(sb.toString());
+        if (orderByBuilder != null) {
+            orderByBuilder.replace(orderByBuilder.length() - 2, orderByBuilder.length(), " ");
+            sb.append(" order by ").append(orderByBuilder.toString());
+        }
+        sb.append(";");
+        super.setQuery(sb.toString());
         return super.getQuery();
     }
 }

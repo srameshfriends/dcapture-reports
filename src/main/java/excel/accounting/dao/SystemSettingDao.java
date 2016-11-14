@@ -61,7 +61,7 @@ public class SystemSettingDao extends AbstractDao<SystemSetting> implements RowC
         SQLBuilder builder = createSQLQuery();
         builder.select(SystemSetting.class);
         builder.whereOrIn("code", codeArray);
-        return findAll(builder);
+        return getOrmReader().findAll(builder);
     }
 
     public List<SystemSetting> findByGroupCode(String groupCode) {

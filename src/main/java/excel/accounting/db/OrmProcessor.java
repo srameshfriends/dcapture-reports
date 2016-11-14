@@ -21,6 +21,7 @@ public class OrmProcessor implements Runnable {
     private Map<OrmTable, List<OrmReference>> ormReferenceMap;
     private String[] packageArray;
     private String schema;
+    private OrmEnumParser ormEnumParser;
 
     public OrmProcessor(JdbcConnectionPool connectionPool) {
         this.connectionPool = connectionPool;
@@ -34,7 +35,7 @@ public class OrmProcessor implements Runnable {
         this.packageArray = packageArray;
     }
 
-    public String getSchema() {
+    String getSchema() {
         return schema;
     }
 
@@ -62,27 +63,12 @@ public class OrmProcessor implements Runnable {
         }
         Collections.unmodifiableMap(ormReferenceMap);
         executeUpdate(schemaQuery);
-        for (String query : tableQuery) {
-            executeUpdate(query);
-        }
-        for (String query : foreignQuery) {
-            executeUpdate(query);
-        }
+        tableQuery.forEach(this::executeUpdate);
+        foreignQuery.forEach(this::executeUpdate);
     }
 
     Connection getConnection() throws SQLException {
         return connectionPool.getConnection();
-    }
-
-    private void close(ResultSet resultSet, PreparedStatement statement) {
-        try {
-            resultSet.close();
-            statement.close();
-        } catch (SQLException ex) {
-            if (logger.isDebugEnabled()) {
-                ex.printStackTrace();
-            }
-        }
     }
 
     private void executeUpdate(String query) {
@@ -146,21 +132,27 @@ public class OrmProcessor implements Runnable {
         }
         logging("Read orm primary columns and another columns");
         Collection<OrmTable> tableList = classTableMap.values();
-        for (OrmTable sqlTable : tableList) {
-            createColumn(sqlTable);
-        }
+        tableList.forEach(this::createColumn);
         logging("Read table join columns");
         for (OrmTable sqlTable : tableList) {
             createJoinColumn(sqlTable, tableList);
         }
     }
 
-    public OrmTable getTable(Class<?> type) {
+    OrmTable getTable(Class<?> type) {
         return tableMap.get(type);
     }
 
-    public QueryTool getQueryTool() {
+    QueryTool getQueryTool() {
         return queryTool;
+    }
+
+    public void setOrmEnumParser(OrmEnumParser ormEnumParser) {
+        this.ormEnumParser = ormEnumParser;
+    }
+
+    Object getEnum(Class<?> enumClass, String name) {
+        return ormEnumParser.getEnum(enumClass, name);
     }
 
     private String findTableName(Class<?> clazz) {

@@ -102,6 +102,10 @@ public class OrmColumn {
         this.sqlType = sqlType;
     }
 
+    public boolean isEnumClass() {
+        return Enum.class.isAssignableFrom(type);
+    }
+
     @Override
     public String toString() {
         return name + " \t " + type.getName();

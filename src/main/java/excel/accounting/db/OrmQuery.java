@@ -7,7 +7,7 @@ import java.util.List;
  */
 public class OrmQuery {
     private Class<?> entity;
-    private String query;
+    private String schema, query;
     private List<OrmParameter> parameterList;
 
     public Class<?> getEntity() {
@@ -16,6 +16,14 @@ public class OrmQuery {
 
     public void setEntity(Class<?> entity) {
         this.entity = entity;
+    }
+
+    public String getSchema() {
+        return schema;
+    }
+
+    public void setSchema(String schema) {
+        this.schema = schema;
     }
 
     public String getQuery() {

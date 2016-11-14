@@ -161,10 +161,13 @@ public class ViewManager extends AbstractControl implements ActionHandler {
     }
 
     public void showView(String name) {
-        if (!getApplicationControl().isAuthenticated()) {
-            sessionDialog.show(name);
+        if(name == null) {
             return;
         }
+        /*if (!getApplicationControl().isAuthenticated()) {
+            sessionDialog.show(name);
+            return;
+        }*/
         setMessage("");
         ViewConfig viewConfig = getViewConfig(name);
         if (viewConfig == null) {
