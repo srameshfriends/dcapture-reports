@@ -1,5 +1,6 @@
 package excel.accounting.shared;
 
+import javafx.application.Platform;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -10,6 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.RunnableFuture;
 
 /**
  * FileHelper

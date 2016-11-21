@@ -132,7 +132,7 @@ public class ExpenseItemService extends AbstractService implements
             setMessage("Valid accounts not found");
             return false;
         }
-        List<String> currencyList = getCurrencyDao().findCodeList();
+        List<String> currencyList = new ArrayList<>(); // getCurrencyDao().findCodeList()
         List<String> accountList = getAccountDao().findCodeList();
         List<String> categoryList = getExpenseCategoryDao().findCodeList();
         //

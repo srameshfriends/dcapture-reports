@@ -10,6 +10,7 @@ import excel.accounting.shared.RulesType;
 import excel.accounting.shared.StringRules;
 import org.apache.poi.ss.usermodel.Cell;
 
+import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -20,7 +21,7 @@ import java.util.stream.Collectors;
  * @since Oct, 2016
  */
 public class CurrencyService extends AbstractService implements EntityToRowColumns<Currency>,
-        ExcelTypeConverter<Currency> {
+        ExcelTypeConverter<Currency>, SqlWriteResponse {
     private CurrencyDao currencyDao;
 
     @Override
@@ -36,7 +37,7 @@ public class CurrencyService extends AbstractService implements EntityToRowColum
     }
 
     private void updateStatus(List<Currency> currencyList) {
-        OrmTransaction transaction = createOrmTransaction();
+        /*OrmTransaction transaction = createOrmTransaction();
         try {
             for (Currency currency : currencyList) {
                 transaction.update(currency);
@@ -44,7 +45,7 @@ public class CurrencyService extends AbstractService implements EntityToRowColum
             commitBatch(transaction);
         } catch (Exception ex) {
             ex.printStackTrace();
-        }
+        }*/
     }
 
     public void setAsDrafted(List<Currency> currencyList) {
@@ -114,16 +115,8 @@ public class CurrencyService extends AbstractService implements EntityToRowColum
                 insertValid(currency, rules)).collect(Collectors.toList());
         if (validList.isEmpty()) {
             setMessage("Valid currency not found");
-            return;
-        }
-        OrmTransaction transaction = createOrmTransaction();
-        try {
-            for (Currency currency : validList) {
-                transaction.insert(currency);
-            }
-            transaction.commit();
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        } else {
+            insert(100, currencyList, this);
         }
     }
 
@@ -131,9 +124,8 @@ public class CurrencyService extends AbstractService implements EntityToRowColum
         List<Currency> filteredList = filteredByStatus(Status.Drafted, currencyList);
         if (filteredList.isEmpty()) {
             setMessage("Error : Only drafted currency allowed to delete");
-            return;
         }
-        OrmTransaction transaction = createOrmTransaction();
+        /*OrmTransaction transaction = createOrmTransaction();
         try {
             for (Currency currency : filteredList) {
                 transaction.delete(currency);
@@ -141,7 +133,7 @@ public class CurrencyService extends AbstractService implements EntityToRowColum
             commitBatch(transaction);
         } catch (Exception ex) {
             ex.printStackTrace();
-        }
+        }*/
     }
 
     @Override
@@ -160,6 +152,15 @@ public class CurrencyService extends AbstractService implements EntityToRowColum
             map.put(2, entity.getCode());
         }
         return map;
+    }
+
+    @Override
+    public void onSqlResponse(int processId) {
+    }
+
+    @Override
+    public void onSqlError(int processId, SQLException ex) {
+        ex.printStackTrace();
     }
 
     @Override

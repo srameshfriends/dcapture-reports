@@ -5,6 +5,7 @@ import excel.accounting.entity.SystemSetting;
 import excel.accounting.shared.DataConverter;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -58,10 +59,10 @@ public class SystemSettingDao extends AbstractDao<SystemSetting> implements RowC
     }
 
     public List<SystemSetting> findByCodeArray(String... codeArray) {
-        SQLBuilder builder = createSQLQuery();
-        builder.select(SystemSetting.class);
-        builder.whereOrIn("code", codeArray);
-        return getOrmReader().findAll(builder);
+       /* SQLBuilder builder = createSQLQuery();
+        builder.selectFrom(SystemSetting.class);
+        builder.whereOrIn("code", codeArray);*/
+        return new ArrayList<>();
     }
 
     public List<SystemSetting> findByGroupCode(String groupCode) {

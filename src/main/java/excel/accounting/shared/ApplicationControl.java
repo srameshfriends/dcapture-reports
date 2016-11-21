@@ -1,8 +1,7 @@
 package excel.accounting.shared;
 
 import com.google.gson.Gson;
-import excel.accounting.db.DataProcessor;
-import excel.accounting.db.OrmProcessor;
+import excel.accounting.db.*;
 import excel.accounting.model.ApplicationConfig;
 import javafx.scene.control.TextField;
 import org.h2.jdbcx.JdbcConnectionPool;
@@ -10,10 +9,11 @@ import org.h2.jdbcx.JdbcConnectionPool;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.nio.file.Path;
+import java.sql.SQLException;
 import java.text.MessageFormat;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Application Control
@@ -22,7 +22,8 @@ public class ApplicationControl {
     private static ApplicationControl applicationControl;
     private ApplicationConfig applicationConfig;
     private DataProcessor dataProcessor;
-    private OrmProcessor ormProcessor;
+    private SqlTableMap sqlTableMap;
+    private SqlForwardTool sqlForwardTool;
     private JdbcConnectionPool connectionPool;
     private String userName, userCode;
     private Map<String, Object> beanMap;
@@ -113,8 +114,8 @@ public class ApplicationControl {
         return connectionPool;
     }
 
-    public OrmProcessor getOrmProcessor() {
-        return ormProcessor;
+    public SqlTableMap getSqlTableMap() {
+        return sqlTableMap;
     }
 
     public String getName() {
@@ -129,11 +130,35 @@ public class ApplicationControl {
                 applicationConfig.getDatabaseUser(), applicationConfig.getDatabasePassword());
         dataProcessor = new DataProcessor(connectionPool);
         dataProcessor.run();
-        ormProcessor = new OrmProcessor(connectionPool);
-        ormProcessor.setSchema(getSchema());
-        ormProcessor.setPackageArray(getEntityPackages());
-        ormProcessor.run();
-        ormProcessor.setOrmEnumParser(new OrmEnumParserImpl());
+        sqlTableMap = SqlFactory.createSqlTableMap("excel", getEntityPackages());
+        sqlForwardTool = new H2ForwardTool();
+        sqlForwardTool.setSqlTableMap(sqlTableMap);
+        sqlForwardTool.setSqlEnumParser(new SqlEnumParserImpl());
+        runForwardTool();
+    }
+
+    private void runForwardTool() {
+        SqlQuery createSchema = sqlForwardTool.createSchemaQuery();
+        List<SqlQuery> createTableList = sqlForwardTool.createTableQueries();
+        List<SqlQuery> alterTableList = sqlForwardTool.alterTableQueries();
+        SqlTransaction transaction = new SqlTransaction(connectionPool);
+        transaction.add(createSchema);
+        transaction.addAll(createTableList);
+        transaction.addAll(alterTableList);
+        SqlWriteResponse response = new SqlWriteResponse() {
+            @Override
+            public void onSqlResponse(int processId) {
+            }
+
+            @Override
+            public void onSqlError(int processId, SQLException ex) {
+                ex.printStackTrace();
+            }
+        };
+        transaction.setProcessId(1);
+        transaction.setResponse(response);
+        ExecutorService executor = Executors.newCachedThreadPool();
+        executor.execute(transaction);
     }
 
     public void addBean(String name, Object service) {
@@ -143,6 +168,7 @@ public class ApplicationControl {
         beanMap.put(name, service);
     }
 
+
     public Object getBean(String name) {
         return beanMap.get(name);
     }
@@ -151,8 +177,8 @@ public class ApplicationControl {
         dataProcessor.close();
     }
 
-    private String getSchema() {
-        return "excel";
+    public SqlForwardTool getSqlForwardTool() {
+        return sqlForwardTool;
     }
 
     private String[] getEntityPackages() {

@@ -4,19 +4,19 @@ import javax.persistence.TemporalType;
 import java.sql.SQLType;
 
 /**
- * Orm Column
+ * Sql Column
  */
-public class OrmColumn {
+public class SqlColumn {
     private String fieldName, name;
     private Class<?> type;
     private boolean primaryKey, autoIncrement, nullable;
     private int length;
-    private OrmTable joinTable;
+    private SqlTable joinTable;
     private TemporalType temporalType;
     private int colIndex;
     private SQLType sqlType;
 
-    public OrmColumn(String name, Class<?> type) {
+    public SqlColumn(String name, Class<?> type) {
         this.name = name;
         this.type = type;
         nullable = true;
@@ -30,11 +30,11 @@ public class OrmColumn {
         this.fieldName = fieldName;
     }
 
-    public void setJoinTable(OrmTable joinTable) {
+    public void setJoinTable(SqlTable joinTable) {
         this.joinTable = joinTable;
     }
 
-    public OrmTable getJoinTable() {
+    public SqlTable getJoinTable() {
         return joinTable;
     }
 

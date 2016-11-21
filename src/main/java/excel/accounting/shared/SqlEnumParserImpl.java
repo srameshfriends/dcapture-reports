@@ -1,13 +1,13 @@
 package excel.accounting.shared;
 
-import excel.accounting.db.OrmEnumParser;
+import excel.accounting.db.SqlEnumParser;
 import excel.accounting.entity.AccountType;
 import excel.accounting.entity.Status;
 
 /**
  * Orm Enum Parser Impl
  */
-class OrmEnumParserImpl implements OrmEnumParser {
+class SqlEnumParserImpl implements SqlEnumParser {
 
     @Override
     public Object getEnum(final Class<?> typeClass, final String value) {

@@ -8,7 +8,7 @@ import javax.persistence.Column;
  * Master Record
  */
 @ColumnIndex(columns = {"dataType", "status", "name"})
-public class MasterRecord extends BaseRecord {
+class MasterRecord extends BaseRecord {
     @Column(name = "data_type", length = 16)
     private String dataType;
 

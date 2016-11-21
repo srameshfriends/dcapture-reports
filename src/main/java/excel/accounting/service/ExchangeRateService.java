@@ -76,7 +76,7 @@ public class ExchangeRateService extends AbstractService implements
         }
         for (ExchangeRate exchangeRate : filteredList) {
             String errorMessage = getExchangeRateDao().isEntityReferenceUsed(exchangeRate.getCode());
-            if(errorMessage != null) {
+            if (errorMessage != null) {
                 setMessage(errorMessage);
                 return;
             }
@@ -116,7 +116,7 @@ public class ExchangeRateService extends AbstractService implements
             setMessage("Valid exchange rate not found");
             return false;
         }
-        List<String> currencyList = getCurrencyDao().findCodeList();
+        List<String> currencyList = new ArrayList<>(); // getCurrencyDao().findCodeList();
         //
         QueryBuilder queryBuilder = getQueryBuilder("insertExchangeRate");
         Transaction transaction = createTransaction();

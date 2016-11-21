@@ -1,9 +1,6 @@
 package excel.accounting.shared;
 
-import excel.accounting.db.DataProcessor;
-import excel.accounting.db.DataReader;
-import excel.accounting.db.OrmReader;
-import excel.accounting.db.SQLBuilder;
+import excel.accounting.db.*;
 
 /**
  * Has Apps Control
@@ -11,13 +8,12 @@ import excel.accounting.db.SQLBuilder;
 public abstract class AbstractControl {
     private ApplicationControl control;
     private DataReader dataReader;
-    private OrmReader ormReader;
+    private SqlTableMap sqlTableMap;
 
     public final void setApplicationControl(ApplicationControl control) {
         this.control = control;
         dataReader = new DataReader(control.getDataProcessor());
-        ormReader = new OrmReader();
-        ormReader.setProcessor(getApplicationControl().getOrmProcessor());
+        sqlTableMap = control.getSqlTableMap();
     }
 
     protected final ApplicationControl getApplicationControl() {
@@ -28,8 +24,12 @@ public abstract class AbstractControl {
         return control.getDataProcessor();
     }
 
-    protected SQLBuilder createSQLQuery() {
-        return new SQLBuilder(getApplicationControl().getOrmProcessor());
+    protected QueryTool createSqlBuilder() {
+        return new QueryTool(getSqlTableMap().getSchema());
+    }
+
+    protected SqlTableMap getSqlTableMap() {
+        return sqlTableMap;
     }
 
     protected Object getBean(String name) {
@@ -38,10 +38,6 @@ public abstract class AbstractControl {
 
     protected final DataReader getDataReader() {
         return dataReader;
-    }
-
-    public final OrmReader getOrmReader() {
-        return ormReader;
     }
 
     protected void setMessage(String message) {

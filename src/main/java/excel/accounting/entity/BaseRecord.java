@@ -6,10 +6,10 @@ import javax.persistence.Column;
 import javax.persistence.Id;
 
 /**
- * Base Row
+ * Base Record
  */
 @ColumnIndex(columns = {"code"})
-public abstract class BaseRecord {
+abstract class BaseRecord {
     @Id
     @Column(name = "code", length = 8)
     private String code;

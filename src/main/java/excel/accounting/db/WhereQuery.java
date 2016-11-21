@@ -49,6 +49,11 @@ public class WhereQuery {
         parameterList.addAll(parameters);
     }
 
+    public void where(String query, Object parameter) {
+        queryList.add(" and " + query + " = ? ");
+        parameterList.add(parameter);
+    }
+
     private String buildInArray(int length) {
         StringBuilder sb = new StringBuilder("(");
         while (0 < length) {

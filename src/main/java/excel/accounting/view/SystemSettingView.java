@@ -151,7 +151,6 @@ public class SystemSettingView extends AbstractView implements ViewHolder {
     }
 
     private void performActionEvent(final String actionId) {
-        System.out.println(actionId);
         setMessage("");
     }
 

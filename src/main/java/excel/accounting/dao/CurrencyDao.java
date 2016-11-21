@@ -3,9 +3,9 @@ package excel.accounting.dao;
 import excel.accounting.db.*;
 import excel.accounting.entity.Currency;
 import excel.accounting.entity.Status;
-import excel.accounting.entity.SystemSetting;
 import excel.accounting.shared.DataConverter;
 
+import java.sql.SQLException;
 import java.util.List;
 
 /**
@@ -29,11 +29,19 @@ public class CurrencyDao extends AbstractDao<Currency> implements RowColumnsToEn
         return getDataReader().findSingleRow(builder, this);
     }
 
-    public List<Currency> loadAll() {
-        SQLBuilder builder = createSQLQuery();
-        builder.select(Currency.class);
-        builder.orderBy("code");
-        return getOrmReader().findAll(builder);
+    public void loadAll(int pid, EntityDao<Currency> entityDao) {
+        QueryTool builder = selectBuilder(Currency.class).orderBy("code");
+        execute(builder.getSqlQuery(), new SqlReadResponse() {
+            @Override
+            public void onSqlResponse(SqlQuery sqlQuery, SqlMetaData[] mdArray, List<Object[]> dataArrayList) {
+                entityDao.onEntityDaoCompleted(pid, toEntityList(mdArray, dataArrayList));
+            }
+
+            @Override
+            public void onSqlError(SqlQuery sqlQuery, SQLException exception) {
+                entityDao.onEntityDaoError(pid, exception);
+            }
+        });
     }
 
     public List<Currency> searchCurrency(String searchText, Status status) {
@@ -47,12 +55,6 @@ public class CurrencyDao extends AbstractDao<Currency> implements RowColumnsToEn
         }
         queryBuilder.addSearchTextQuery("$searchText", searchTextQuery);
         return getDataReader().findRowDataList(queryBuilder, this);
-    }
-
-    public List<String> findCodeList() {
-        SQLBuilder builder = createSQLQuery();
-        builder.select("code").from(Currency.class);
-        return getOrmReader().findStringList(builder);
     }
 
     @Override

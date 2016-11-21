@@ -15,6 +15,8 @@ import org.apache.poi.ss.usermodel.Cell;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.Future;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -51,7 +53,7 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
     }
 
     private void updateStatus(List<Account> accountList) {
-        OrmTransaction transaction = createOrmTransaction();
+        /*OrmTransaction transaction = createOrmTransaction();
         try {
             for (Account account : accountList) {
                 transaction.update(account);
@@ -59,7 +61,7 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
             commitBatch(transaction);
         } catch (Exception ex) {
             ex.printStackTrace();
-        }
+        }*/
     }
 
     public void updateCurrency(Currency currency, List<Account> accountList) {
@@ -185,7 +187,7 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
             setMessage("Valid accounts not found");
             return;
         }
-        List<String> currencyList = getCurrencyDao().findCodeList();
+        List<String> currencyList = new ArrayList<>(); //getCurrencyDao().findCodeList();
         List<AccountType> accountTypeList = getAccountTypeList();
         QueryBuilder queryBuilder = getQueryBuilder("insertAccount");
         Transaction transaction = createTransaction();

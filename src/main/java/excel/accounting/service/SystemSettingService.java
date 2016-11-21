@@ -30,7 +30,7 @@ public class SystemSettingService extends AbstractService implements EntityToRow
     }
 
     private void insertSystemSetting(List<SystemSetting> settingList) {
-        OrmTransaction transaction = createOrmTransaction();
+       /* OrmTransaction transaction = createOrmTransaction();
         try {
             for (SystemSetting systemSetting : settingList) {
                 transaction.insert(systemSetting);
@@ -38,7 +38,7 @@ public class SystemSettingService extends AbstractService implements EntityToRow
             transaction.commit();
         } catch (Exception ex) {
             ex.printStackTrace();
-        }
+        }*/
     }
 
     public void updateValue(List<SystemSetting> settingList) {
