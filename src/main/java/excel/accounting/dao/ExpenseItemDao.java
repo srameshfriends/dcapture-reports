@@ -23,7 +23,7 @@ public class ExpenseItemDao extends AbstractDao<ExpenseItem> implements RowColum
     }
 
     @Override
-    protected ExpenseItem getReferenceRow(String primaryKay) {
+    protected ExpenseItem getReference(String primaryKay) {
         QueryBuilder builder = getQueryBuilder("findByCode");
         builder.add(1, primaryKay);
         return getDataReader().findSingleRow(builder, this);

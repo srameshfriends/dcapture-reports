@@ -26,7 +26,7 @@ public class ExpenseCategoryDao extends AbstractDao<ExpenseCategory> implements 
     }
 
     @Override
-    protected ExpenseCategory getReferenceRow(String primaryKay) {
+    protected ExpenseCategory getReference(String primaryKay) {
         QueryBuilder builder = getQueryBuilder("findByCode");
         builder.add(1, primaryKay);
         return getDataReader().findSingleRow(builder, this);

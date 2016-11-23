@@ -35,7 +35,7 @@ public class ExchangeRateDao extends AbstractDao<ExchangeRate> implements RowCol
     }
 
     @Override
-    protected ExchangeRate getReferenceRow(String primaryKay) {
+    protected ExchangeRate getReference(String primaryKay) {
         QueryBuilder builder = getQueryBuilder("findByCode");
         builder.add(1, primaryKay);
         return getDataReader().findSingleRow(builder, this);

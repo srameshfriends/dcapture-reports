@@ -145,13 +145,13 @@ public class ApplicationControl {
         transaction.add(createSchema);
         transaction.addAll(createTableList);
         transaction.addAll(alterTableList);
-        SqlWriteResponse response = new SqlWriteResponse() {
+        SqlWriter response = new SqlWriter() {
             @Override
-            public void onSqlResponse(int processId) {
+            public void onSqlUpdated(int pid) {
             }
 
             @Override
-            public void onSqlError(int processId, SQLException ex) {
+            public void onSqlError(int pid, SQLException ex) {
                 ex.printStackTrace();
             }
         };

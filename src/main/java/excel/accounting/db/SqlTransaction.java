@@ -13,7 +13,7 @@ import java.util.List;
 public class SqlTransaction extends LinkedList<SqlQuery> implements Runnable {
     private boolean doBatchUpdate;
     private final JdbcConnectionPool pool;
-    private SqlWriteResponse response;
+    private SqlWriter response;
     private int processId;
 
     public SqlTransaction(JdbcConnectionPool pool) {
@@ -24,7 +24,7 @@ public class SqlTransaction extends LinkedList<SqlQuery> implements Runnable {
         this.doBatchUpdate = doBatchUpdate;
     }
 
-    public void setResponse(SqlWriteResponse response) {
+    public void setResponse(SqlWriter response) {
         this.response = response;
     }
 
@@ -42,7 +42,7 @@ public class SqlTransaction extends LinkedList<SqlQuery> implements Runnable {
             } else {
                 executeCommit(connection);
             }
-            response.onSqlResponse(processId);
+            response.onSqlUpdated(processId);
         } catch (SQLException ex) {
             response.onSqlError(processId, ex);
         }

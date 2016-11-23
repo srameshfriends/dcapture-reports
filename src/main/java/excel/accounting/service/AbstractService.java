@@ -36,7 +36,7 @@ public abstract class AbstractService extends AbstractControl {
         }
     }
 
-    protected void executeBatch(int pid, List<SqlQuery> queryList, SqlWriteResponse response) {
+    protected void executeBatch(int pid, List<SqlQuery> queryList, SqlWriter response) {
         SqlTransaction transaction = new SqlTransaction(getApplicationControl().getConnectionPool());
         transaction.setResponse(response);
         transaction.setProcessId(pid);
@@ -46,7 +46,7 @@ public abstract class AbstractService extends AbstractControl {
         executor.execute(transaction);
     }
 
-    protected void executeCommit(int pid, List<SqlQuery> queryList, SqlWriteResponse response) {
+    protected void executeCommit(int pid, List<SqlQuery> queryList, SqlWriter response) {
         SqlTransaction transaction = new SqlTransaction(getApplicationControl().getConnectionPool());
         transaction.setResponse(response);
         transaction.setProcessId(pid);
@@ -55,12 +55,22 @@ public abstract class AbstractService extends AbstractControl {
         executor.execute(transaction);
     }
 
-    protected void insert(int pid, List<?> dataList, SqlWriteResponse response) {
+    protected void insert(List<?> dataList, int pid, SqlWriter response) {
         SqlTransaction transaction = new SqlTransaction(getApplicationControl().getConnectionPool());
         transaction.setResponse(response);
         transaction.setProcessId(pid);
         SqlForwardTool forwardTool = getApplicationControl().getSqlForwardTool();
         transaction.addAll(dataList.stream().map(forwardTool::insertQuery).collect(Collectors.toList()));
+        ExecutorService executor = Executors.newCachedThreadPool();
+        executor.execute(transaction);
+    }
+
+    protected void delete(List<?> dataList, int pid, SqlWriter response) {
+        SqlTransaction transaction = new SqlTransaction(getApplicationControl().getConnectionPool());
+        transaction.setResponse(response);
+        transaction.setProcessId(pid);
+        SqlForwardTool forwardTool = getApplicationControl().getSqlForwardTool();
+        transaction.addAll(dataList.stream().map(forwardTool::deleteQuery).collect(Collectors.toList()));
         ExecutorService executor = Executors.newCachedThreadPool();
         executor.execute(transaction);
     }

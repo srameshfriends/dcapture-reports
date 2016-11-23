@@ -27,7 +27,7 @@ public class IncomeItemDao extends AbstractDao<IncomeItem> implements RowColumns
     }
 
     @Override
-    protected IncomeItem getReferenceRow(String primaryKay) {
+    protected IncomeItem getReference(String primaryKay) {
         QueryBuilder builder = getQueryBuilder("findByCode");
         builder.add(1, primaryKay);
         return getDataReader().findSingleRow(builder, this);

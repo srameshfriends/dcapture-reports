@@ -10,7 +10,6 @@ import excel.accounting.shared.RulesType;
 import excel.accounting.shared.StringRules;
 import org.apache.poi.ss.usermodel.Cell;
 
-import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -20,8 +19,7 @@ import java.util.stream.Collectors;
  * @author Ramesh
  * @since Oct, 2016
  */
-public class CurrencyService extends AbstractService implements EntityToRowColumns<Currency>,
-        ExcelTypeConverter<Currency>, SqlWriteResponse {
+public class CurrencyService extends AbstractService implements ExcelTypeConverter<Currency> {
     private CurrencyDao currencyDao;
 
     @Override
@@ -36,36 +34,38 @@ public class CurrencyService extends AbstractService implements EntityToRowColum
         return currencyDao;
     }
 
-    private void updateStatus(List<Currency> currencyList) {
-        /*OrmTransaction transaction = createOrmTransaction();
+    private void updateStatus(List<Currency> currencyList, int pid, SqlWriter handler) {
         try {
+            List<SqlQuery> queryList = new ArrayList<>();
             for (Currency currency : currencyList) {
-                transaction.update(currency);
+                QueryTool tool = createSqlBuilder(pid);
+                tool.update("currency").updateColumns("status", currency.getStatus()).where("code", currency.getCode());
+                queryList.add(tool.getSqlQuery());
             }
-            commitBatch(transaction);
+            executeCommit(150, queryList, handler);
         } catch (Exception ex) {
             ex.printStackTrace();
-        }*/
+        }
     }
 
-    public void setAsDrafted(List<Currency> currencyList) {
+    public void setAsDrafted(List<Currency> currencyList, int pid, SqlWriter writer) {
         List<Currency> filteredList = filteredByStatus(Status.Confirmed, currencyList);
         if (filteredList.isEmpty()) {
             setMessage("Wrong Status : confirmed currency are allowed to modify as drafted");
             return;
         }
         for (Currency currency : filteredList) {
-            String errorMessage = getCurrencyDao().isEntityReferenceUsed(currency.getCode());
+            Object errorMessage = getCurrencyDao().findReferenceUsed(currency);
             if (errorMessage != null) {
-                setMessage(errorMessage);
+                setMessage(errorMessage.toString());
                 return;
             }
             currency.setStatus(Status.Drafted);
         }
-        updateStatus(filteredList);
+        updateStatus(filteredList, pid, writer);
     }
 
-    public void setAsConfirmed(List<Currency> currencyList) {
+    public void setAsConfirmed(List<Currency> currencyList, int pid, SqlWriter writer) {
         List<Currency> filteredList = filteredByStatus(Status.Drafted, currencyList);
         if (filteredList.isEmpty()) {
             setMessage("Wrong Status : drafted currency are allowed to modify as confirmed");
@@ -74,10 +74,10 @@ public class CurrencyService extends AbstractService implements EntityToRowColum
         for (Currency currency : filteredList) {
             currency.setStatus(Status.Confirmed);
         }
-        updateStatus(filteredList);
+        updateStatus(filteredList, pid, writer);
     }
 
-    public void setAsClosed(List<Currency> currencyList) {
+    public void setAsClosed(List<Currency> currencyList, int pid, SqlWriter writer) {
         List<Currency> filteredList = filteredByStatus(Status.Confirmed, currencyList);
         if (filteredList.isEmpty()) {
             setMessage("Wrong Status : confirmed currency are allowed to modify as closed");
@@ -86,10 +86,10 @@ public class CurrencyService extends AbstractService implements EntityToRowColum
         for (Currency currency : filteredList) {
             currency.setStatus(Status.Closed);
         }
-        updateStatus(filteredList);
+        updateStatus(filteredList, pid, writer);
     }
 
-    public void reopenCurrency(List<Currency> currencyList) {
+    public void reopenCurrency(List<Currency> currencyList, int pid, SqlWriter writer) {
         List<Currency> filteredList = filteredByStatus(Status.Closed, currencyList);
         if (filteredList.isEmpty()) {
             setMessage("Wrong Status : closed currency are allowed to reopen");
@@ -98,14 +98,14 @@ public class CurrencyService extends AbstractService implements EntityToRowColum
         for (Currency currency : filteredList) {
             currency.setStatus(Status.Confirmed);
         }
-        updateStatus(filteredList);
+        updateStatus(filteredList, pid, writer);
     }
 
     private boolean insertValid(Currency currency, StringRules rules) {
         return rules.isValid(currency.getCode()) && !StringRules.isEmpty(currency.getName());
     }
 
-    public void insertCurrency(List<Currency> currencyList) {
+    public void insertCurrency(List<Currency> currencyList, int pid, SqlWriter writer) {
         setMessage("Currency code, name should not be empty");
         StringRules rules = new StringRules();
         rules.setMinMaxLength(3, 3);
@@ -116,51 +116,17 @@ public class CurrencyService extends AbstractService implements EntityToRowColum
         if (validList.isEmpty()) {
             setMessage("Valid currency not found");
         } else {
-            insert(100, currencyList, this);
+            insert(currencyList, pid, writer);
         }
     }
 
-    public void deleteCurrency(List<Currency> currencyList) {
+    public void deleteCurrency(List<Currency> currencyList, int pid, SqlWriter writer) {
         List<Currency> filteredList = filteredByStatus(Status.Drafted, currencyList);
         if (filteredList.isEmpty()) {
             setMessage("Error : Only drafted currency allowed to delete");
+        } else {
+            delete(currencyList, pid, writer);
         }
-        /*OrmTransaction transaction = createOrmTransaction();
-        try {
-            for (Currency currency : filteredList) {
-                transaction.delete(currency);
-            }
-            commitBatch(transaction);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }*/
-    }
-
-    @Override
-    public Map<Integer, Object> getColumnsMap(final String queryName, Currency entity) {
-        Map<Integer, Object> map = new HashMap<>();
-        if ("insertCurrency".equals(queryName)) {
-            map.put(1, entity.getCode());
-            map.put(2, entity.getName());
-            map.put(3, entity.getDecimalPrecision());
-            map.put(4, entity.getSymbol());
-            map.put(5, Status.Drafted.toString());
-        } else if ("deleteCurrency".equals(queryName)) {
-            map.put(1, entity.getCode());
-        } else if ("updateStatus".equals(queryName)) {
-            map.put(1, entity.getStatus().toString());
-            map.put(2, entity.getCode());
-        }
-        return map;
-    }
-
-    @Override
-    public void onSqlResponse(int processId) {
-    }
-
-    @Override
-    public void onSqlError(int processId, SQLException ex) {
-        ex.printStackTrace();
     }
 
     @Override

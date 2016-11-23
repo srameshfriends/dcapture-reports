@@ -27,7 +27,7 @@ public class PaymentDao extends AbstractDao<Payment> implements RowColumnsToEnti
     }
 
     @Override
-    protected Payment getReferenceRow(String code) {
+    protected Payment getReference(String code) {
         QueryBuilder builder = getQueryBuilder("findByCode");
         builder.add(1, code);
         return getDataReader().findSingleRow(builder, this);

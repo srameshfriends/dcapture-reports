@@ -12,18 +12,28 @@ public class QueryTool {
     private String selectTable, updateTable, deleteTable, insertTable;
     private List<String> selectColumns, updateColumns, insertColumns, orderByColumns;
     private WhereQuery whereQuery;
-    private StringBuilder orderByBuilder;
     private List<Object> updateParameters, insertParameters;
     private StringBuilder joinBuilder;
     private SqlQuery sqlQuery;
+    private int id;
 
     public QueryTool(String schema) {
         this.schema = schema;
     }
 
+    public int getId() {
+        return id;
+    }
+
+    public QueryTool setId(int id) {
+        this.id = id;
+        return QueryTool.this;
+    }
+
     public SqlQuery getSqlQuery() {
         if (sqlQuery == null) {
             sqlQuery = new SqlQuery();
+            sqlQuery.setId(getId());
             if (selectTable != null) {
                 buildSelectQuery(sqlQuery);
             } else if (updateTable != null) {
@@ -69,7 +79,7 @@ public class QueryTool {
         StringBuilder sb = new StringBuilder();
         sb.append("update ").append(getSchema()).append(".").append(updateTable).append(" set ");
         for (String upd : updateColumns) {
-            sb.append(upd).append(",");
+            sb.append(upd).append(" = ?,");
         }
         sb.replace(sb.toString().length() - 1, sb.toString().length(), " ");
         if (joinBuilder != null) {
@@ -143,8 +153,9 @@ public class QueryTool {
         return QueryTool.this;
     }
 
-    public void update(String tableName) {
+    public QueryTool update(String tableName) {
         this.updateTable = tableName;
+        return QueryTool.this;
     }
 
     public QueryTool deleteFrom(String table) {
@@ -213,20 +224,13 @@ public class QueryTool {
         return whereQuery;
     }
 
-    private StringBuilder getOrderByBuilder() {
-        if (orderByBuilder == null) {
-            orderByBuilder = new StringBuilder();
-        }
-        return orderByBuilder;
-    }
-
     public QueryTool selectFrom(String table) {
         selectTable = table;
         return QueryTool.this;
     }
 
-    public void where(String query, Object parameters) {
-        getWhereQuery().where(query, parameters);
+    public void where(String column, Object parameter) {
+        getWhereQuery().where(column, parameter);
     }
 
     public void whereOrIn(String query, List<Object> parameters) {
@@ -247,7 +251,7 @@ public class QueryTool {
 
     public QueryTool orderBy(String... columns) {
         for (String col : columns) {
-            getOrderByBuilder().append(col).append(", ");
+            getOrderByColumns().add(col);
         }
         return QueryTool.this;
     }

@@ -13,6 +13,7 @@ class SqlTable extends ArrayList<SqlColumn> {
     private SqlColumn primaryColumn;
     private Map<String, String> columnFieldMap;
     private Map<String, Class<?>> enumFieldMap;
+    private List<SqlReference> referenceList;
 
     SqlTable(String name, Class<?> type) {
         this.name = name;
@@ -33,6 +34,14 @@ class SqlTable extends ArrayList<SqlColumn> {
 
     List<Field> getFieldList() {
         return fieldList;
+    }
+
+    public List<SqlReference> getReferenceList() {
+        return referenceList;
+    }
+
+    void setReferenceList(List<SqlReference> referenceList) {
+        this.referenceList = referenceList;
     }
 
     SqlColumn getPrimaryColumn() {

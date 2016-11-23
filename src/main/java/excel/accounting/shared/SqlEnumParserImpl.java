@@ -12,19 +12,20 @@ class SqlEnumParserImpl implements SqlEnumParser {
     @Override
     public Object getEnum(final Class<?> typeClass, final String value) {
         if (Status.class.equals(typeClass)) {
-            return toEnum(Status.class, value);
+            return toEnum(Status.class, value, Status.Drafted);
         } else if (AccountType.class.equals(typeClass)) {
-            return toEnum(AccountType.class, value);
+            return toEnum(AccountType.class, value, AccountType.Expense);
         }
         return null;
     }
 
-    private <E extends Enum<E>> E toEnum(Class<E> enumClass, String name) {
+    @SuppressWarnings("unchecked")
+    private <E extends Enum<E>> E toEnum(Class<E> enumClass, String name, Object defaultValue) {
         try {
             return Enum.valueOf(enumClass, name);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        return null;
+        return (E)defaultValue;
     }
 }

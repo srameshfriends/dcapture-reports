@@ -21,7 +21,7 @@ public class IncomeCategoryDao extends AbstractDao<IncomeCategory> {
     }
 
     @Override
-    protected IncomeCategory getReferenceRow(String primaryKay) {
+    protected IncomeCategory getReference(String primaryKay) {
 
         return null;
     }

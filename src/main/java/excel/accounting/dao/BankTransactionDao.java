@@ -47,7 +47,7 @@ public class BankTransactionDao extends AbstractDao<BankTransaction> implements 
     }
 
     @Override
-    protected BankTransaction getReferenceRow(String primaryKay) {
+    protected BankTransaction getReference(String primaryKay) {
         QueryBuilder builder = getQueryBuilder("findByCode");
         builder.add(1, primaryKay);
         return getDataReader().findSingleRow(builder, this);

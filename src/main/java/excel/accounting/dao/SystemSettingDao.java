@@ -41,7 +41,7 @@ public class SystemSettingDao extends AbstractDao<SystemSetting> implements RowC
     }
 
     @Override
-    protected SystemSetting getReferenceRow(String primaryKay) {
+    protected SystemSetting getReference(String primaryKay) {
         QueryBuilder builder = getQueryBuilder("findByCode");
         builder.add(1, primaryKay);
         return getDataReader().findSingleRow(builder, this);

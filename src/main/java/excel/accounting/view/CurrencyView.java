@@ -9,7 +9,6 @@ import excel.accounting.service.CurrencyService;
 import excel.accounting.shared.DataConverter;
 import excel.accounting.shared.FileHelper;
 import excel.accounting.ui.*;
-import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -18,9 +17,9 @@ import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.stage.FileChooser;
 
 import java.io.File;
+import java.sql.SQLException;
 import java.util.List;
 
 /**
@@ -29,12 +28,11 @@ import java.util.List;
  * @author Ramesh
  * @since Oct, 2016
  */
-public class CurrencyView extends AbstractView implements ViewHolder, EntityDao<Currency> {
-    private final String exportActionId = "exportAction", deleteActionId = "deleteAction";
-    private final String exportSelectedActionId = "exportSelectedAction";
-    private final String confirmedActionId = "confirmedAction", reopenActionId = "reopenAction";
-    private final String closedActionId = "closedAction", draftedActionId = "draftedAction";
-    private final int LOAD_DATA = 100, EXPORT_DATA = 110;
+public class CurrencyView extends AbstractView implements ViewHolder, EntityDao<Currency>, SqlWriter,
+        ListChangeListener<Integer>, ActionHandler {
+    private final int IMPORT = 100, EXPORT = 110, EXPORT_SELECTED = 120;
+    private final int DELETE_RECORD = 10, SET_DRAFTED = 20, SET_CONFIRMED = 30, SET_CLOSED = 40, REOPEN_CLOSED = 50;
+    private final int LOAD_RECORD = 1000, REFRESH_RECORD = 1100;
 
     private ReadableTableView<Currency> tableView;
     private CurrencyDao currencyDao;
@@ -48,7 +46,6 @@ public class CurrencyView extends AbstractView implements ViewHolder, EntityDao<
 
     @Override
     public Node createControl() {
-        ViewListener viewListener = new ViewListener();
         currencyDao = (CurrencyDao) getService("currencyDao");
         currencyService = (CurrencyService) getService("currencyService");
         tableView = new ReadableTableView<Currency>().create();
@@ -57,17 +54,17 @@ public class CurrencyView extends AbstractView implements ViewHolder, EntityDao<
         tableView.addTextColumn("symbol", "Symbol").setPrefWidth(100);
         tableView.addTextColumn("decimalPrecision", "Precision").setMinWidth(120);
         tableView.addTextColumn("status", "Status").setMinWidth(120);
-        tableView.addSelectionChangeListener(viewListener);
-        tableView.setContextMenuHandler(viewListener);
-        tableView.addContextMenuItem(confirmedActionId, "Set As Confirmed");
+        tableView.addSelectionChangeListener(this);
+        tableView.setContextMenuHandler(this);
+        tableView.addContextMenuItem(SET_CONFIRMED, "Set As Confirmed");
         tableView.addContextMenuItemSeparator();
-        tableView.addContextMenuItem(draftedActionId, "Set As Drafted");
-        tableView.addContextMenuItem(closedActionId, "Set As Closed");
-        tableView.addContextMenuItem(reopenActionId, "Reopen Currency");
+        tableView.addContextMenuItem(SET_DRAFTED, "Set As Drafted");
+        tableView.addContextMenuItem(SET_CLOSED, "Set As Closed");
+        tableView.addContextMenuItem(REOPEN_CLOSED, "Reopen Currency");
         tableView.addContextMenuItemSeparator();
-        tableView.addContextMenuItem(exportSelectedActionId, "Export As xls");
+        tableView.addContextMenuItem(EXPORT_SELECTED, "Export As xls");
         tableView.addContextMenuItemSeparator();
-        tableView.addContextMenuItem(deleteActionId, "Delete Currency");
+        tableView.addContextMenuItem(DELETE_RECORD, "Delete Currency");
         //
         basePanel = new VBox();
         basePanel.getChildren().addAll(createToolbar(), tableView.getTableView());
@@ -75,13 +72,12 @@ public class CurrencyView extends AbstractView implements ViewHolder, EntityDao<
     }
 
     private HBox createToolbar() {
-        final String importActionId = "importAction", refreshActionId = "refreshAction";
         Button refreshBtn, importBtn, exportBtn;
-        refreshBtn = createButton(refreshActionId, "Refresh", event ->
-                currencyDao.loadAll(LOAD_DATA, this)
+        refreshBtn = createButton(REFRESH_RECORD, "Refresh", event ->
+                currencyDao.loadAll(LOAD_RECORD, this)
         );
-        importBtn = createButton(importActionId, "Import", event -> importFromExcelEvent());
-        exportBtn = createButton(exportActionId, "Export", event -> exportToExcelEvent());
+        importBtn = createButton(IMPORT, "Import", event -> importFromExcelEvent());
+        exportBtn = createButton(EXPORT, "Export", event -> currencyDao.loadAll(EXPORT, this));
         //
         HBox box = new HBox();
         box.setSpacing(12);
@@ -103,7 +99,7 @@ public class CurrencyView extends AbstractView implements ViewHolder, EntityDao<
     public void openView(double width, double height) {
         onResize(width, height);
         onRowSelectionChanged(false);
-        currencyDao.loadAll(LOAD_DATA, this);
+        currencyDao.loadAll(LOAD_RECORD, this);
     }
 
     @Override
@@ -116,50 +112,68 @@ public class CurrencyView extends AbstractView implements ViewHolder, EntityDao<
         basePanel.setPrefHeight(height);
     }
 
-    private void changeStatusEvent(String actionId) {
+    private void changeStatusEvent(final int actionId) {
         String message = "";
-        if (confirmedActionId.equals(actionId)) {
-            message = "Are you really wish to confirmed?";
-        } else if (draftedActionId.equals(actionId)) {
-            message = "Are you really wish to drafted?";
-        } else if (closedActionId.equals(actionId)) {
-            message = "Are you really wish to closed?";
-        } else if (reopenActionId.equals(actionId)) {
-            message = "Are you really wish to reopen?";
+        switch (actionId) {
+            case SET_CONFIRMED:
+                message = "Are you really wish to confirmed?";
+                break;
+            case SET_DRAFTED:
+                message = "Are you really wish to drafted?";
+                break;
+            case SET_CLOSED:
+                message = "Are you really wish to closed?";
+                break;
+            case REOPEN_CLOSED:
+                message = "Are you really wish to reopen?";
+                break;
         }
         if (!confirmDialog(message)) {
             return;
         }
-        if (confirmedActionId.equals(actionId)) {
-            currencyService.setAsConfirmed(tableView.getSelectedItems());
-        } else if (draftedActionId.equals(actionId)) {
-            currencyService.setAsDrafted(tableView.getSelectedItems());
-        } else if (closedActionId.equals(actionId)) {
-            currencyService.setAsClosed(tableView.getSelectedItems());
-        } else if (reopenActionId.equals(actionId)) {
-            currencyService.reopenCurrency(tableView.getSelectedItems());
+        switch (actionId) {
+            case SET_CONFIRMED:
+                currencyService.setAsConfirmed(tableView.getSelectedItems(), actionId, this);
+                break;
+            case SET_DRAFTED:
+                currencyService.setAsDrafted(tableView.getSelectedItems(), actionId, this);
+                break;
+            case SET_CLOSED:
+                currencyService.setAsClosed(tableView.getSelectedItems(), actionId, this);
+                break;
+            case REOPEN_CLOSED:
+                currencyService.reopenCurrency(tableView.getSelectedItems(), actionId, this);
+                break;
         }
-        currencyDao.loadAll(LOAD_DATA, this);
     }
 
     private void deleteEvent() {
         if (!confirmDialog("Are you really wish to delete?")) {
             return;
         }
-        currencyService.deleteCurrency(tableView.getSelectedItems());
-        currencyDao.loadAll(LOAD_DATA, this);
+        currencyService.deleteCurrency(tableView.getSelectedItems(), DELETE_RECORD, this);
     }
 
     @Override
-    public void onEntityDaoCompleted(int pid, List<Currency> dataList) {
+    public void onEntityResult(int pid, List<Currency> dataList) {
         switch (pid) {
-            case LOAD_DATA:
+            case LOAD_RECORD:
                 setItems(dataList);
                 break;
-            case EXPORT_DATA:
+            case EXPORT:
                 exportToExcelEvent(dataList);
                 break;
         }
+    }
+
+    @Override
+    public void onSqlUpdated(int pid) {
+        currencyDao.loadAll(LOAD_RECORD, this);
+    }
+
+    @Override
+    public void onSqlError(int pid, SQLException ex) {
+        ex.printStackTrace();
     }
 
     private void setItems(List<Currency> dataList) {
@@ -168,7 +182,7 @@ public class CurrencyView extends AbstractView implements ViewHolder, EntityDao<
     }
 
     @Override
-    public void onEntityDaoError(int pid, Exception ex) {
+    public void onEntityError(int pid, Exception ex) {
         ex.printStackTrace();
     }
 
@@ -184,71 +198,53 @@ public class CurrencyView extends AbstractView implements ViewHolder, EntityDao<
             setMessage("Valid import records not found");
             return;
         }
-        currencyService.insertCurrency(dataList);
-        currencyDao.loadAll(LOAD_DATA, this);
-    }
-
-    private void exportToExcelEvent() {
-        currencyDao.loadAll(EXPORT_DATA, this);
+        currencyService.insertCurrency(dataList, 212, this);
     }
 
     private void exportToExcelEvent(List<Currency> currencyList) {
         String fileName = DataConverter.getUniqueFileName("currency", "xls");
-        FileChooser.ExtensionFilter filter = new FileChooser.ExtensionFilter("Excel", "*.xls");
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Save Excel File");
-        fileChooser.getExtensionFilters().add(filter);
-        fileChooser.setInitialFileName(fileName);
-        Platform.runLater(new Runnable() {
-            @Override
-            public void run() {
-                File saveFile = fileChooser.showSaveDialog(getPrimaryStage());
-                if (saveFile != null) {
-                    File file = FileHelper.showSaveFileDialogExcel(fileName, getPrimaryStage());
-                    if (file != null) {
-                        WriteExcelData<Currency> writeExcelData = new WriteExcelData<>("", file, currencyService);
-                        writeExcelData.writeRowData(currencyList);
-                    }
-                }
-            }
-        });
+        WriteExcelData<Currency> writeExcelData = new WriteExcelData<>(currencyList, currencyService);
+        writeExcelData.writeRecords(fileName, getPrimaryStage());
     }
 
     private void onRowSelectionChanged(boolean isRowSelected) {
-        tableView.setDisable(!isRowSelected, exportSelectedActionId, draftedActionId, confirmedActionId,
-                closedActionId);
+        tableView.disableAction(!isRowSelected, EXPORT_SELECTED, SET_DRAFTED, SET_CONFIRMED, SET_CLOSED);
     }
 
-    private void performActionEvent(final String actionId) {
+    private void onActionEvent(final int actionId) {
         setMessage("");
         switch (actionId) {
-            case confirmedActionId:
-            case draftedActionId:
-            case closedActionId:
-            case reopenActionId:
+            case SET_CONFIRMED:
+            case SET_DRAFTED:
+            case SET_CLOSED:
+            case REOPEN_CLOSED:
                 changeStatusEvent(actionId);
                 break;
-            case deleteActionId:
+            case REFRESH_RECORD:
+                currencyDao.loadAll(LOAD_RECORD, this);
+                break;
+            case DELETE_RECORD:
                 deleteEvent();
                 break;
-            case exportActionId:
-                exportToExcelEvent();
+            case EXPORT:
+                currencyDao.loadAll(EXPORT, this);
                 break;
-            case exportSelectedActionId:
+            case EXPORT_SELECTED:
                 exportToExcelEvent(tableView.getSelectedItems());
+                break;
+            case IMPORT:
+                importFromExcelEvent();
                 break;
         }
     }
 
-    private class ViewListener implements ListChangeListener<Integer>, ActionHandler {
-        @Override
-        public void onChanged(Change<? extends Integer> change) {
-            onRowSelectionChanged(0 < change.getList().size());
-        }
+    @Override
+    public void onChanged(ListChangeListener.Change<? extends Integer> change) {
+        onRowSelectionChanged(0 < change.getList().size());
+    }
 
-        @Override
-        public void onActionEvent(final String actionId) {
-            performActionEvent(actionId);
-        }
+    @Override
+    public void onActionEvent(final String actionId) {
+        onActionEvent(DataConverter.getInteger(actionId));
     }
 }

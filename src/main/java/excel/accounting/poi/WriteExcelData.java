@@ -1,5 +1,9 @@
 package excel.accounting.poi;
 
+import excel.accounting.entity.Currency;
+import excel.accounting.shared.FileHelper;
+import javafx.application.Platform;
+import javafx.stage.Stage;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.DateFormatConverter;
@@ -17,13 +21,21 @@ import java.util.Locale;
  */
 public class WriteExcelData<T> {
     private String type;
-    private final File file;
+    private File file;
     private final ExcelTypeConverter<T> excelTypeConverter;
+    private List<T> dataList;
     private String dateFormatPattern;
 
     public WriteExcelData(String type, File file, ExcelTypeConverter<T> excelTypeConverter) {
         this.type = type;
         this.file = file;
+        this.excelTypeConverter = excelTypeConverter;
+        setDateFormat(new SimpleDateFormat("dd-MMM-yyyy"));
+    }
+
+    public WriteExcelData(List<T> dataList, ExcelTypeConverter<T> excelTypeConverter) {
+        this.type = "";
+        this.dataList = dataList;
         this.excelTypeConverter = excelTypeConverter;
         setDateFormat(new SimpleDateFormat("dd-MMM-yyyy"));
     }
@@ -36,6 +48,18 @@ public class WriteExcelData<T> {
 
     private String getDateFormatPattern() {
         return dateFormatPattern;
+    }
+
+    public void writeRecords(final String fileName, final Stage stage) {
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                file = FileHelper.showSaveFileDialogExcel(fileName, stage);
+                if (file != null) {
+                    writeRowData(dataList);
+                }
+            }
+        });
     }
 
     public void writeRowData(List<T> dataList) {

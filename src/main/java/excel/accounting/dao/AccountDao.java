@@ -27,7 +27,7 @@ public class AccountDao extends AbstractDao<Account> implements RowColumnsToEnti
     }
 
     @Override
-    protected Account getReferenceRow(String primaryKay) {
+    protected Account getReference(String primaryKay) {
         QueryBuilder builder = getQueryBuilder("findByCode");
         builder.add(1, primaryKay);
         return getDataReader().findSingleRow(builder, this);

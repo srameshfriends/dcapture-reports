@@ -7,6 +7,7 @@ import org.reflections.Reflections;
 import javax.persistence.*;
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Sql Factory
@@ -27,13 +28,13 @@ public abstract class SqlFactory {
         for (String pack : packArray) {
             Reflections reflections = new Reflections(pack.trim());
             Set<Class<?>> classes = reflections.getTypesAnnotatedWith(Table.class);
-            addOrmTableMap(tableMap, classes);
+            addTableClassMap(tableMap, classes);
         }
-        addOrmTableColumns(tableMap);
+        addTableColumns(tableMap);
         return tableMap;
     }
 
-    private static void addOrmTableMap(Map<Class<?>, SqlTable> tMap, Set<Class<?>> entityList) {
+    private static void addTableClassMap(Map<Class<?>, SqlTable> tMap, Set<Class<?>> entityList) {
         if (entityList != null && !entityList.isEmpty()) {
             for (Class<?> clazz : entityList) {
                 tMap.put(clazz, null);
@@ -41,7 +42,7 @@ public abstract class SqlFactory {
         }
     }
 
-    private static void addOrmTableColumns(SqlTableMap tableMap) {
+    private static void addTableColumns(SqlTableMap tableMap) {
         for (Class<?> entity : tableMap.keySet()) {
             String tableName = findTableName(entity);
             if (tableName == null) {
@@ -64,6 +65,24 @@ public abstract class SqlFactory {
             List<SqlColumn> sortedList = getSortedColumnList(table);
             table.clear();
             table.addAll(sortedList);
+        }
+        List<SqlReference> refList = new ArrayList<>();
+        for (SqlTable table : tableList) {
+            table.stream().filter(column -> column.getJoinTable() != null).forEach(column -> {
+                SqlReference reference = new SqlReference();
+                reference.setSqlTable(column.getJoinTable());
+                reference.setSqlColumn(column.getJoinTable().getPrimaryColumn());
+                reference.setReferenceTable(table);
+                reference.setReferenceColumn(column);
+                refList.add(reference);
+            });
+        }
+        for (SqlTable table : tableList) {
+            List<SqlReference> list = refList.stream().filter(reference ->
+                    table.equals(reference.getSqlTable())).collect(Collectors.toList());
+            if(!list.isEmpty()) {
+                table.setReferenceList(list);
+            }
         }
     }
 
@@ -205,7 +224,7 @@ public abstract class SqlFactory {
 
     @SuppressWarnings("unchecked")
     static <T> List<T> toEntityList(SqlTableMap tableMap, SqlEnumParser enumParsers, SqlMetaData[] metaData,
-                                           List<Object[]> dataList) {
+                                    List<Object[]> dataList) {
         SqlTable table = dataList.isEmpty() ? null : getValidOrmTable(tableMap, metaData);
         if (table == null) {
             return new ArrayList<T>();
@@ -214,11 +233,11 @@ public abstract class SqlFactory {
         for (Object[] data : dataList) {
             T result = (T) instance(table.getType());
             int index = 0;
-            for(Object value : data) {
+            for (Object value : data) {
                 String columnName = metaData[index].getColumnName();
                 String fieldName = table.getColumnFieldMap().get(columnName);
                 Class<?> enumClass = table.getEnumClass(fieldName);
-                if(enumClass != null) {
+                if (enumClass != null) {
                     value = enumParsers.getEnum(enumClass, (String) value);
                 }
                 copyProperty(result, fieldName, value);
@@ -238,7 +257,7 @@ public abstract class SqlFactory {
     }
 
     private static SqlTable getValidOrmTable(SqlTableMap tableMap, SqlMetaData[] metaDataArray) {
-        SqlTable table = tableMap.getOrmTable(metaDataArray[0].getTableName());
+        SqlTable table = tableMap.getSqlTable(metaDataArray[0].getTableName());
         if (table != null) {
             for (SqlMetaData metaData : metaDataArray) {
                 if (!metaData.getTableName().equals(table.getName())) {

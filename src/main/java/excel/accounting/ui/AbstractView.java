@@ -20,6 +20,7 @@ public abstract class AbstractView implements ViewHolder {
     private ApplicationControl applicationControl;
     private double panelWidth, panelHeight;
     private Map<String, Button> actionBtnMap;
+    private Map<Integer, Button> actionMap;
 
     @Override
     public void setApplicationControl(ApplicationControl control) {
@@ -42,10 +43,18 @@ public abstract class AbstractView implements ViewHolder {
         return actionBtnMap;
     }
 
-    protected Button getButton(String actionId) {
-        return getActionBtnMap().get(actionId);
+    private Map<Integer, Button> getActionMap() {
+        if (actionMap == null) {
+            actionMap = new HashMap<>();
+        }
+        return actionMap;
     }
 
+    protected Button getAction(int actionId) {
+        return getActionMap().get(actionId);
+    }
+
+    @Deprecated
     protected Button createButton(String actionId, String title, EventHandler<ActionEvent> handler) {
         Button button = new Button(title);
         button.setId(actionId);
@@ -54,10 +63,17 @@ public abstract class AbstractView implements ViewHolder {
         return button;
     }
 
-    protected void setActionDisable(boolean disable, String... actionArray) {
-        getActionBtnMap();
-        for (String actionId : actionArray) {
-            Button button = actionBtnMap.get(actionId);
+    protected Button createButton(int pid, String title, EventHandler<ActionEvent> handler) {
+        Button button = new Button(title);
+        button.setOnAction(handler);
+        button.setUserData(pid);
+        getActionMap().put(pid, button);
+        return button;
+    }
+
+    protected void disableAction(boolean disable, int... actionArray) {
+        for (int actionId : actionArray) {
+            Button button = getActionMap().get(actionId);
             if (button != null) {
                 button.setDisable(disable);
             }

@@ -23,23 +23,21 @@ public class CurrencyDao extends AbstractDao<Currency> implements RowColumnsToEn
     }
 
     @Override
-    protected Currency getReferenceRow(String code) {
-        QueryBuilder builder = getQueryBuilder("findByCode");
-        builder.add(1, code);
-        return getDataReader().findSingleRow(builder, this);
+    protected Currency getReference(String code) {
+        return code == null ? null : findByCode(Currency.class, code);
     }
 
     public void loadAll(int pid, EntityDao<Currency> entityDao) {
-        QueryTool builder = selectBuilder(Currency.class).orderBy("code");
-        execute(builder.getSqlQuery(), new SqlReadResponse() {
+        QueryTool builder = selectBuilder(Currency.class, pid).orderBy("code");
+        execute(builder.getSqlQuery(), new SqlReader() {
             @Override
-            public void onSqlResponse(SqlQuery sqlQuery, SqlMetaData[] mdArray, List<Object[]> dataArrayList) {
-                entityDao.onEntityDaoCompleted(pid, toEntityList(mdArray, dataArrayList));
+            public void onSqlResult(int pid, SqlMetaData[] mdArray, List<Object[]> dataArrayList) {
+                entityDao.onEntityResult(pid, toEntityList(mdArray, dataArrayList));
             }
 
             @Override
-            public void onSqlError(SqlQuery sqlQuery, SQLException exception) {
-                entityDao.onEntityDaoError(pid, exception);
+            public void onSqlError(int pid, SQLException exception) {
+                entityDao.onEntityError(pid, exception);
             }
         });
     }

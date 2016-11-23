@@ -1,5 +1,6 @@
 package excel.accounting.ui;
 
+import javafx.application.Platform;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.scene.control.*;
@@ -31,12 +32,22 @@ public class ReadableTableView<T> {
         tableView.setContextMenu(contextMenu);
     }
 
+    @Deprecated
     public void addContextMenuItem(final String actionId, String title) {
         StyleBuilder builder = new StyleBuilder();
         builder.padding(2);
         MenuItem menuItem = new MenuItem(title);
         menuItem.setStyle(builder.toString());
         menuItem.setOnAction(event -> contextHandler.onActionEvent(actionId));
+        contextMenu.getItems().add(menuItem);
+    }
+
+    public void addContextMenuItem(final int actionId, String title) {
+        StyleBuilder builder = new StyleBuilder();
+        builder.padding(2);
+        MenuItem menuItem = new MenuItem(title);
+        menuItem.setStyle(builder.toString());
+        menuItem.setOnAction(event -> contextHandler.onActionEvent(actionId + ""));
         contextMenu.getItems().add(menuItem);
     }
 
@@ -48,11 +59,24 @@ public class ReadableTableView<T> {
         contextMenu.getItems().add(menuItem);
     }
 
+    @Deprecated
     public void setDisable(boolean disable, String... actionArray) {
         List<MenuItem> itemList = contextMenu.getItems();
         for (MenuItem menuItem : itemList) {
             for (String actionId : actionArray) {
                 if (actionId.equals(menuItem.getId())) {
+                    menuItem.setDisable(disable);
+                    break;
+                }
+            }
+        }
+    }
+
+    public void disableAction(boolean disable, int... actionArray) {
+        List<MenuItem> itemList = contextMenu.getItems();
+        for (MenuItem menuItem : itemList) {
+            for (Integer actionId : actionArray) {
+                if (actionId == menuItem.getUserData()) {
                     menuItem.setDisable(disable);
                     break;
                 }

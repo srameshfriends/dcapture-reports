@@ -10,7 +10,7 @@ public class SqlTableMap extends HashMap<Class<?>, SqlTable> {
     private final String schema;
     private Map<String, SqlTable> tableMap;
 
-    public SqlTableMap(String schema) {
+    SqlTableMap(String schema) {
         this.schema = schema;
         tableMap = new HashMap<>();
     }
@@ -19,7 +19,7 @@ public class SqlTableMap extends HashMap<Class<?>, SqlTable> {
         return schema;
     }
 
-    public SqlTable getOrmTable(String tableName) {
+    SqlTable getSqlTable(String tableName) {
         tableName = tableName.toLowerCase();
         SqlTable result = tableMap.get(tableName);
         if(result == null) {

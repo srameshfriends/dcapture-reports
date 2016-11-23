@@ -9,7 +9,7 @@ import javax.persistence.Id;
  * Base Record
  */
 @ColumnIndex(columns = {"code"})
-abstract class BaseRecord {
+public abstract class BaseRecord {
     @Id
     @Column(name = "code", length = 8)
     private String code;

@@ -24,7 +24,7 @@ public class AssetDao extends AbstractDao<Asset> implements RowColumnsToEntity<A
     }
 
     @Override
-    protected Asset getReferenceRow(String primaryKay) {
+    protected Asset getReference(String primaryKay) {
         QueryBuilder builder = getQueryBuilder("findByCode");
         builder.add(1, primaryKay);
         return getDataReader().findSingleRow(builder, this);
