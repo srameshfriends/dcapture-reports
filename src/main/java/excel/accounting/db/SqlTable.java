@@ -36,7 +36,7 @@ class SqlTable extends ArrayList<SqlColumn> {
         return fieldList;
     }
 
-    public List<SqlReference> getReferenceList() {
+    List<SqlReference> getReferenceList() {
         return referenceList;
     }
 

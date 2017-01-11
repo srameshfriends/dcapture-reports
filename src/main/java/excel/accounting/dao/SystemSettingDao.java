@@ -4,10 +4,7 @@ import excel.accounting.db.*;
 import excel.accounting.entity.SystemSetting;
 import excel.accounting.shared.DataConverter;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -16,7 +13,7 @@ import java.util.List;
  * @author Ramesh
  * @since Nov, 2016
  */
-public class SystemSettingDao extends AbstractDao<SystemSetting> implements RowColumnsToEntity<SystemSetting> {
+public class SystemSettingDao extends AbstractDao<SystemSetting> {
     @Override
     protected String getTableName() {
         return "entity.system_setting";
@@ -27,48 +24,16 @@ public class SystemSettingDao extends AbstractDao<SystemSetting> implements RowC
         return "system-setting";
     }
 
-    @Override
-    public SystemSetting getEntity(String queryName, Object[] columns) {
-        SystemSetting systemSetting = new SystemSetting();
-        systemSetting.setCode((String) columns[0]);
-        systemSetting.setGroupCode((String) columns[1]);
-        systemSetting.setName((String) columns[2]);
-        systemSetting.setTextValue((String) columns[3]);
-        systemSetting.setDecimalValue((BigDecimal) columns[4]);
-        systemSetting.setDateValue((Date) columns[5]);
-        systemSetting.setBoolValue((Boolean) columns[6]);
-        return systemSetting;
-    }
-
-    @Override
-    protected SystemSetting getReference(String primaryKay) {
-        QueryBuilder builder = getQueryBuilder("findByCode");
-        builder.add(1, primaryKay);
-        return getDataReader().findSingleRow(builder, this);
-    }
-
-    public List<SystemSetting> loadAll() {
-        QueryBuilder builder = getQueryBuilder("loadAll");
-        return getDataReader().findRowDataList(builder, this);
-    }
-
-    public SystemSetting findByCode(String code) {
-        QueryBuilder builder = getQueryBuilder("findByCode");
-        builder.add(1, code);
-        return getDataReader().findSingleRow(builder, this);
-    }
-
-    public List<SystemSetting> findByCodeArray(String... codeArray) {
-       /* SQLBuilder builder = createSQLQuery();
-        builder.selectFrom(SystemSetting.class);
-        builder.whereOrIn("code", codeArray);*/
-        return new ArrayList<>();
+    private List<SystemSetting> findByCodeArray(String... codeArray) {
+        QueryBuilder queryBuilder = selectBuilder(SystemSetting.class);
+        queryBuilder.whereAndIn("code", codeArray);
+        return fetchList(queryBuilder);
     }
 
     public List<SystemSetting> findByGroupCode(String groupCode) {
-        QueryBuilder builder = getQueryBuilder("findByGroupCode");
-        builder.add(1, groupCode);
-        return getDataReader().findRowDataList(builder, this);
+        QueryBuilder queryBuilder = selectBuilder(SystemSetting.class);
+        queryBuilder.where("group_code", groupCode);
+        return fetchList(queryBuilder);
     }
 
     public List<SystemSetting> getSystemUser() {

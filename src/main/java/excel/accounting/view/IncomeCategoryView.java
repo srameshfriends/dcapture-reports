@@ -1,5 +1,6 @@
 package excel.accounting.view;
 
+import excel.accounting.dao.IncomeCategoryDao;
 import excel.accounting.entity.IncomeCategory;
 import excel.accounting.poi.ReadExcelData;
 import excel.accounting.poi.WriteExcelData;
@@ -35,6 +36,7 @@ public class IncomeCategoryView extends AbstractView implements ViewHolder {
 
     private ReadableTableView<IncomeCategory> tableView;
     private IncomeCategoryService incomeCategoryService;
+    private IncomeCategoryDao incomeCategoryDao;
     private VBox basePanel;
 
     @Override
@@ -126,7 +128,7 @@ public class IncomeCategoryView extends AbstractView implements ViewHolder {
     }
 
     private void loadRecords() {
-        List<IncomeCategory> categoryList = incomeCategoryService.loadAll();
+        List<IncomeCategory> categoryList = incomeCategoryDao.loadAll(IncomeCategory.class);
         if (categoryList == null || categoryList.isEmpty()) {
             return;
         }
@@ -144,7 +146,7 @@ public class IncomeCategoryView extends AbstractView implements ViewHolder {
         if (dataList.isEmpty()) {
             return;
         }
-        List<String> existingCodeList = incomeCategoryService.findCodeList();
+        List<String> existingCodeList = incomeCategoryDao.loadCodeList();
         List<IncomeCategory> updateList = new ArrayList<>();
         List<IncomeCategory> insertList = new ArrayList<>();
         for (IncomeCategory category : dataList) {
@@ -179,9 +181,8 @@ public class IncomeCategoryView extends AbstractView implements ViewHolder {
             List<IncomeCategory> selected = tableView.getSelectedItems();
             writeExcelData.writeRowData(selected);
         } else {
-            writeExcelData.writeRowData(incomeCategoryService.loadAll());
+            writeExcelData.writeRowData(incomeCategoryDao.loadAll(IncomeCategory.class));
         }
-
     }
 
     private void onRowSelectionChanged(boolean isRowSelected) {

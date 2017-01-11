@@ -5,9 +5,9 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Query Tool
+ * Query Builder
  */
-public class QueryTool {
+public class H2QueryBuilder implements QueryBuilder {
     private final String schema;
     private String selectTable, updateTable, deleteTable, insertTable;
     private List<String> selectColumns, updateColumns, insertColumns, orderByColumns;
@@ -15,21 +15,143 @@ public class QueryTool {
     private List<Object> updateParameters, insertParameters;
     private StringBuilder joinBuilder;
     private SqlQuery sqlQuery;
-    private int id;
+    private int id, limit = -1, offset = -1;
 
-    public QueryTool(String schema) {
+    public H2QueryBuilder(String schema) {
         this.schema = schema;
     }
 
+    public H2QueryBuilder setId(int id) {
+        this.id = id;
+        return H2QueryBuilder.this;
+    }
+
+    @Override
     public int getId() {
         return id;
     }
 
-    public QueryTool setId(int id) {
-        this.id = id;
-        return QueryTool.this;
+    @Override
+    public String getSchema() {
+        return schema;
     }
 
+    @Override
+    public H2QueryBuilder updateColumns(String column, Object object) {
+        getUpdateColumns().add(column);
+        getUpdateParameters().add(object);
+        return H2QueryBuilder.this;
+    }
+
+    @Override
+    public H2QueryBuilder update(String tableName) {
+        this.updateTable = tableName;
+        return H2QueryBuilder.this;
+    }
+
+    @Override
+    public H2QueryBuilder deleteFrom(String table) {
+        deleteTable = table;
+        return H2QueryBuilder.this;
+    }
+
+    @Override
+    public H2QueryBuilder insertInto(String tableName) {
+        this.insertTable = tableName;
+        return H2QueryBuilder.this;
+    }
+
+    @Override
+    public H2QueryBuilder insertColumns(String column, Object object) {
+        getInsertColumns().add(column);
+        getInsertParameters().add(object);
+        return H2QueryBuilder.this;
+    }
+
+    @Override
+    public H2QueryBuilder join(String joinQuery) {
+        getJoinBuilder().append(joinQuery);
+        return H2QueryBuilder.this;
+    }
+
+    @Override
+    public H2QueryBuilder selectColumns(String... columns) {
+        for (String col : columns) {
+            getSelectColumns().add(col);
+        }
+        return H2QueryBuilder.this;
+    }
+
+    @Override
+    public H2QueryBuilder selectColumns(Set<String> columnSet) {
+        getSelectColumns().addAll(columnSet);
+        return H2QueryBuilder.this;
+    }
+
+    @Override
+    public H2QueryBuilder selectFrom(String table) {
+        selectTable = table;
+        return H2QueryBuilder.this;
+    }
+
+    @Override
+    public H2QueryBuilder where(String column, Object parameter) {
+        getWhereQuery().where(column, parameter);
+        return H2QueryBuilder.this;
+    }
+
+    @Override
+    public H2QueryBuilder where(SearchTextQuery searchTextQuery) {
+        getWhereQuery().where(searchTextQuery);
+        return H2QueryBuilder.this;
+    }
+
+    @Override
+    public H2QueryBuilder whereOrIn(String query, List<Object> parameters) {
+        getWhereQuery().whereOrIn(query, parameters);
+        return H2QueryBuilder.this;
+    }
+
+    @Override
+    public H2QueryBuilder whereOrIn(String query, Object[] parameters) {
+        getWhereQuery().whereOrIn(query, parameters);
+        return H2QueryBuilder.this;
+    }
+
+    @Override
+    public H2QueryBuilder whereAndIn(String query, List<Object> parameters) {
+        getWhereQuery().whereOrIn(query, parameters);
+        return H2QueryBuilder.this;
+    }
+
+    @Override
+    public H2QueryBuilder whereAndIn(String query, Object[] parameters) {
+        getWhereQuery().whereOrIn(query, parameters);
+        return H2QueryBuilder.this;
+    }
+
+    @Override
+    public H2QueryBuilder orderBy(String... columns) {
+        for (String col : columns) {
+            getOrderByColumns().add(col);
+        }
+        return H2QueryBuilder.this;
+    }
+
+    @Override
+    public QueryBuilder limit(int limit) {
+        this.limit = limit;
+        return H2QueryBuilder.this;
+    }
+
+    @Override
+    public QueryBuilder limitOffset(int limit, int offset) {
+        this.limit = limit;
+        this.offset = offset;
+        return H2QueryBuilder.this;
+    }
+
+    @Override
     public SqlQuery getSqlQuery() {
         if (sqlQuery == null) {
             sqlQuery = new SqlQuery();
@@ -69,6 +191,12 @@ public class QueryTool {
             }
             orderByBuild.replace(orderByBuild.length() - 1, orderByBuild.length(), " ");
             sb.append(orderByBuild.toString());
+        }
+        if (0 < limit) {
+            sb.append(" limit ").append(limit);
+        }
+        if (0 < offset) {
+            sb.append(" offset ").append(offset);
         }
         sb.append(";");
         sqlQuery.setQuery(sb.toString());
@@ -122,10 +250,6 @@ public class QueryTool {
         sqlQuery.setQuery(sb.toString());
     }
 
-    public String getSchema() {
-        return schema;
-    }
-
     private List<String> getSelectColumns() {
         if (selectColumns == null) {
             selectColumns = new ArrayList<>();
@@ -147,53 +271,11 @@ public class QueryTool {
         return updateParameters;
     }
 
-    public QueryTool updateColumns(String column, Object object) {
-        getUpdateColumns().add(column);
-        getUpdateParameters().add(object);
-        return QueryTool.this;
-    }
-
-    public QueryTool update(String tableName) {
-        this.updateTable = tableName;
-        return QueryTool.this;
-    }
-
-    public QueryTool deleteFrom(String table) {
-        deleteTable = table;
-        return QueryTool.this;
-    }
-
-    public void insertInto(String tableName) {
-        this.insertTable = tableName;
-    }
-
-    public QueryTool insertColumns(String column, Object object) {
-        getInsertColumns().add(column);
-        getInsertParameters().add(object);
-        return QueryTool.this;
-    }
-
-    public void join(String joinQuery) {
-        getJoinBuilder().append(joinQuery);
-    }
-
     private List<String> getInsertColumns() {
         if (insertColumns == null) {
             insertColumns = new ArrayList<>();
         }
         return insertColumns;
-    }
-
-    public QueryTool selectColumns(String... columns) {
-        for (String col : columns) {
-            getSelectColumns().add(col);
-        }
-        return QueryTool.this;
-    }
-
-    QueryTool selectColumns(Set<String> columnSet) {
-        getSelectColumns().addAll(columnSet);
-        return QueryTool.this;
     }
 
     private List<Object> getInsertParameters() {
@@ -222,37 +304,5 @@ public class QueryTool {
             whereQuery = new WhereQuery();
         }
         return whereQuery;
-    }
-
-    public QueryTool selectFrom(String table) {
-        selectTable = table;
-        return QueryTool.this;
-    }
-
-    public void where(String column, Object parameter) {
-        getWhereQuery().where(column, parameter);
-    }
-
-    public void whereOrIn(String query, List<Object> parameters) {
-        getWhereQuery().whereOrIn(query, parameters);
-    }
-
-    public void whereOrIn(String query, Object[] parameters) {
-        getWhereQuery().whereOrIn(query, parameters);
-    }
-
-    public void whereAndIn(String query, List<Object> parameters) {
-        getWhereQuery().whereOrIn(query, parameters);
-    }
-
-    public void whereAndIn(String query, Object[] parameters) {
-        getWhereQuery().whereOrIn(query, parameters);
-    }
-
-    public QueryTool orderBy(String... columns) {
-        for (String col : columns) {
-            getOrderByColumns().add(col);
-        }
-        return QueryTool.this;
     }
 }

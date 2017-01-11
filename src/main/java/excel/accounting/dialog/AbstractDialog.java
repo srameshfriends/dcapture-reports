@@ -56,14 +56,6 @@ public abstract class AbstractDialog extends AbstractControl implements EventHan
         dialogStage.setScene(new Scene(basePanel));
     }
 
-    protected Transaction createTransaction() {
-        return new Transaction(getApplicationControl().getConnectionPool());
-    }
-
-    protected QueryBuilder getQueryBuilder(String sqlFileName, String queryName) {
-        return getDataProcessor().getQueryBuilder(sqlFileName, queryName);
-    }
-
     protected void setCancelled(boolean cancelled) {
         this.cancelled = cancelled;
     }
@@ -116,13 +108,5 @@ public abstract class AbstractDialog extends AbstractControl implements EventHan
     }
 
     protected void onCloseEvent() {
-    }
-
-    protected void executeBatch(Transaction transaction) {
-        try {
-            transaction.executeBatch();
-        } catch (SQLException ex) {
-            setMessage(ex.getErrorCode() + " : " + ex.getMessage());
-        }
     }
 }

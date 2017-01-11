@@ -5,7 +5,7 @@ import java.util.List;
 /**
  * Sql Meta Data Result
  */
-class SqlMetaDataResult {
+public class SqlMetaDataResult {
     private SqlMetaData[] metaData;
     private List<Object[]> objectsList;
 

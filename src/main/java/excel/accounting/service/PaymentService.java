@@ -1,9 +1,6 @@
 package excel.accounting.service;
 
 import excel.accounting.dao.PaymentDao;
-import excel.accounting.db.EntityToRowColumns;
-import excel.accounting.db.QueryBuilder;
-import excel.accounting.db.Transaction;
 import excel.accounting.entity.Payment;
 import excel.accounting.entity.Status;
 import excel.accounting.poi.ExcelTypeConverter;
@@ -12,9 +9,7 @@ import excel.accounting.shared.StringRules;
 import org.apache.poi.ss.usermodel.Cell;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -23,8 +18,7 @@ import java.util.stream.Collectors;
  * @author Ramesh
  * @since Nov, 2016
  */
-public class PaymentService extends AbstractService implements ExcelTypeConverter<Payment>,
-        EntityToRowColumns<Payment> {
+public class PaymentService extends AbstractService implements ExcelTypeConverter<Payment> {
     private PaymentDao paymentDao;
 
     private PaymentDao getPaymentDao() {
@@ -73,13 +67,13 @@ public class PaymentService extends AbstractService implements ExcelTypeConverte
         if (validList.isEmpty()) {
             return;
         }
-        QueryBuilder queryBuilder = getQueryBuilder("insertPayment");
+        /*QueryBuilder queryBuilder = getQueryBuilder("insertPayment");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (Payment payment : paymentList) {
             transaction.addBatch(getColumnsMap("insertPayment", payment));
         }
-        executeBatch(transaction);
+        executeBatch(transaction);*/
     }
 
     public void setAsConfirmed(List<Payment> paymentList) {
@@ -91,13 +85,13 @@ public class PaymentService extends AbstractService implements ExcelTypeConverte
         if (validList.isEmpty()) {
             return;
         }
-        QueryBuilder queryBuilder = getQueryBuilder("updateStatus");
+        /*QueryBuilder queryBuilder = getQueryBuilder("updateStatus");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (Payment payment : validList) {
             transaction.addBatch(getColumnsMap("updateStatus", payment));
         }
-        executeBatch(transaction);
+        executeBatch(transaction);*/
     }
 
     public void setAsDrafted(List<Payment> paymentList) {
@@ -116,13 +110,13 @@ public class PaymentService extends AbstractService implements ExcelTypeConverte
         for (Payment payment : filteredList) {
             payment.setStatus(changedStatus);
         }
-        QueryBuilder queryBuilder = getQueryBuilder("updateStatus");
+        /*QueryBuilder queryBuilder = getQueryBuilder("updateStatus");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (Payment payment : filteredList) {
             transaction.addBatch(getColumnsMap("updateStatus", payment));
         }
-        executeBatch(transaction);
+        executeBatch(transaction);*/
     }
 
     public void deletePayment(List<Payment> paymentList) {
@@ -130,38 +124,13 @@ public class PaymentService extends AbstractService implements ExcelTypeConverte
         if (filteredList.isEmpty()) {
             return;
         }
-        QueryBuilder queryBuilder = getQueryBuilder("deletePayment");
+        /*QueryBuilder queryBuilder = getQueryBuilder("deletePayment");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (Payment payment : filteredList) {
             transaction.addBatch(getColumnsMap("deletePayment", payment));
         }
-        executeBatch(transaction);
-    }
-
-    @Override
-    public Map<Integer, Object> getColumnsMap(String queryName, Payment payment) {
-        Map<Integer, Object> map = new HashMap<>();
-        if ("insertPayment".equals(queryName)) {
-            map.put(1, payment.getCode());
-            map.put(2, payment.getDataType());
-            map.put(3, payment.getDataCode());
-            map.put(4, payment.getPaymentDate());
-            map.put(5, payment.getInstalment());
-            map.put(6, payment.getDescription());
-            map.put(7, payment.getCurrency());
-            map.put(8, payment.getAmount());
-            map.put(9, payment.getAccount());
-            map.put(10, payment.getExchangeRate());
-            map.put(11, payment.getExchangeUnit());
-            map.put(12, Status.Drafted);
-        } else if ("deletePayment".equals(queryName)) {
-            map.put(1, payment.getCode());
-        } else if ("updateStatus".equals(queryName)) {
-            map.put(1, payment.getStatus().toString());
-            map.put(2, payment.getCode());
-        }
-        return map;
+        executeBatch(transaction);*/
     }
 
     @Override

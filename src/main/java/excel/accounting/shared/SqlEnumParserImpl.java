@@ -10,7 +10,7 @@ import excel.accounting.entity.Status;
 class SqlEnumParserImpl implements SqlEnumParser {
 
     @Override
-    public Object getEnum(final Class<?> typeClass, final String value) {
+    public <E> Object parseEnum(Class<?> typeClass, String value) {
         if (Status.class.equals(typeClass)) {
             return toEnum(Status.class, value, Status.Drafted);
         } else if (AccountType.class.equals(typeClass)) {

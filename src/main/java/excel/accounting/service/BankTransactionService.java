@@ -1,8 +1,5 @@
 package excel.accounting.service;
 
-import excel.accounting.db.QueryBuilder;
-import excel.accounting.db.EntityToRowColumns;
-import excel.accounting.db.Transaction;
 import excel.accounting.entity.BankTransaction;
 import excel.accounting.entity.Status;
 import excel.accounting.poi.ExcelTypeConverter;
@@ -10,9 +7,7 @@ import excel.accounting.dao.BankTransactionDao;
 import excel.accounting.shared.DataConverter;
 import org.apache.poi.ss.usermodel.Cell;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -21,8 +16,7 @@ import java.util.stream.Collectors;
  * @author Ramesh
  * @since Oct 2016
  */
-public class BankTransactionService extends AbstractService implements
-        EntityToRowColumns<BankTransaction>, ExcelTypeConverter<BankTransaction> {
+public class BankTransactionService extends AbstractService implements ExcelTypeConverter<BankTransaction> {
     private BankTransactionDao bankTransactionDao;
 
     @Override
@@ -37,16 +31,6 @@ public class BankTransactionService extends AbstractService implements
         return bankTransactionDao;
     }
 
-    public List<BankTransaction> loadAll() {
-        QueryBuilder queryBuilder = getQueryBuilder("loadAll");
-        return getDataReader().findRowDataList(queryBuilder, getBankTransactionDao());
-    }
-
-    public List<String> findCodeList() {
-        QueryBuilder queryBuilder = getQueryBuilder("findCodeList");
-        return getDataReader().findString(queryBuilder);
-    }
-
     /**
      * status, code
      */
@@ -58,13 +42,13 @@ public class BankTransactionService extends AbstractService implements
         for (BankTransaction bankTransaction : filteredList) {
             bankTransaction.setStatus(changedStatus);
         }
-        QueryBuilder queryBuilder = getQueryBuilder("updateStatus");
+        /*QueryBuilder queryBuilder = getQueryBuilder("updateStatus");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (BankTransaction bankTransaction : filteredList) {
             transaction.addBatch(getColumnsMap("updateStatus", bankTransaction));
         }
-        executeBatch(transaction);
+        executeBatch(transaction);*/
     }
 
     public void setAsDrafted(List<BankTransaction> bankTransactionList) {
@@ -80,23 +64,23 @@ public class BankTransactionService extends AbstractService implements
     }
 
     public void insertBankTransaction(List<BankTransaction> bankTransactionList) {
-        QueryBuilder queryBuilder = getQueryBuilder("insertBankTransaction");
+        /*QueryBuilder queryBuilder = getQueryBuilder("insertBankTransaction");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (BankTransaction bankTransaction : bankTransactionList) {
             transaction.addBatch(getColumnsMap("insertBankTransaction", bankTransaction));
         }
-        executeBatch(transaction);
+        executeBatch(transaction);*/
     }
 
     public void updateBankTransaction(List<BankTransaction> bankTransactionList) {
-        QueryBuilder queryBuilder = getQueryBuilder("updateBankTransaction");
+        /*QueryBuilder queryBuilder = getQueryBuilder("updateBankTransaction");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (BankTransaction bankTransaction : bankTransactionList) {
             transaction.addBatch(getColumnsMap("updateBankTransaction", bankTransaction));
         }
-        executeBatch(transaction);
+        executeBatch(transaction);*/
     }
 
     public void deleteBankTransaction(List<BankTransaction> bankTransactionList) {
@@ -104,45 +88,13 @@ public class BankTransactionService extends AbstractService implements
         if (filteredList.isEmpty()) {
             return;
         }
-        QueryBuilder queryBuilder = getQueryBuilder("deleteBankTransaction");
+        /*QueryBuilder queryBuilder = getQueryBuilder("deleteBankTransaction");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (BankTransaction bankTransaction : filteredList) {
             transaction.addBatch(getColumnsMap("deleteBankTransaction", bankTransaction));
         }
-        executeBatch(transaction);
-    }
-
-    @Override
-    public Map<Integer, Object> getColumnsMap(final String queryName, BankTransaction type) {
-        Map<Integer, Object> map = new HashMap<>();
-        if ("insertBankTransaction".equals(queryName)) {
-            map.put(1, type.getBank());
-            map.put(2, type.getTransactionDate());
-            map.put(3, type.getTransactionIndex());
-            map.put(4, type.getTransactionCode());
-            map.put(5, type.getDescription());
-            map.put(6, type.getCurrency());
-            map.put(7, type.getCreditAmount());
-            map.put(8, type.getDebitAmount());
-            map.put(9, Status.Drafted.toString());
-        } else if ("deleteBankTransaction".equals(queryName)) {
-            map.put(1, type.getCode());
-        } else if ("updateStatus".equals(queryName)) {
-            map.put(1, type.getStatus().toString());
-            map.put(2, type.getCode());
-        } else if ("updateBankTransaction".equals(queryName)) {
-            map.put(1, type.getBank());
-            map.put(2, type.getTransactionDate());
-            map.put(3, type.getTransactionIndex());
-            map.put(4, type.getTransactionCode());
-            map.put(5, type.getDescription());
-            map.put(6, type.getCurrency());
-            map.put(7, type.getCreditAmount());
-            map.put(8, type.getDebitAmount());
-            map.put(9, type.getCode());
-        }
-        return map;
+        executeBatch(transaction);*/
     }
 
     @Override

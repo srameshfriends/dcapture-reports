@@ -1,21 +1,15 @@
 package excel.accounting.service;
 
 import excel.accounting.dao.CurrencyDao;
-import excel.accounting.db.QueryBuilder;
-import excel.accounting.db.EntityToRowColumns;
-import excel.accounting.db.Transaction;
 import excel.accounting.entity.ExchangeRate;
 import excel.accounting.entity.Status;
 import excel.accounting.poi.ExcelTypeConverter;
 import excel.accounting.dao.ExchangeRateDao;
 import excel.accounting.shared.DataConverter;
-import excel.accounting.shared.EntitySequence;
 import org.apache.poi.ss.usermodel.Cell;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -24,8 +18,7 @@ import java.util.stream.Collectors;
  * @author Ramesh
  * @since Oct 2016
  */
-public class ExchangeRateService extends AbstractService implements
-        EntityToRowColumns<ExchangeRate>, ExcelTypeConverter<ExchangeRate> {
+public class ExchangeRateService extends AbstractService implements ExcelTypeConverter<ExchangeRate> {
     private ExchangeRateDao exchangeRateDao;
     private CurrencyDao currencyDao;
 
@@ -59,13 +52,13 @@ public class ExchangeRateService extends AbstractService implements
     }
 
     private void updateStatus(List<ExchangeRate> dataList) {
-        QueryBuilder queryBuilder = getQueryBuilder("updateStatus");
+        /*QueryBuilder queryBuilder = getQueryBuilder("updateStatus");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (ExchangeRate item : dataList) {
             transaction.addBatch(getColumnsMap("updateStatus", item));
         }
-        executeBatch(transaction);
+        executeBatch(transaction);*/
     }
 
     public void setAsDrafted(List<ExchangeRate> dataList) {
@@ -75,9 +68,9 @@ public class ExchangeRateService extends AbstractService implements
             return;
         }
         for (ExchangeRate exchangeRate : filteredList) {
-            String errorMessage = getExchangeRateDao().isEntityReferenceUsed(exchangeRate.getCode());
-            if (errorMessage != null) {
-                setMessage(errorMessage);
+            Object usedReference = getExchangeRateDao().getUsedReference(exchangeRate);
+            if (usedReference != null) {
+                setMessage(usedReference.toString());
                 return;
             }
             exchangeRate.setStatus(Status.Drafted);
@@ -118,7 +111,7 @@ public class ExchangeRateService extends AbstractService implements
         }
         List<String> currencyList = new ArrayList<>(); // getCurrencyDao().findCodeList();
         //
-        QueryBuilder queryBuilder = getQueryBuilder("insertExchangeRate");
+        /*QueryBuilder queryBuilder = getQueryBuilder("insertExchangeRate");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (ExchangeRate exchangeRate : validList) {
@@ -129,18 +122,18 @@ public class ExchangeRateService extends AbstractService implements
             }
             transaction.addBatch(getColumnsMap("insertExchangeRate", exchangeRate));
         }
-        executeBatch(transaction);
+        executeBatch(transaction);*/
         return true;
     }
 
     public void updateExchangeRate(List<ExchangeRate> itemList) {
-        QueryBuilder queryBuilder = getQueryBuilder("updateExchangeRate");
+        /*QueryBuilder queryBuilder = getQueryBuilder("updateExchangeRate");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (ExchangeRate item : itemList) {
             transaction.addBatch(getColumnsMap("updateExchangeRate", item));
         }
-        executeBatch(transaction);
+        executeBatch(transaction);*/
     }
 
     public void deleteExchangeRate(List<ExchangeRate> itemList) {
@@ -149,40 +142,13 @@ public class ExchangeRateService extends AbstractService implements
             setMessage("Drafted exchange rate not found to delete");
             return;
         }
-        QueryBuilder queryBuilder = getQueryBuilder("deleteExchangeRate");
+        /*QueryBuilder queryBuilder = getQueryBuilder("deleteExchangeRate");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (ExchangeRate item : filteredList) {
             transaction.addBatch(getColumnsMap("deleteExchangeRate", item));
         }
-        executeBatch(transaction);
-    }
-
-    @Override
-    public Map<Integer, Object> getColumnsMap(final String queryName, ExchangeRate type) {
-        Map<Integer, Object> map = new HashMap<>();
-        if ("insertExchangeRate".equals(queryName)) {
-            map.put(1, type.getCode());
-            map.put(2, type.getFetchFrom());
-            map.put(3, type.getAsOfDate());
-            map.put(4, type.getCurrency());
-            map.put(5, type.getExchangeCurrency());
-            map.put(6, type.getUnit());
-            map.put(7, type.getSellingRate());
-            map.put(8, type.getBuyingRate());
-            map.put(9, Status.Drafted.toString());
-        } else if ("deleteExchangeRate".equals(queryName)) {
-            map.put(1, type.getCode());
-        } else if ("updateStatus".equals(queryName)) {
-            map.put(1, type.getStatus().toString());
-            map.put(2, type.getCode());
-        } else if ("updateExchangeRate".equals(queryName)) {
-            map.put(1, type.getUnit());
-            map.put(2, type.getSellingRate());
-            map.put(3, type.getBuyingRate());
-            map.put(4, type.getCode());
-        }
-        return map;
+        executeBatch(transaction);*/
     }
 
     @Override

@@ -1,5 +1,6 @@
 package excel.accounting.view;
 
+import excel.accounting.dao.IncomeItemDao;
 import excel.accounting.entity.IncomeItem;
 import excel.accounting.poi.ReadExcelData;
 import excel.accounting.poi.WriteExcelData;
@@ -35,6 +36,7 @@ public class IncomeItemView extends AbstractView implements ViewHolder {
 
     private ReadableTableView<IncomeItem> tableView;
     private IncomeItemService incomeItemService;
+    private IncomeItemDao incomeItemDao;
     private VBox basePanel;
 
     @Override
@@ -126,7 +128,7 @@ public class IncomeItemView extends AbstractView implements ViewHolder {
     }
 
     private void loadRecords() {
-        List<IncomeItem> categoryList = incomeItemService.loadAll();
+        List<IncomeItem> categoryList = incomeItemDao.loadAll(IncomeItem.class);
         if (categoryList == null || categoryList.isEmpty()) {
             return;
         }
@@ -144,7 +146,7 @@ public class IncomeItemView extends AbstractView implements ViewHolder {
         if (dataList.isEmpty()) {
             return;
         }
-        List<String> existingCodeList = incomeItemService.findCodeList();
+        List<String> existingCodeList = incomeItemDao.loadCodeList();
         List<IncomeItem> updateList = new ArrayList<>();
         List<IncomeItem> insertList = new ArrayList<>();
         for (IncomeItem incomeItem : dataList) {
@@ -176,7 +178,7 @@ public class IncomeItemView extends AbstractView implements ViewHolder {
             List<IncomeItem> selected = tableView.getSelectedItems();
             writeExcelData.writeRowData(selected);
         } else {
-            writeExcelData.writeRowData(incomeItemService.loadAll());
+            writeExcelData.writeRowData(incomeItemDao.loadAll(IncomeItem.class));
         }
     }
 

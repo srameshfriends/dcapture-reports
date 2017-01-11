@@ -150,7 +150,7 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
     }
 
     private void loadRecords() {
-        List<ExpenseItem> categoryList = expenseItemDao.loadAll();
+        List<ExpenseItem> categoryList = expenseItemDao.loadAll(ExpenseItem.class);
         if (categoryList == null || categoryList.isEmpty()) {
             return;
         }
@@ -183,7 +183,7 @@ public class ExpenseItemView extends AbstractView implements ViewHolder {
             List<ExpenseItem> selected = tableView.getSelectedItems();
             writeExcelData.writeRowData(selected);
         } else {
-            writeExcelData.writeRowData(expenseItemDao.loadAll());
+            writeExcelData.writeRowData(expenseItemDao.loadAll(ExpenseItem.class));
         }
     }
 

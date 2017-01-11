@@ -19,10 +19,4 @@ public class IncomeCategoryDao extends AbstractDao<IncomeCategory> {
     protected String getSqlFileName() {
         return "income-category";
     }
-
-    @Override
-    protected IncomeCategory getReference(String primaryKay) {
-
-        return null;
-    }
 }

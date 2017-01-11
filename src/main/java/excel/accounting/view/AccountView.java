@@ -154,10 +154,7 @@ public class AccountView extends AbstractView implements ViewHolder {
     }
 
     private void loadRecords() {
-        List<Account> accountList = accountDao.loadAll();
-        if (accountList == null || accountList.isEmpty()) {
-            return;
-        }
+        List<Account> accountList = accountDao.loadAll(Account.class);
         ObservableList<Account> observableList = FXCollections.observableArrayList(accountList);
         tableView.setItems(observableList);
     }
@@ -220,9 +217,8 @@ public class AccountView extends AbstractView implements ViewHolder {
             List<Account> selected = tableView.getSelectedItems();
             writeExcelData.writeRowData(selected);
         } else {
-            writeExcelData.writeRowData(accountDao.loadAll());
+            writeExcelData.writeRowData(accountDao.loadAll(Account.class));
         }
-
     }
 
     private void onRowSelectionChanged(boolean isRowSelected) {

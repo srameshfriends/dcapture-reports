@@ -19,7 +19,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 import java.io.File;
-import java.sql.SQLException;
 import java.util.List;
 
 /**
@@ -28,11 +27,11 @@ import java.util.List;
  * @author Ramesh
  * @since Oct, 2016
  */
-public class CurrencyView extends AbstractView implements ViewHolder, EntityDao<Currency>, SqlWriter,
+public class CurrencyView extends AbstractView implements ViewHolder, SqlWriter,
         ListChangeListener<Integer>, ActionHandler {
     private final int IMPORT = 100, EXPORT = 110, EXPORT_SELECTED = 120;
     private final int DELETE_RECORD = 10, SET_DRAFTED = 20, SET_CONFIRMED = 30, SET_CLOSED = 40, REOPEN_CLOSED = 50;
-    private final int LOAD_RECORD = 1000, REFRESH_RECORD = 1100;
+    private final int REFRESH_RECORD = 1100;
 
     private ReadableTableView<Currency> tableView;
     private CurrencyDao currencyDao;
@@ -71,13 +70,20 @@ public class CurrencyView extends AbstractView implements ViewHolder, EntityDao<
         return basePanel;
     }
 
+    private void loadRecords() {
+        List<Currency> dataList = currencyDao.loadAll(Currency.class);
+        setItems(dataList);
+    }
+
     private HBox createToolbar() {
         Button refreshBtn, importBtn, exportBtn;
-        refreshBtn = createButton(REFRESH_RECORD, "Refresh", event ->
-                currencyDao.loadAll(LOAD_RECORD, this)
-        );
+        refreshBtn = createButton(REFRESH_RECORD, "Refresh", event -> {
+            loadRecords();
+        });
         importBtn = createButton(IMPORT, "Import", event -> importFromExcelEvent());
-        exportBtn = createButton(EXPORT, "Export", event -> currencyDao.loadAll(EXPORT, this));
+        exportBtn = createButton(EXPORT, "Export", event -> {
+            exportToExcelEvent(EXPORT);
+        });
         //
         HBox box = new HBox();
         box.setSpacing(12);
@@ -99,7 +105,8 @@ public class CurrencyView extends AbstractView implements ViewHolder, EntityDao<
     public void openView(double width, double height) {
         onResize(width, height);
         onRowSelectionChanged(false);
-        currencyDao.loadAll(LOAD_RECORD, this);
+        List<Currency> dataList = currencyDao.loadAll(Currency.class);
+        setItems(dataList);
     }
 
     @Override
@@ -136,7 +143,7 @@ public class CurrencyView extends AbstractView implements ViewHolder, EntityDao<
                 currencyService.setAsConfirmed(tableView.getSelectedItems(), actionId, this);
                 break;
             case SET_DRAFTED:
-                currencyService.setAsDrafted(tableView.getSelectedItems(), actionId, this);
+                currencyService.setAsDrafted(tableView.getSelectedItems());
                 break;
             case SET_CLOSED:
                 currencyService.setAsClosed(tableView.getSelectedItems(), actionId, this);
@@ -155,35 +162,13 @@ public class CurrencyView extends AbstractView implements ViewHolder, EntityDao<
     }
 
     @Override
-    public void onEntityResult(int pid, List<Currency> dataList) {
-        switch (pid) {
-            case LOAD_RECORD:
-                setItems(dataList);
-                break;
-            case EXPORT:
-                exportToExcelEvent(dataList);
-                break;
-        }
-    }
-
-    @Override
     public void onSqlUpdated(int pid) {
-        currencyDao.loadAll(LOAD_RECORD, this);
-    }
-
-    @Override
-    public void onSqlError(int pid, SQLException ex) {
-        ex.printStackTrace();
+        setItems(currencyDao.loadAll(Currency.class));
     }
 
     private void setItems(List<Currency> dataList) {
         ObservableList<Currency> observableList = FXCollections.observableArrayList(dataList);
         tableView.setItems(observableList);
-    }
-
-    @Override
-    public void onEntityError(int pid, Exception ex) {
-        ex.printStackTrace();
     }
 
     private void importFromExcelEvent() {
@@ -198,10 +183,17 @@ public class CurrencyView extends AbstractView implements ViewHolder, EntityDao<
             setMessage("Valid import records not found");
             return;
         }
-        currencyService.insertCurrency(dataList, 212, this);
+        currencyService.insertCurrency(dataList);
+        loadRecords();
     }
 
-    private void exportToExcelEvent(List<Currency> currencyList) {
+    private void exportToExcelEvent(final int actionId) {
+        List<Currency> currencyList;
+        if(EXPORT == actionId) {
+            currencyList = currencyDao.loadAll(Currency.class);
+        } else {
+            currencyList = tableView.getSelectedItems();
+        }
         String fileName = DataConverter.getUniqueFileName("currency", "xls");
         WriteExcelData<Currency> writeExcelData = new WriteExcelData<>(currencyList, currencyService);
         writeExcelData.writeRecords(fileName, getPrimaryStage());
@@ -221,16 +213,14 @@ public class CurrencyView extends AbstractView implements ViewHolder, EntityDao<
                 changeStatusEvent(actionId);
                 break;
             case REFRESH_RECORD:
-                currencyDao.loadAll(LOAD_RECORD, this);
+
                 break;
             case DELETE_RECORD:
                 deleteEvent();
                 break;
             case EXPORT:
-                currencyDao.loadAll(EXPORT, this);
-                break;
             case EXPORT_SELECTED:
-                exportToExcelEvent(tableView.getSelectedItems());
+                exportToExcelEvent(actionId);
                 break;
             case IMPORT:
                 importFromExcelEvent();

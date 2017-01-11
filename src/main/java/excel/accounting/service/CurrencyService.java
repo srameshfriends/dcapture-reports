@@ -34,35 +34,35 @@ public class CurrencyService extends AbstractService implements ExcelTypeConvert
         return currencyDao;
     }
 
-    private void updateStatus(List<Currency> currencyList, int pid, SqlWriter handler) {
+    private void updateStatus(List<Currency> currencyList) {
         try {
             List<SqlQuery> queryList = new ArrayList<>();
             for (Currency currency : currencyList) {
-                QueryTool tool = createSqlBuilder(pid);
+                QueryBuilder tool = getSqlProcessor().createQueryBuilder();
                 tool.update("currency").updateColumns("status", currency.getStatus()).where("code", currency.getCode());
                 queryList.add(tool.getSqlQuery());
             }
-            executeCommit(150, queryList, handler);
+            update(queryList);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
     }
 
-    public void setAsDrafted(List<Currency> currencyList, int pid, SqlWriter writer) {
+    public void setAsDrafted(List<Currency> currencyList) {
         List<Currency> filteredList = filteredByStatus(Status.Confirmed, currencyList);
         if (filteredList.isEmpty()) {
             setMessage("Wrong Status : confirmed currency are allowed to modify as drafted");
             return;
         }
         for (Currency currency : filteredList) {
-            Object errorMessage = getCurrencyDao().findReferenceUsed(currency);
+            Object errorMessage = getCurrencyDao().getUsedReference(currency);
             if (errorMessage != null) {
                 setMessage(errorMessage.toString());
                 return;
             }
             currency.setStatus(Status.Drafted);
         }
-        updateStatus(filteredList, pid, writer);
+        updateStatus(filteredList);
     }
 
     public void setAsConfirmed(List<Currency> currencyList, int pid, SqlWriter writer) {
@@ -74,7 +74,7 @@ public class CurrencyService extends AbstractService implements ExcelTypeConvert
         for (Currency currency : filteredList) {
             currency.setStatus(Status.Confirmed);
         }
-        updateStatus(filteredList, pid, writer);
+        updateStatus(filteredList);
     }
 
     public void setAsClosed(List<Currency> currencyList, int pid, SqlWriter writer) {
@@ -86,7 +86,7 @@ public class CurrencyService extends AbstractService implements ExcelTypeConvert
         for (Currency currency : filteredList) {
             currency.setStatus(Status.Closed);
         }
-        updateStatus(filteredList, pid, writer);
+        updateStatus(filteredList);
     }
 
     public void reopenCurrency(List<Currency> currencyList, int pid, SqlWriter writer) {
@@ -98,14 +98,14 @@ public class CurrencyService extends AbstractService implements ExcelTypeConvert
         for (Currency currency : filteredList) {
             currency.setStatus(Status.Confirmed);
         }
-        updateStatus(filteredList, pid, writer);
+        updateStatus(filteredList);
     }
 
     private boolean insertValid(Currency currency, StringRules rules) {
         return rules.isValid(currency.getCode()) && !StringRules.isEmpty(currency.getName());
     }
 
-    public void insertCurrency(List<Currency> currencyList, int pid, SqlWriter writer) {
+    public void insertCurrency(List<Currency> currencyList) {
         setMessage("Currency code, name should not be empty");
         StringRules rules = new StringRules();
         rules.setMinMaxLength(3, 3);
@@ -116,7 +116,7 @@ public class CurrencyService extends AbstractService implements ExcelTypeConvert
         if (validList.isEmpty()) {
             setMessage("Valid currency not found");
         } else {
-            insert(currencyList, pid, writer);
+            insert(currencyList);
         }
     }
 
@@ -125,7 +125,7 @@ public class CurrencyService extends AbstractService implements ExcelTypeConvert
         if (filteredList.isEmpty()) {
             setMessage("Error : Only drafted currency allowed to delete");
         } else {
-            delete(currencyList, pid, writer);
+            delete(currencyList);
         }
     }
 

@@ -12,19 +12,14 @@ import java.nio.file.Path;
 import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Application Control
  */
 public class ApplicationControl {
     private static ApplicationControl applicationControl;
-    private ApplicationConfig applicationConfig;
-    private DataProcessor dataProcessor;
-    private SqlTableMap sqlTableMap;
-    private SqlForwardTool sqlForwardTool;
-    private JdbcConnectionPool connectionPool;
+    private ApplicationConfig config;
+    private SqlProcessor sqlProcessor;
     private String userName, userCode;
     private Map<String, Object> beanMap;
     private TextField messagePanel;
@@ -39,7 +34,7 @@ public class ApplicationControl {
             throw new NullPointerException("Application config json is missing");
         }
         Gson gson = new Gson();
-        applicationConfig = gson.fromJson(new FileReader(configPath.toFile()), ApplicationConfig.class);
+        config = gson.fromJson(new FileReader(configPath.toFile()), ApplicationConfig.class);
         beanMap = new HashMap<>();
         startDatabase();
         loadMessages();
@@ -102,63 +97,31 @@ public class ApplicationControl {
         messagePanel.setText(message);
     }
 
-    public ApplicationConfig getApplicationConfig() {
-        return applicationConfig;
-    }
-
-    DataProcessor getDataProcessor() {
-        return dataProcessor;
-    }
-
-    public JdbcConnectionPool getConnectionPool() {
-        return connectionPool;
-    }
-
-    public SqlTableMap getSqlTableMap() {
-        return sqlTableMap;
+    public ApplicationConfig getConfig() {
+        return config;
     }
 
     public String getName() {
-        return applicationConfig.getName();
+        return config.getName();
     }
 
     private void startDatabase() throws Exception {
-        if (!applicationConfig.isDevelopmentMode()) {
-            DataProcessor.main();
-        }
-        connectionPool = JdbcConnectionPool.create(applicationConfig.getDatabaseUrl(),
-                applicationConfig.getDatabaseUser(), applicationConfig.getDatabasePassword());
-        dataProcessor = new DataProcessor(connectionPool);
-        dataProcessor.run();
-        sqlTableMap = SqlFactory.createSqlTableMap("excel", getEntityPackages());
-        sqlForwardTool = new H2ForwardTool();
-        sqlForwardTool.setSqlTableMap(sqlTableMap);
-        sqlForwardTool.setSqlEnumParser(new SqlEnumParserImpl());
+        sqlProcessor = SqlFactory.createH2Processor(config.getDatabaseUrl(), config.getDatabaseUser(),
+                config.getDatabasePassword(), "excel", getEntityPackages(), new SqlEnumParserImpl());
         runForwardTool();
     }
 
     private void runForwardTool() {
-        SqlQuery createSchema = sqlForwardTool.createSchemaQuery();
-        List<SqlQuery> createTableList = sqlForwardTool.createTableQueries();
-        List<SqlQuery> alterTableList = sqlForwardTool.alterTableQueries();
-        SqlTransaction transaction = new SqlTransaction(connectionPool);
-        transaction.add(createSchema);
-        transaction.addAll(createTableList);
-        transaction.addAll(alterTableList);
-        SqlWriter response = new SqlWriter() {
-            @Override
-            public void onSqlUpdated(int pid) {
-            }
-
-            @Override
-            public void onSqlError(int pid, SQLException ex) {
-                ex.printStackTrace();
-            }
-        };
-        transaction.setProcessId(1);
-        transaction.setResponse(response);
-        ExecutorService executor = Executors.newCachedThreadPool();
-        executor.execute(transaction);
+        List<SqlQuery> queryList = new ArrayList<>();
+        queryList.add(sqlProcessor.createSchemaQuery());
+        queryList.addAll(sqlProcessor.createTableQueries());
+        queryList.addAll(sqlProcessor.alterTableQueries());
+        SqlTransaction transaction = sqlProcessor.createSqlTransaction();
+        try {
+            transaction.executeCommit(queryList);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
     }
 
     public void addBean(String name, Object service) {
@@ -168,17 +131,16 @@ public class ApplicationControl {
         beanMap.put(name, service);
     }
 
-
     public Object getBean(String name) {
         return beanMap.get(name);
     }
 
     public void close() {
-        dataProcessor.close();
+        //   dataProcessor.close();
     }
 
-    public SqlForwardTool getSqlForwardTool() {
-        return sqlForwardTool;
+    public SqlProcessor getSqlProcessor() {
+        return sqlProcessor;
     }
 
     private String[] getEntityPackages() {

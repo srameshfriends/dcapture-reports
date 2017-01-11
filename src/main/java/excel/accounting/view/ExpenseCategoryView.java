@@ -143,7 +143,7 @@ public class ExpenseCategoryView extends AbstractView implements ViewHolder {
     }
 
     private void loadRecords() {
-        List<ExpenseCategory> categoryList = expenseCategoryDao.loadAll();
+        List<ExpenseCategory> categoryList = expenseCategoryDao.loadAll(ExpenseCategory.class);
         if (categoryList == null || categoryList.isEmpty()) {
             return;
         }
@@ -161,7 +161,7 @@ public class ExpenseCategoryView extends AbstractView implements ViewHolder {
         if (dataList.isEmpty()) {
             return;
         }
-        List<String> existingList = expenseCategoryDao.findCodeList();
+        List<String> existingList = new ArrayList<>(); // expenseCategoryDao.findCodeList();
         List<ExpenseCategory> updateList = new ArrayList<>();
         List<ExpenseCategory> insertList = new ArrayList<>();
         for (ExpenseCategory category : dataList) {
@@ -191,9 +191,8 @@ public class ExpenseCategoryView extends AbstractView implements ViewHolder {
             List<ExpenseCategory> selected = tableView.getSelectedItems();
             writeExcelData.writeRowData(selected);
         } else {
-            writeExcelData.writeRowData(expenseCategoryDao.loadAll());
+            writeExcelData.writeRowData(expenseCategoryDao.loadAll(ExpenseCategory.class));
         }
-
     }
 
     private void onRowSelectionChanged(boolean isRowSelected) {

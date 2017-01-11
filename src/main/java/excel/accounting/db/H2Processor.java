@@ -1,6 +1,8 @@
 package excel.accounting.db;
 
 import org.apache.commons.beanutils.PropertyUtils;
+import org.h2.jdbcx.JdbcConnectionPool;
+import org.h2.tools.Server;
 
 import javax.persistence.TemporalType;
 import java.lang.reflect.InvocationTargetException;
@@ -10,15 +12,71 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * H2 Sql Tool
+ * H2 Processor
  */
-public class H2ForwardTool extends SqlForwardTool {
+public class H2Processor implements SqlProcessor {
+    private JdbcConnectionPool connectionPool;
+    private SqlTableMap tableMap;
+    private SqlEnumParser enumParser;
+    private H2Reader reader;
+
+    public static void main(String... args) throws Exception {
+        Server.createTcpServer().start();
+        Server.createWebServer().start();
+    }
+
+    void setConnectionPool(JdbcConnectionPool connectionPool) {
+        this.connectionPool = connectionPool;
+        reader = new H2Reader(connectionPool);
+    }
+
+    JdbcConnectionPool getConnectionPool() {
+        return connectionPool;
+    }
+
+    void setTableMap(SqlTableMap tableMap) {
+        this.tableMap = tableMap;
+    }
+
+    void setEnumParser(SqlEnumParser enumParser) {
+        this.enumParser = enumParser;
+    }
+
+    @Override
+    public String getSchema() {
+        return tableMap.getSchema();
+    }
+
+    @Override
+    public QueryBuilder createQueryBuilder() {
+        return new H2QueryBuilder(getSchema());
+    }
+
+    @Override
+    public SqlTableMap getSqlTableMap() {
+        return tableMap;
+    }
+
+    @Override
+    public SqlEnumParser enumParser() {
+        return enumParser;
+    }
+
+    @Override
+    public SqlReader getSqlReader() {
+        return reader;
+    }
+
+    @Override
+    public List<SqlReference> getSqlReference(Class<?> entityClass) {
+        return null;
+    }
 
     @Override
     public SqlQuery insertQuery(Object object) {
         SqlTable table = getSqlTableMap().get(object.getClass());
         if (table != null) {
-            QueryTool builder = new QueryTool(getSchema());
+            H2QueryBuilder builder = new H2QueryBuilder(getSchema());
             builder.insertInto(table.getName());
             for (SqlColumn sqlColumn : table) {
                 Object fieldValue = getFieldObject(object, sqlColumn.getFieldName());
@@ -33,7 +91,7 @@ public class H2ForwardTool extends SqlForwardTool {
     public SqlQuery updateQuery(Object object) {
         SqlTable table = getSqlTableMap().get(object.getClass());
         if (table != null) {
-            QueryTool builder = new QueryTool(getSchema());
+            H2QueryBuilder builder = new H2QueryBuilder(getSchema());
             builder.update(table.getName());
             for (SqlColumn sqlColumn : table) {
                 Object fieldValue = getFieldObject(object, sqlColumn.getFieldName());
@@ -48,7 +106,7 @@ public class H2ForwardTool extends SqlForwardTool {
     public SqlQuery deleteQuery(Object object) {
         SqlTable table = getSqlTableMap().get(object.getClass());
         if (table != null) {
-            QueryTool builder = new QueryTool(getSchema());
+            H2QueryBuilder builder = new H2QueryBuilder(getSchema());
             builder.deleteFrom(table.getName());
             SqlColumn sqlColumn = table.getPrimaryColumn();
             Object fieldValue = getFieldObject(object, sqlColumn.getFieldName());
@@ -68,10 +126,10 @@ public class H2ForwardTool extends SqlForwardTool {
     }
 
     @Override
-    public QueryTool selectBuilder(Class<?> entityClass) {
+    public H2QueryBuilder selectBuilder(Class<?> entityClass) {
         SqlTable sqlTable = getSqlTableMap().get(entityClass);
         if (sqlTable != null) {
-            QueryTool builder = new QueryTool(getSchema());
+            H2QueryBuilder builder = new H2QueryBuilder(getSchema());
             builder.selectFrom(sqlTable.getName());
             builder.selectColumns(sqlTable.getColumnFieldMap().keySet());
             return builder;
@@ -109,6 +167,11 @@ public class H2ForwardTool extends SqlForwardTool {
             }
         }
         return queryList;
+    }
+
+    @Override
+    public SqlTransaction createSqlTransaction() {
+        return new H2Transaction(this);
     }
 
     private String createTableQuery(String table, List<SqlColumn> columnList) {

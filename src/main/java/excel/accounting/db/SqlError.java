@@ -6,5 +6,6 @@ import java.sql.SQLException;
  * Sql Error
  */
 interface SqlError {
-    void onSqlError(int pid, SQLException ex);
+    default void onSqlError(SqlQuery query, SQLException ex) {
+    }
 }

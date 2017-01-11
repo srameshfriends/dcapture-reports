@@ -1,8 +1,5 @@
 package excel.accounting.service;
 
-import excel.accounting.db.QueryBuilder;
-import excel.accounting.db.EntityToRowColumns;
-import excel.accounting.db.Transaction;
 import excel.accounting.entity.Asset;
 import excel.accounting.entity.Status;
 import excel.accounting.poi.ExcelTypeConverter;
@@ -10,9 +7,7 @@ import excel.accounting.dao.AssetDao;
 import excel.accounting.shared.DataConverter;
 import org.apache.poi.ss.usermodel.Cell;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -21,7 +16,7 @@ import java.util.stream.Collectors;
  * @author Ramesh
  * @since Oct, 2016
  */
-public class AssetService extends AbstractService implements EntityToRowColumns<Asset>, ExcelTypeConverter<Asset> {
+public class AssetService extends AbstractService implements ExcelTypeConverter<Asset> {
     private AssetDao assetDao;
 
     private AssetDao getAssetDao() {
@@ -36,16 +31,6 @@ public class AssetService extends AbstractService implements EntityToRowColumns<
         return "asset";
     }
 
-    public List<Asset> loadAll() {
-        QueryBuilder queryBuilder = getQueryBuilder("loadAll");
-        return getDataReader().findRowDataList(queryBuilder, getAssetDao());
-    }
-
-    public List<String> findCodeList() {
-        QueryBuilder queryBuilder = getQueryBuilder("findCodeList");
-        return getDataReader().findString(queryBuilder);
-    }
-
     private void updateStatus(Status requiredStatus, Status changedStatus, List<Asset> assetList) {
         List<Asset> filteredList = filteredByStatus(requiredStatus, assetList);
         if (filteredList.isEmpty()) {
@@ -54,13 +39,13 @@ public class AssetService extends AbstractService implements EntityToRowColumns<
         for (Asset asset : filteredList) {
             asset.setStatus(changedStatus);
         }
-        QueryBuilder queryBuilder = getQueryBuilder("updateStatus");
+        /*QueryBuilder queryBuilder = getQueryBuilder("updateStatus");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (Asset asset : filteredList) {
             transaction.addBatch(getColumnsMap("updateStatus", asset));
         }
-        executeBatch(transaction);
+        executeBatch(transaction);*/
     }
 
     public void setAsDrafted(List<Asset> assetList) {
@@ -76,23 +61,23 @@ public class AssetService extends AbstractService implements EntityToRowColumns<
     }
 
     public void insertAsset(List<Asset> assetList) {
-        QueryBuilder queryBuilder = getQueryBuilder("insertAsset");
+        /*QueryBuilder queryBuilder = getQueryBuilder("insertAsset");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (Asset asset : assetList) {
             transaction.addBatch(getColumnsMap("insertAsset", asset));
         }
-        executeBatch(transaction);
+        executeBatch(transaction);*/
     }
 
     public void updateAsset(List<Asset> assetList) {
-        QueryBuilder queryBuilder = getQueryBuilder("updateAsset");
+        /*QueryBuilder queryBuilder = getQueryBuilder("updateAsset");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (Asset asset : assetList) {
             transaction.addBatch(getColumnsMap("updateAsset", asset));
         }
-        executeBatch(transaction);
+        executeBatch(transaction);*/
     }
 
     public void deleteAsset(List<Asset> assetList) {
@@ -100,64 +85,13 @@ public class AssetService extends AbstractService implements EntityToRowColumns<
         if (filteredList.isEmpty()) {
             return;
         }
-        QueryBuilder queryBuilder = getQueryBuilder("deleteAsset");
+        /*QueryBuilder queryBuilder = getQueryBuilder("deleteAsset");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (Asset asset : filteredList) {
             transaction.addBatch(getColumnsMap("deleteAsset", asset));
         }
-        executeBatch(transaction);
-    }
-
-    /**
-     * insertAsset
-     * code, name, description, asset_type, start_date, end_date, currency, cost, status, units, reference_number,
-     * category
-     * deleteAsset
-     * find by code
-     * updateStatus
-     * set status find by code
-     * updateAsset
-     * code, name, description, asset_type, start_date, end_date, currency, cost, status, units, reference_number,
-     * category
-     */
-    @Override
-    public Map<Integer, Object> getColumnsMap(final String queryName, Asset type) {
-        Map<Integer, Object> map = new HashMap<>();
-        if ("insertAsset".equals(queryName)) {
-            map.put(1, type.getCode());
-            map.put(2, type.getName());
-            map.put(3, type.getDescription());
-            map.put(4, type.getAssetType());
-            map.put(5, type.getStartDate());
-            map.put(6, type.getEndDate());
-            map.put(7, type.getCurrency());
-            map.put(8, type.getCost());
-            map.put(9, Status.Drafted.toString());
-            map.put(10, type.getUnits());
-            map.put(11, type.getReference());
-            map.put(12, type.getCategory());
-        } else if ("deleteAsset".equals(queryName)) {
-            map.put(1, type.getCode());
-        } else if ("updateAsset".equals(queryName)) {
-            map.put(1, type.getCode());
-            map.put(2, type.getName());
-            map.put(3, type.getDescription());
-            map.put(4, type.getAssetType());
-            map.put(5, type.getStartDate());
-            map.put(6, type.getEndDate());
-            map.put(7, type.getCurrency());
-            map.put(8, type.getCost());
-            map.put(9, Status.Drafted.toString());
-            map.put(10, type.getUnits());
-            map.put(11, type.getReference());
-            map.put(12, type.getCategory());
-            map.put(13, type.getCode());
-        } else if ("updateStatus".equals(queryName)) {
-            map.put(1, type.getStatus().toString());
-            map.put(2, type.getCode());
-        }
-        return map;
+        executeBatch(transaction);*/
     }
 
     /**

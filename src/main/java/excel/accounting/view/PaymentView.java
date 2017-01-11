@@ -137,7 +137,7 @@ public class PaymentView extends AbstractView implements ViewHolder {
     }
 
     private void loadRecords() {
-        List<Payment> accountList = paymentDao.loadAll();
+        List<Payment> accountList = paymentDao.loadAll(Payment.class);
         if (accountList == null || accountList.isEmpty()) {
             return;
         }
@@ -172,7 +172,7 @@ public class PaymentView extends AbstractView implements ViewHolder {
             List<Payment> selected = tableView.getSelectedItems();
             writeExcelData.writeRowData(selected);
         } else {
-            writeExcelData.writeRowData(paymentDao.loadAll());
+            writeExcelData.writeRowData(paymentDao.loadAll(Payment.class));
         }
 
     }

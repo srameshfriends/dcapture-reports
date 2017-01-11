@@ -54,6 +54,13 @@ public class WhereQuery {
         parameterList.add(parameter);
     }
 
+    public void where(SearchTextQuery searchTextQuery) {
+        queryList.add(" and " + searchTextQuery.toString());
+        for (int index = 0; index < searchTextQuery.getColumnSize(); index++) {
+            parameterList.add(searchTextQuery.getSearchText());
+        }
+    }
+
     private String buildInArray(int length) {
         StringBuilder sb = new StringBuilder("(");
         while (0 < length) {

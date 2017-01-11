@@ -63,7 +63,7 @@ public class ExpensePayableDialog extends AbstractDialog {
 
     private void loadBankCashAccounts() {
         String searchText = bankCashSearchField.getText();
-        List<Account> accountList = accountDao.findByAccountTypes(searchText, AccountType.Cash, AccountType.Bank);
+        List<Account> accountList = accountDao.searchAccount(searchText, null, AccountType.Cash, AccountType.Bank);
         ObservableList<Account> observableList = FXCollections.observableArrayList(accountList);
         accountTable.setItems(observableList);
     }

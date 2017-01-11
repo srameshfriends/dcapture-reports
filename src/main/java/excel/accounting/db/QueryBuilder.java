@@ -1,151 +1,51 @@
 package excel.accounting.db;
 
-import org.apache.commons.lang3.StringUtils;
-
-import java.util.*;
+import java.util.List;
+import java.util.Set;
 
 /**
- * Query
+ * Query Builder
  */
-public class QueryBuilder {
-    private StringBuilder selectBuilder, joinBuilder, whereBuilder, orderByBuilder;
-    private String queryName, queryTemplate, limitQuery;
-    private Map<Integer, Object> parameters;
-    private Map<String, String> replaceMap;
+public interface QueryBuilder {
+    int getId();
 
-    public QueryBuilder() {
-        parameters = new HashMap<>();
-        replaceMap = new HashMap<>();
-        queryName = "";
-    }
+    String getSchema();
 
-    QueryBuilder(String name, String queryTemplate) {
-        this();
-        queryName = name;
-        setQueryTemplate(queryTemplate);
-    }
+    SqlQuery getSqlQuery();
 
-    public void setQueryTemplate(String queryTemplate) {
-        this.queryTemplate = queryTemplate;
-    }
+    QueryBuilder updateColumns(String column, Object object);
 
-    public String getQueryName() {
-        return queryName;
-    }
+    QueryBuilder update(String tableName);
 
-    private void appendSelect(String... fields) {
-        if (selectBuilder == null) {
-            selectBuilder = new StringBuilder();
-        }
-        for(String fld : fields) {
-            selectBuilder.append(fld).append(",");
-        }
-    }
+    QueryBuilder deleteFrom(String table);
 
-    private void appendJoin(String txt) {
-        if (joinBuilder == null) {
-            joinBuilder = new StringBuilder();
-        }
-        joinBuilder.append(txt);
-    }
+    QueryBuilder insertInto(String tableName);
 
-    private void appendOrderBy(String txt) {
-        if (orderByBuilder == null) {
-            orderByBuilder = new StringBuilder();
-        }
-        orderByBuilder.append(txt);
-    }
+    QueryBuilder insertColumns(String column, Object object);
 
-    private void appendWhere(String txt) {
-        if (whereBuilder == null) {
-            whereBuilder = new StringBuilder();
-        }
-        whereBuilder.append(txt);
-    }
+    QueryBuilder join(String joinQuery);
 
-    public QueryBuilder addInClauseQuery(String replaceName, ClauseQuery clauseQuery) {
-        replaceMap.put(replaceName, clauseQuery == null ? "" : clauseQuery.toString());
-        if(clauseQuery != null) {
-            clauseQuery.getParameterList().forEach(this::addParameter);
-        }
-        return QueryBuilder.this;
-    }
+    QueryBuilder selectColumns(String... columns);
 
-    public QueryBuilder addSearchTextQuery(String replaceName, SearchTextQuery searchTextQuery) {
-        if (searchTextQuery != null) {
-            replaceMap.put(replaceName, searchTextQuery.toString());
-            searchTextQuery.getParameterList().forEach(this::addParameter);
-        } else {
-            replaceMap.put(replaceName, "");
-        }
-        return QueryBuilder.this;
-    }
+    QueryBuilder selectColumns(Set<String> columnSet);
 
-    public QueryBuilder select(String query) {
-        appendSelect(query);
-        return QueryBuilder.this;
-    }
+    QueryBuilder selectFrom(String table);
 
-    public QueryBuilder where(String query) {
-        appendWhere(query);
-        return QueryBuilder.this;
-    }
+    QueryBuilder where(String column, Object parameter);
 
-    public QueryBuilder orderBy(String query) {
-        appendOrderBy(query);
-        return QueryBuilder.this;
-    }
+    QueryBuilder where(SearchTextQuery searchTextQuery);
 
-    public QueryBuilder limit(int startFrom, int rowCount) {
-        limitQuery = " limit " + rowCount + " offset " + startFrom;
-        return QueryBuilder.this;
-    }
+    QueryBuilder whereOrIn(String query, List<Object> parameters);
 
-    public QueryBuilder add(int index, Object parameter) {
-        parameters.put(index, parameter);
-        return QueryBuilder.this;
-    }
+    QueryBuilder whereOrIn(String query, Object[] parameters);
 
-    public QueryBuilder addParameter(Object parameter) {
-        add(parameters.size() + 1, parameter);
-        return QueryBuilder.this;
-    }
+    QueryBuilder whereAndIn(String query, List<Object> parameters);
 
-    Map<Integer, Object> getParameters() {
-        return parameters;
-    }
+    QueryBuilder whereAndIn(String query, Object[] parameters);
 
-    public String getQuery() {
-        String query = queryTemplate;
-        if (query.contains("$select") && selectBuilder != null) {
-            String temp = StringUtils.removeEnd(selectBuilder.toString(), ",");
-            query = StringUtils.replace(query, "$select", temp);
-        }
-        if (query.contains("$where") && whereBuilder != null) {
-            query = StringUtils.replace(query, "$where", whereBuilder.toString());
-        }
-        if (query.contains("$join") && joinBuilder != null) {
-            query = StringUtils.replace(query, "$join", joinBuilder.toString());
-        }
-        if (query.contains("$orderby") && orderByBuilder != null) {
-            query = StringUtils.replace(query, "$orderby", orderByBuilder.toString());
-        }
-        for (Map.Entry<String, String> entry : replaceMap.entrySet()) {
-            query = StringUtils.replace(query, entry.getKey().toLowerCase(), entry.getValue());
-        }
-        if (limitQuery != null) {
-            query = query.concat(limitQuery);
-        }
-        return query;
-    }
+    QueryBuilder orderBy(String... columns);
 
-    @Override
-    public int hashCode() {
-        return queryName.hashCode();
-    }
+    QueryBuilder limit(int limit);
 
-    @Override
-    public String toString() {
-        return queryName;
-    }
+    QueryBuilder limitOffset(int limit, int offset);
 }

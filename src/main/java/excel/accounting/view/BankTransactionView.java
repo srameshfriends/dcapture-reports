@@ -1,5 +1,6 @@
 package excel.accounting.view;
 
+import excel.accounting.dao.BankTransactionDao;
 import excel.accounting.entity.BankTransaction;
 import excel.accounting.poi.ReadExcelData;
 import excel.accounting.poi.WriteExcelData;
@@ -35,6 +36,7 @@ public class BankTransactionView extends AbstractView implements ViewHolder {
 
     private ReadableTableView<BankTransaction> tableView;
     private BankTransactionService bankTransactionService;
+    private BankTransactionDao bankTransactionDao;
     private VBox basePanel;
 
     @Override
@@ -130,7 +132,7 @@ public class BankTransactionView extends AbstractView implements ViewHolder {
     }
 
     private void loadRecords() {
-        List<BankTransaction> bankTransactionList = bankTransactionService.loadAll();
+        List<BankTransaction> bankTransactionList = bankTransactionDao.loadAll(BankTransaction.class);
         if (bankTransactionList == null || bankTransactionList.isEmpty()) {
             return;
         }
@@ -148,7 +150,7 @@ public class BankTransactionView extends AbstractView implements ViewHolder {
         if (dataList.isEmpty()) {
             return;
         }
-        List<String> existingCodeList = bankTransactionService.findCodeList();
+        List<String> existingCodeList = bankTransactionDao.loadCodeList();
         List<BankTransaction> updateList = new ArrayList<>();
         List<BankTransaction> insertList = new ArrayList<>();
         for (BankTransaction bankTransaction : dataList) {
@@ -180,7 +182,7 @@ public class BankTransactionView extends AbstractView implements ViewHolder {
             List<BankTransaction> selected = tableView.getSelectedItems();
             writeExcelData.writeRowData(selected);
         } else {
-            writeExcelData.writeRowData(bankTransactionService.loadAll());
+            writeExcelData.writeRowData(bankTransactionDao.loadAll(BankTransaction.class));
         }
     }
 

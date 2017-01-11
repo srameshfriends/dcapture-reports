@@ -9,176 +9,96 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Sql Result
+ * Sql Reader
  */
-public class SqlResultSet implements Runnable {
-    private final SqlQuery sqlQuery;
+public class H2Reader implements SqlReader {
     private final JdbcConnectionPool pool;
-    private final SqlReader notify;
 
-    public SqlResultSet(JdbcConnectionPool pool) {
-        this(pool, null, null);
-    }
-
-    SqlResultSet(JdbcConnectionPool pool, SqlQuery sqlQuery, SqlReader notify) {
-        this.sqlQuery = sqlQuery;
+    public H2Reader(JdbcConnectionPool pool) {
         this.pool = pool;
-        this.notify = notify;
     }
 
-    public List<String> findStringList(SqlQuery sql) {
-        List<Object> objectList = findObjectList(sql);
-        return objectList.stream().map(object -> (String) object).collect(Collectors.toList());
-    }
-
-    public List<Integer> findIntegerList(SqlQuery sql) {
-        List<Object> objectList = findObjectList(sql);
-        return objectList.stream().map(object -> (Integer) object).collect(Collectors.toList());
-    }
-
-    public String[] findStrings(SqlQuery sql) {
-        Object[] objects = findObjects(sql);
-        if (objects != null) {
-            String[] result = new String[objects.length];
-            int index = 0;
-            for (Object obj : objects) {
-                result[index] = (String) obj;
-                index += 1;
-            }
-            return result;
-        }
-        return null;
-    }
-
-    public String findString(SqlQuery sql) {
-        return (String) findObject(sql);
-    }
-
-    public List<Object> loadObjectList(SqlQuery sql) throws SQLException {
+    @Override
+    public Object objectValue(SqlQuery sql) throws SQLException {
         Connection connection = null;
         PreparedStatement statement = null;
         ResultSet resultSet = null;
-        List<Object> resultList;
         try {
             connection = pool.getConnection();
             statement = connection.prepareStatement(sql.getQuery());
             addParameter(statement, sql);
             resultSet = statement.executeQuery();
-            resultList = loadObjectList(resultSet);
-            close(resultSet, statement, connection);
-            return resultList;
-        } catch (SQLException ex) {
-            close(resultSet, statement, connection);
-            throw ex;
-        }
-    }
-
-    public List<Object[]> loadObjectsList(SqlQuery sql) throws SQLException {
-        Connection connection = null;
-        PreparedStatement statement = null;
-        ResultSet result = null;
-        List<Object[]> resultList;
-        try {
-            connection = pool.getConnection();
-            statement = connection.prepareStatement(sql.getQuery());
-            addParameter(statement, sql);
-            result = statement.executeQuery();
-            resultList = loadObjectsList(result.getMetaData().getColumnCount(), result);
-            close(result, statement, connection);
-            return resultList;
-        } catch (SQLException ex) {
-            close(result, statement, connection);
-            throw ex;
-        }
-    }
-
-    public Object findObject(SqlQuery sql) {
-        Connection connection = null;
-        PreparedStatement statement = null;
-        ResultSet resultSet = null;
-        Object object = null;
-        try {
-            connection = pool.getConnection();
-            statement = connection.prepareStatement(sql.getQuery());
-            addParameter(statement, sql);
-            resultSet = statement.executeQuery();
+            Object data = null;
             if (resultSet.next()) {
-                object = resultSet.getObject(1);
+                data = resultSet.getObject(1);
             }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        } finally {
             close(resultSet, statement, connection);
+            return data;
+        } catch (SQLException ex) {
+            close(resultSet, statement, connection);
+            throw ex;
         }
-        return object;
     }
 
-    public Object[] findObjects(SqlQuery sql) {
+    @Override
+    public Object[] objectArray(SqlQuery sql) throws SQLException {
         Connection connection = null;
         PreparedStatement statement = null;
         ResultSet result = null;
-        Object[] objects = null;
         try {
             connection = pool.getConnection();
             statement = connection.prepareStatement(sql.getQuery());
             addParameter(statement, sql);
             result = statement.executeQuery();
-            if (result.next()) {
-                int columnCount = result.getMetaData().getColumnCount();
-                objects = new Object[columnCount];
-                for (int col = 0; col < columnCount; col++) {
-                    objects[col] = result.getObject(col + 1);
-                }
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        } finally {
+            Object[] dataArray = objectArray(result);
             close(result, statement, connection);
+            return dataArray;
+        } catch (SQLException ex) {
+            close(result, statement, connection);
+            throw ex;
         }
-        return objects;
     }
 
-    public List<Object> findObjectList(SqlQuery sql) {
+    @Override
+    public List<Object> objectList(SqlQuery sql) throws SQLException {
         Connection connection = null;
         PreparedStatement statement = null;
         ResultSet resultSet = null;
-        List<Object> resultList;
         try {
             connection = pool.getConnection();
             statement = connection.prepareStatement(sql.getQuery());
             addParameter(statement, sql);
             resultSet = statement.executeQuery();
-            resultList = loadObjectList(resultSet);
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            resultList = new ArrayList<>();
-        } finally {
+            List<Object> dataList = objectList(resultSet);
             close(resultSet, statement, connection);
+            return dataList;
+        } catch (SQLException ex) {
+            close(resultSet, statement, connection);
+            throw ex;
         }
-        return resultList;
     }
 
-    public List<Object[]> findObjectsList(SqlQuery sql) {
+    @Override
+    public List<Object[]> objectArrayList(SqlQuery sql) throws SQLException {
         Connection connection = null;
         PreparedStatement statement = null;
         ResultSet result = null;
-        List<Object[]> resultList;
         try {
             connection = pool.getConnection();
             statement = connection.prepareStatement(sql.getQuery());
             addParameter(statement, sql);
             result = statement.executeQuery();
-            resultList = loadObjectsList(result.getMetaData().getColumnCount(), result);
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            resultList = new ArrayList<>();
-        } finally {
+            List<Object[]> resultList = objectArrayList(result);
             close(result, statement, connection);
+            return resultList;
+        } catch (SQLException ex) {
+            close(result, statement, connection);
+            throw ex;
         }
-        return resultList;
     }
 
-    public SqlMetaDataResult findSqlMetaDataResult(SqlQuery sql) {
+    @Override
+    public SqlMetaDataResult sqlMetaDataResult(SqlQuery sql) throws SQLException {
         Connection connection = null;
         PreparedStatement statement = null;
         ResultSet result = null;
@@ -189,7 +109,7 @@ public class SqlResultSet implements Runnable {
             addParameter(statement, sql);
             result = statement.executeQuery();
             SqlMetaData[] metaData = getMetaData(result);
-            List<Object[]> resultList = loadObjectsList(metaData.length, result);
+            List<Object[]> resultList = objectArrayList(result);
             dataResult = new SqlMetaDataResult(metaData, resultList);
         } catch (SQLException ex) {
             ex.printStackTrace();
@@ -200,27 +120,90 @@ public class SqlResultSet implements Runnable {
     }
 
     @Override
-    public void run() {
-        Connection connection = null;
-        PreparedStatement statement = null;
-        ResultSet result = null;
-        List<Object[]> resultList;
-        try {
-            connection = pool.getConnection();
-            statement = connection.prepareStatement(sqlQuery.getQuery());
-            addParameter(statement, sqlQuery);
-            result = statement.executeQuery();
-            SqlMetaData[] metaData = getMetaData(result);
-            resultList = loadObjectsList(metaData.length, result);
-            close(result, statement, connection);
-            notify.onSqlResult(sqlQuery.getId(), metaData, resultList);
-        } catch (SQLException ex) {
-            close(result, statement, connection);
-            notify.onSqlError(sqlQuery.getId(), ex);
-        }
+    public String textValue(SqlQuery query) throws SQLException {
+        return (String) objectValue(query);
     }
 
-    private List<Object> loadObjectList(ResultSet rs) throws SQLException {
+    @Override
+    public String[] textArray(SqlQuery query) throws SQLException {
+        return textArray(objectArray(query));
+    }
+
+    @Override
+    public List<String> textList(SqlQuery query) throws SQLException {
+        List<Object> objList = objectList(query);
+        return objList.stream().map(obj -> (String) obj).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<String[]> textArrayList(SqlQuery query) throws SQLException {
+        List<Object[]> objArrList = objectArrayList(query);
+        List<String[]> result = new ArrayList<>();
+        for (Object[] objArr : objArrList) {
+            result.add(textArray(objArr));
+        }
+        return result;
+    }
+
+    @Override
+    public int intValue(SqlQuery query) throws SQLException {
+        return (Integer) objectValue(query);
+    }
+
+    @Override
+    public int[] intArray(SqlQuery query) throws SQLException {
+        return intArray(objectArray(query));
+    }
+
+    @Override
+    public List<Integer> integerList(SqlQuery query) throws SQLException {
+        List<Object> objList = objectList(query);
+        return objList.stream().map(obj -> (Integer) obj).collect(Collectors.toList());
+    }
+
+    @Override
+    public long longValue(SqlQuery query) throws SQLException {
+        return (Long) objectValue(query);
+    }
+
+    @Override
+    public long[] longArray(SqlQuery query) throws SQLException {
+        return longArray(objectArray(query));
+    }
+
+    @Override
+    public List<Long> longList(SqlQuery query) throws SQLException {
+        List<Object> objList = objectList(query);
+        return objList.stream().map(obj -> (Long) obj).collect(Collectors.toList());
+    }
+
+    @Override
+    public BigDecimal bigDecimalValue(SqlQuery query) throws SQLException {
+        return (BigDecimal) objectValue(query);
+    }
+
+    @Override
+    public BigDecimal[] bigDecimalArray(SqlQuery query) throws SQLException {
+        return bigDecimalArray(objectArray(query));
+    }
+
+    @Override
+    public List<BigDecimal> bigDecimalList(SqlQuery query) throws SQLException {
+        List<Object> objList = objectList(query);
+        return objList.stream().map(obj -> (BigDecimal) obj).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<BigDecimal[]> bigDecimalArrayList(SqlQuery query) throws SQLException {
+        List<Object[]> objArrList = objectArrayList(query);
+        List<BigDecimal[]> result = new ArrayList<>();
+        for (Object[] objArr : objArrList) {
+            result.add(bigDecimalArray(objArr));
+        }
+        return result;
+    }
+
+    private List<Object> objectList(ResultSet rs) throws SQLException {
         List<Object> dataList = new ArrayList<>();
         while (rs.next()) {
             Object data = rs.getObject(1);
@@ -229,7 +212,8 @@ public class SqlResultSet implements Runnable {
         return dataList;
     }
 
-    private List<Object[]> loadObjectsList(int columnCount, ResultSet rs) throws SQLException {
+    private List<Object[]> objectArrayList(ResultSet rs) throws SQLException {
+        final int columnCount = rs.getMetaData().getColumnCount();
         List<Object[]> dataList = new ArrayList<>();
         while (rs.next()) {
             Object[] data = new Object[columnCount];
@@ -239,6 +223,50 @@ public class SqlResultSet implements Runnable {
             dataList.add(data);
         }
         return dataList;
+    }
+
+    private Object[] objectArray(ResultSet result) throws SQLException {
+        int columnCount = result.getMetaData().getColumnCount();
+        if (result.next()) {
+            Object[] data = new Object[columnCount];
+            for (int col = 0; col < columnCount; col++) {
+                data[col] = result.getObject(col + 1);
+            }
+            return data;
+        }
+        return null;
+    }
+
+    private String[] textArray(Object[] objectArray) {
+        String[] data = new String[objectArray.length];
+        for (int ix = 0; ix < data.length; ix++) {
+            data[ix] = (String) objectArray[ix];
+        }
+        return data;
+    }
+
+    private int[] intArray(Object[] objectArray) {
+        int[] data = new int[objectArray.length];
+        for (int ix = 0; ix < data.length; ix++) {
+            data[ix] = (Integer) objectArray[ix];
+        }
+        return data;
+    }
+
+    private long[] longArray(Object[] objectArray) {
+        long[] data = new long[objectArray.length];
+        for (int ix = 0; ix < data.length; ix++) {
+            data[ix] = (Long) objectArray[ix];
+        }
+        return data;
+    }
+
+    private BigDecimal[] bigDecimalArray(Object[] objectArray) {
+        BigDecimal[] data = new BigDecimal[objectArray.length];
+        for (int ix = 0; ix < data.length; ix++) {
+            data[ix] = (BigDecimal) objectArray[ix];
+        }
+        return data;
     }
 
     private SqlMetaData[] getMetaData(ResultSet rs) throws SQLException {
@@ -301,7 +329,7 @@ public class SqlResultSet implements Runnable {
         }
     }
 
-    private java.sql.Date toSqlDate(java.util.Date sqlDate) {
-        return new java.sql.Date(sqlDate.getTime());
+    private Date toSqlDate(java.util.Date sqlDate) {
+        return new Date(sqlDate.getTime());
     }
 }

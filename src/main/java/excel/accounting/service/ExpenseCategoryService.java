@@ -21,8 +21,7 @@ import java.util.stream.Collectors;
  * @author Ramesh
  * @since Oct 2016
  */
-public class ExpenseCategoryService extends AbstractService implements
-        EntityToRowColumns<ExpenseCategory>, ExcelTypeConverter<ExpenseCategory> {
+public class ExpenseCategoryService extends AbstractService implements ExcelTypeConverter<ExpenseCategory> {
     private ExpenseCategoryDao expenseCategoryDao;
 
     private ExpenseCategoryDao getExpenseCategoryDao() {
@@ -46,13 +45,13 @@ public class ExpenseCategoryService extends AbstractService implements
     }
 
     private void updateStatus(List<ExpenseCategory> dataList) {
-        QueryBuilder queryBuilder = getQueryBuilder("updateStatus");
+        /*QueryBuilder queryBuilder = getQueryBuilder("updateStatus");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (ExpenseCategory category : dataList) {
             transaction.addBatch(getColumnsMap("updateStatus", category));
         }
-        executeBatch(transaction);
+        executeBatch(transaction);*/
     }
 
     public void setAsDrafted(List<ExpenseCategory> dataList) {
@@ -62,9 +61,9 @@ public class ExpenseCategoryService extends AbstractService implements
             return;
         }
         for (ExpenseCategory data : filteredList) {
-            String errorMessage = getExpenseCategoryDao().isEntityReferenceUsed(data.getCode());
-            if (errorMessage != null) {
-                setMessage(errorMessage);
+            Object usedReference = getExpenseCategoryDao().getUsedReference(data);
+            if (usedReference != null) {
+                setMessage(usedReference.toString());
                 return;
             }
             data.setStatus(Status.Drafted);
@@ -121,7 +120,7 @@ public class ExpenseCategoryService extends AbstractService implements
         rules.setFirstCharAlphaOnly(true);
         rules.setRulesType(RulesType.Alphanumeric);
         //
-        List<String> existingList = getExpenseCategoryDao().findCodeList();
+        List<String> existingList = new ArrayList<>(); // getExpenseCategoryDao().findCodeList();
         List<ExpenseCategory> validList = new ArrayList<>();
         for (ExpenseCategory expenseCategory : dataList) {
             if (insertValidate(expenseCategory, rules) && !existingList.contains(expenseCategory.getCode())) {
@@ -132,23 +131,23 @@ public class ExpenseCategoryService extends AbstractService implements
             setMessage("Valid expense category not found");
             return;
         }
-        QueryBuilder queryBuilder = getQueryBuilder("insertExpenseCategory");
+        /*QueryBuilder queryBuilder = getQueryBuilder("insertExpenseCategory");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (ExpenseCategory expenseCategory : validList) {
             transaction.addBatch(getColumnsMap("insertExpenseCategory", expenseCategory));
         }
-        executeBatch(transaction);
+        executeBatch(transaction);*/
     }
 
     public void updateExpenseCategory(List<ExpenseCategory> categoryList) {
-        QueryBuilder queryBuilder = getQueryBuilder("updateExpenseCategory");
+        /*QueryBuilder queryBuilder = getQueryBuilder("updateExpenseCategory");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (ExpenseCategory category : categoryList) {
             transaction.addBatch(getColumnsMap("updateExpenseCategory", category));
         }
-        executeBatch(transaction);
+        executeBatch(transaction);*/
     }
 
     public void deleteExpenseCategory(List<ExpenseCategory> categoryList) {
@@ -156,30 +155,13 @@ public class ExpenseCategoryService extends AbstractService implements
         if (filteredList.isEmpty()) {
             return;
         }
-        QueryBuilder queryBuilder = getQueryBuilder("deleteExpenseCategory");
+        /*QueryBuilder queryBuilder = getQueryBuilder("deleteExpenseCategory");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (ExpenseCategory category : filteredList) {
             transaction.addBatch(getColumnsMap("deleteExpenseCategory", category));
         }
-        executeBatch(transaction);
-    }
-
-    @Override
-    public Map<Integer, Object> getColumnsMap(final String queryName, ExpenseCategory type) {
-        Map<Integer, Object> map = new HashMap<>();
-        if ("insertExpenseCategory".equals(queryName)) {
-            map.put(1, type.getCode());
-            map.put(2, type.getName());
-            map.put(4, type.getDescription());
-            map.put(5, Status.Drafted.toString());
-        } else if ("deleteExpenseCategory".equals(queryName)) {
-            map.put(1, type.getCode());
-        } else if ("updateStatus".equals(queryName)) {
-            map.put(1, type.getStatus().toString());
-            map.put(2, type.getCode());
-        }
-        return map;
+        executeBatch(transaction);*/
     }
 
     @Override

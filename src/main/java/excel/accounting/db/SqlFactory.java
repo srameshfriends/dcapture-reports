@@ -2,6 +2,7 @@ package excel.accounting.db;
 
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.log4j.Logger;
+import org.h2.jdbcx.JdbcConnectionPool;
 import org.reflections.Reflections;
 
 import javax.persistence.*;
@@ -23,7 +24,16 @@ public abstract class SqlFactory {
         logger.info(value);
     }
 
-    public static SqlTableMap createSqlTableMap(String schema, String... packArray) {
+    public static H2Processor createH2Processor(String url, String user, String pass, String schema,
+                                                String[] entityPackage, SqlEnumParser enumParser) {
+        H2Processor processor = new H2Processor();
+        processor.setEnumParser(enumParser);
+        processor.setTableMap(SqlFactory.createSqlTableMap(schema, entityPackage));
+        processor.setConnectionPool(JdbcConnectionPool.create(url, user, pass));
+        return processor;
+    }
+
+    private static SqlTableMap createSqlTableMap(String schema, String... packArray) {
         SqlTableMap tableMap = new SqlTableMap(schema);
         for (String pack : packArray) {
             Reflections reflections = new Reflections(pack.trim());
@@ -223,22 +233,21 @@ public abstract class SqlFactory {
     }
 
     @SuppressWarnings("unchecked")
-    static <T> List<T> toEntityList(SqlTableMap tableMap, SqlEnumParser enumParsers, SqlMetaData[] metaData,
-                                    List<Object[]> dataList) {
-        SqlTable table = dataList.isEmpty() ? null : getValidOrmTable(tableMap, metaData);
+    static <T> List<T> toEntityList(SqlProcessor processor, SqlMetaDataResult dataResult) {
+        SqlTable table = getValidOrmTable(processor.getSqlTableMap(), dataResult.getMetaData());
         if (table == null) {
             return new ArrayList<T>();
         }
         List<T> resultList = new ArrayList<>();
-        for (Object[] data : dataList) {
+        for (Object[] data : dataResult.getObjectsList()) {
             T result = (T) instance(table.getType());
             int index = 0;
             for (Object value : data) {
-                String columnName = metaData[index].getColumnName();
+                String columnName = dataResult.getMetaData()[index].getColumnName();
                 String fieldName = table.getColumnFieldMap().get(columnName);
                 Class<?> enumClass = table.getEnumClass(fieldName);
                 if (enumClass != null) {
-                    value = enumParsers.getEnum(enumClass, (String) value);
+                    value = processor.enumParser().parseEnum(enumClass, (String) value);
                 }
                 copyProperty(result, fieldName, value);
                 index += 1;

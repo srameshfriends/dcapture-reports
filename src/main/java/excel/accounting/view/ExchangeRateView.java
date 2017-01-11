@@ -135,7 +135,7 @@ public class ExchangeRateView extends AbstractView implements ViewHolder {
     }
 
     private void loadRecords() {
-        List<ExchangeRate> exchangeRateList = exchangeRateDao.loadAll();
+        List<ExchangeRate> exchangeRateList = exchangeRateDao.loadAll(ExchangeRate.class);
         if (exchangeRateList == null || exchangeRateList.isEmpty()) {
             return;
         }
@@ -170,7 +170,7 @@ public class ExchangeRateView extends AbstractView implements ViewHolder {
             List<ExchangeRate> selected = tableView.getSelectedItems();
             writeExcelData.writeRowData(selected);
         } else {
-            writeExcelData.writeRowData(exchangeRateDao.loadAll());
+            writeExcelData.writeRowData(exchangeRateDao.loadAll(ExchangeRate.class));
         }
     }
 

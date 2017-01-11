@@ -23,12 +23,12 @@ public class SearchTextQuery {
         Collections.addAll(columnList, fieldArray);
     }
 
-    List<String> getParameterList() {
-        List<String> parameters = new ArrayList<>();
-        for (int index = 0; index < columnList.size(); index++) {
-            parameters.add(searchText);
-        }
-        return parameters;
+    int getColumnSize() {
+        return columnList.size();
+    }
+
+    String getSearchText() {
+        return searchText;
     }
 
     @Override

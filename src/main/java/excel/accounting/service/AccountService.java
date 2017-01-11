@@ -15,15 +15,12 @@ import org.apache.poi.ss.usermodel.Cell;
 
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.concurrent.Future;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
  * Account Service
  */
-public class AccountService extends AbstractService implements ExcelTypeConverter<Account>,
-        EntityToRowColumns<Account> {
+public class AccountService extends AbstractService implements ExcelTypeConverter<Account> {
     private AccountDao accountDao;
     private CurrencyDao currencyDao;
 
@@ -65,7 +62,7 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
     }
 
     public void updateCurrency(Currency currency, List<Account> accountList) {
-        List<Account> filteredList = filteredByStatus(Status.Drafted, accountList);
+      /*  List<Account> filteredList = filteredByStatus(Status.Drafted, accountList);
         if (filteredList.isEmpty()) {
             setMessage("Error : Only drafted accounts are allowed to change currency");
             return;
@@ -78,9 +75,9 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (Account account : filteredList) {
-            transaction.addBatch(getColumnsMap("updateCurrency", account));
+            executeBatch(100, ).addBatch(getColumnsMap("updateCurrency", account));
         }
-        executeBatch(transaction);
+        executeBatch(transaction);*/
     }
 
     public void updateAccountType(AccountType accountType, List<Account> accountList) {
@@ -92,13 +89,13 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
         for (Account account : filteredList) {
             account.setAccountType(accountType);
         }
-        QueryBuilder queryBuilder = getQueryBuilder("updateAccountType");
+       /* QueryBuilder queryBuilder = getQueryBuilder("updateAccountType");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (Account account : filteredList) {
             transaction.addBatch(getColumnsMap("updateAccountType", account));
         }
-        executeBatch(transaction);
+        executeBatch(transaction);*/
     }
 
     public void setAsDrafted(List<Account> accountList) {
@@ -108,9 +105,9 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
             return;
         }
         for (Account account : filteredList) {
-            String errorMessage = getAccountDao().isEntityReferenceUsed(account.getCode());
+            Object errorMessage = getAccountDao().getUsedReference(account);
             if(errorMessage != null) {
-                setMessage(errorMessage);
+                setMessage(errorMessage.toString());
                 return;
             }
             account.setStatus(Status.Drafted);
@@ -189,7 +186,7 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
         }
         List<String> currencyList = new ArrayList<>(); //getCurrencyDao().findCodeList();
         List<AccountType> accountTypeList = getAccountTypeList();
-        QueryBuilder queryBuilder = getQueryBuilder("insertAccount");
+       /* QueryBuilder queryBuilder = getQueryBuilder("insertAccount");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (Account account : validList) {
@@ -201,7 +198,7 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
             }
             transaction.addBatch(getColumnsMap("insertAccount", account));
         }
-        executeBatch(transaction);
+        executeBatch(transaction);*/
     }
 
     public void deleteAccount(List<Account> accountList) {
@@ -210,49 +207,13 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
             setMessage("Error : Drafted accounts not found to delete");
             return;
         }
-        QueryBuilder queryBuilder = getQueryBuilder("deleteAccount");
+       /* QueryBuilder queryBuilder = getQueryBuilder("deleteAccount");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (Account account : filteredList) {
             transaction.addBatch(getColumnsMap("deleteAccount", account));
         }
-        executeBatch(transaction);
-    }
-
-    /**
-     * insertAccount
-     * code, name, account_type, status, currency, balance, description
-     * deleteAccount
-     * find by code
-     * updateStatus
-     * set status find by code
-     * updateCurrency
-     * set currency find by code
-     */
-    @Override
-    public Map<Integer, Object> getColumnsMap(final String queryName, Account account) {
-        Map<Integer, Object> map = new HashMap<>();
-        if ("insertAccount".equals(queryName)) {
-            map.put(1, account.getCode());
-            map.put(2, account.getName());
-            map.put(3, account.getAccountType().toString());
-            map.put(4, Status.Drafted.toString());
-            map.put(5, account.getCurrency());
-            map.put(6, BigDecimal.ZERO);
-            map.put(7, account.getDescription());
-        } else if ("deleteAccount".equals(queryName)) {
-            map.put(1, account.getCode());
-        } else if ("updateStatus".equals(queryName)) {
-            map.put(1, account.getStatus().toString());
-            map.put(2, account.getCode());
-        } else if ("updateCurrency".equals(queryName)) {
-            map.put(1, account.getCurrency());
-            map.put(2, account.getCode());
-        } else if ("updateAccountType".equals(queryName)) {
-            map.put(1, account.getAccountType());
-            map.put(2, account.getCode());
-        }
-        return map;
+        executeBatch(transaction);*/
     }
 
     @Override

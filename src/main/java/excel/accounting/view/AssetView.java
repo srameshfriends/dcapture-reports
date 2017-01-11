@@ -1,5 +1,6 @@
 package excel.accounting.view;
 
+import excel.accounting.dao.AssetDao;
 import excel.accounting.entity.Asset;
 import excel.accounting.poi.ReadExcelData;
 import excel.accounting.poi.WriteExcelData;
@@ -35,6 +36,7 @@ public class AssetView extends AbstractView implements ViewHolder {
 
     private ReadableTableView<Asset> tableView;
     private AssetService assetService;
+    private AssetDao assetDao;
     private VBox basePanel;
 
     @Override
@@ -133,7 +135,7 @@ public class AssetView extends AbstractView implements ViewHolder {
     }
 
     private void loadRecords() {
-        List<Asset> assetList = assetService.loadAll();
+        List<Asset> assetList = assetDao.loadAll(Asset.class);
         if (assetList == null || assetList.isEmpty()) {
             return;
         }
@@ -151,7 +153,7 @@ public class AssetView extends AbstractView implements ViewHolder {
         if (rowDataList.isEmpty()) {
             return;
         }
-        List<String> existingCodeList = assetService.findCodeList();
+        List<String> existingCodeList = assetDao.loadCodeList();
         List<Asset> updateList = new ArrayList<>();
         List<Asset> insertList = new ArrayList<>();
         for (Asset asset : rowDataList) {
@@ -183,7 +185,7 @@ public class AssetView extends AbstractView implements ViewHolder {
             List<Asset> selected = tableView.getSelectedItems();
             writeExcelData.writeRowData(selected);
         } else {
-            writeExcelData.writeRowData(assetService.loadAll());
+            writeExcelData.writeRowData(assetDao.loadAll(Asset.class));
         }
     }
 

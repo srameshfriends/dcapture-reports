@@ -138,7 +138,7 @@ public class SystemSettingView extends AbstractView implements ViewHolder {
     }
 
     private void loadRecords() {
-        List<SystemSetting> settings = systemSettingDao.loadAll();
+        List<SystemSetting> settings = systemSettingDao.loadAll(SystemSetting.class);
         if (settings == null || settings.isEmpty()) {
             return;
         }

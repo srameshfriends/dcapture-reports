@@ -18,21 +18,15 @@ import java.util.stream.Collectors;
  * @author Ramesh
  * @since Oct 2016
  */
-public class IncomeCategoryService extends AbstractService implements ExcelTypeConverter<IncomeCategory>,
-        EntityToRowColumns<IncomeCategory>, RowColumnsToEntity<IncomeCategory> {
+public class IncomeCategoryService extends AbstractService implements ExcelTypeConverter<IncomeCategory> {
 
     @Override
     protected String getSqlFileName() {
         return "income-category";
     }
 
-    public List<IncomeCategory> loadAll() {
-        QueryBuilder queryBuilder = getQueryBuilder("loadAll");
-        return getDataReader().findRowDataList(queryBuilder, this);
-    }
-
     public List<IncomeCategory> searchIncomeCategory(String searchText, Status... statuses) {
-        ClauseQuery clauseQuery = new ClauseQuery("status");
+       /* ClauseQuery clauseQuery = new ClauseQuery("status");
         clauseQuery.addParameter(statuses);
         QueryBuilder queryBuilder = getQueryBuilder("searchIncomeCategory");
         queryBuilder.addInClauseQuery("$status", clauseQuery);
@@ -42,12 +36,8 @@ public class IncomeCategoryService extends AbstractService implements ExcelTypeC
             searchTextQuery.add("code", "name");
         }
         queryBuilder.addSearchTextQuery("$searchText", searchTextQuery);
-        return getDataReader().findRowDataList(queryBuilder, this);
-    }
-
-    public List<String> findCodeList() {
-        QueryBuilder queryBuilder = getQueryBuilder("findCodeList");
-        return getDataReader().findString(queryBuilder);
+        return getDataReader().findRowDataList(queryBuilder, this);*/
+        return null;
     }
 
     private void updateStatus(Status requiredStatus, Status changedStatus, List<IncomeCategory> categoryList) {
@@ -58,13 +48,13 @@ public class IncomeCategoryService extends AbstractService implements ExcelTypeC
         for (IncomeCategory category : filteredList) {
             category.setStatus(changedStatus);
         }
-        QueryBuilder queryBuilder = getQueryBuilder("updateStatus");
+        /*QueryBuilder queryBuilder = getQueryBuilder("updateStatus");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (IncomeCategory category : filteredList) {
             transaction.addBatch(getColumnsMap("updateStatus", category));
         }
-        executeBatch(transaction);
+        executeBatch(transaction);*/
     }
 
     public void setAsDrafted(List<IncomeCategory> categoryList) {
@@ -80,23 +70,23 @@ public class IncomeCategoryService extends AbstractService implements ExcelTypeC
     }
 
     public void insertIncomeCategory(List<IncomeCategory> categoryList) {
-        QueryBuilder queryBuilder = getQueryBuilder("insertIncomeCategory");
+        /*QueryBuilder queryBuilder = getQueryBuilder("insertIncomeCategory");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (IncomeCategory category : categoryList) {
             transaction.addBatch(getColumnsMap("insertIncomeCategory", category));
         }
-        executeBatch(transaction);
+        executeBatch(transaction);*/
     }
 
     public void updateIncomeCategory(List<IncomeCategory> categoryList) {
-        QueryBuilder queryBuilder = getQueryBuilder("updateIncomeCategory");
+        /*QueryBuilder queryBuilder = getQueryBuilder("updateIncomeCategory");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (IncomeCategory category : categoryList) {
             transaction.addBatch(getColumnsMap("updateIncomeCategory", category));
         }
-        executeBatch(transaction);
+        executeBatch(transaction);*/
     }
 
     public void deleteIncomeCategory(List<IncomeCategory> categoryList) {
@@ -104,61 +94,13 @@ public class IncomeCategoryService extends AbstractService implements ExcelTypeC
         if (filteredList.isEmpty()) {
             return;
         }
-        QueryBuilder queryBuilder = getQueryBuilder("deleteIncomeCategory");
+        /*QueryBuilder queryBuilder = getQueryBuilder("deleteIncomeCategory");
         Transaction transaction = createTransaction();
         transaction.setBatchQuery(queryBuilder);
         for (IncomeCategory category : filteredList) {
             transaction.addBatch(getColumnsMap("deleteIncomeCategory", category));
         }
-        executeBatch(transaction);
-    }
-
-    /**
-     * code, name, status, currency, income_account, description
-     */
-    @Override
-    public IncomeCategory getEntity(String queryName, Object[] columns) {
-        IncomeCategory category = new IncomeCategory();
-        category.setCode((String) columns[0]);
-        category.setName((String) columns[1]);
-        category.setStatus(DataConverter.getStatus(columns[2]));
-        category.setCurrency((String) columns[3]);
-        category.setDescription((String) columns[4]);
-        return category;
-    }
-
-    /**
-     * insertIncomeCategory
-     * code, name, status, currency, income_account, description
-     * deleteIncomeCategory
-     * find by code
-     * updateStatus
-     * set status find by code
-     * updateIncomeCategory
-     * code, name, currency, income_account, description
-     */
-    @Override
-    public Map<Integer, Object> getColumnsMap(String queryName, IncomeCategory entity) {
-        Map<Integer, Object> map = new HashMap<>();
-        if ("insertIncomeCategory".equals(queryName)) {
-            map.put(1, entity.getCode());
-            map.put(2, entity.getName());
-            map.put(3, Status.Drafted.toString());
-            map.put(4, entity.getCurrency());
-            map.put(6, entity.getDescription());
-        } else if ("deleteIncomeCategory".equals(queryName)) {
-            map.put(1, entity.getCode());
-        } else if ("updateStatus".equals(queryName)) {
-            map.put(1, entity.getStatus().toString());
-            map.put(2, entity.getCode());
-        } else if ("updateIncomeCategory".equals(queryName)) {
-            map.put(1, entity.getCode());
-            map.put(2, entity.getName());
-            map.put(3, entity.getCurrency());
-            map.put(5, entity.getDescription());
-            map.put(6, entity.getCode());
-        }
-        return map;
+        executeBatch(transaction);*/
     }
 
     /**

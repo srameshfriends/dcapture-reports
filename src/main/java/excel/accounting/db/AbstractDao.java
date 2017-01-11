@@ -3,9 +3,9 @@ package excel.accounting.db;
 import excel.accounting.entity.BaseRecord;
 import excel.accounting.shared.AbstractControl;
 
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Table Relation
@@ -16,43 +16,25 @@ public abstract class AbstractDao<T> extends AbstractControl {
 
     protected abstract String getSqlFileName();
 
-    protected abstract T getReference(String code);
-
-    @Deprecated
-    protected QueryBuilder getQueryBuilder(String templateName) {
-        return getDataProcessor().getQueryBuilder(getSqlFileName(), templateName);
-    }
-
-    public String isEntityReferenceUsed(String code) {
-        EntityReference reference = getDataProcessor().getUsedEntityReference(getTableName(), code);
-        if (reference == null) {
-            return null;
+    public Object getUsedReference(BaseRecord baseRecord) {
+        try {
+            return getUsedReference(baseRecord.getClass(), baseRecord.getCode());
+        } catch (SQLException ex) {
+            ex.printStackTrace();
         }
-        String tbl = getApplicationControl().getMessage(reference.getTable());
-        String col = getApplicationControl().getMessage(reference.getTable() + "." + reference.getColumn());
-        return getApplicationControl().getMessage("entity.reference.used", code, tbl, col);
+        return null;
     }
 
-    public Object findReferenceUsed(BaseRecord baseRecord) {
-        return findReferenceUsed(baseRecord.getClass(), baseRecord.getCode());
-    }
-
-    public Object findReferenceUsed(Class<?> entityClass, String code) {
-        if (code == null) {
-            return null;
-        }
-        SqlTable sqlTable = getSqlTableMap().get(entityClass);
-        List<SqlReference> referenceList = sqlTable.getReferenceList();
+    private Object getUsedReference(Class<?> entityClass, String code) throws SQLException {
+        List<SqlReference> referenceList = code == null ? null : getSqlProcessor().getSqlReference(entityClass);
         if (referenceList == null) {
             return null;
         }
         for (SqlReference reference : referenceList) {
-            QueryTool tool = createSqlBuilder();
+            QueryBuilder tool = getSqlProcessor().createQueryBuilder();
             tool.selectFrom(reference.getReferenceTable().getName()).selectColumns(reference.getReferenceColumn().getName());
             tool.where(reference.getReferenceColumn().getName(), code);
-            System.out.println("Reference Query : " + tool.getSqlQuery().getQuery());
-            Object object = getSqlResultSet().findObject(tool.getSqlQuery());
-            System.out.println("Result : " + object);
+            Object object = getSqlReader().objectValue(tool.getSqlQuery());
             if (object != null) {
                 return object;
             }
@@ -60,31 +42,43 @@ public abstract class AbstractDao<T> extends AbstractControl {
         return null;
     }
 
-    protected QueryTool selectBuilder(Class<?> entityClass) {
-        return getSqlForwardTool().selectBuilder(entityClass);
+    protected QueryBuilder selectBuilder(Class<?> entityClass) {
+        return getSqlProcessor().selectBuilder(entityClass);
     }
 
-    protected QueryTool selectBuilder(Class<?> entityClass, int pid) {
-        return getSqlForwardTool().selectBuilder(entityClass).setId(pid);
+    protected QueryBuilder selectBuilder(String entityClass) {
+        return getSqlProcessor().createQueryBuilder().selectFrom(getTableName());
     }
 
-    protected List<T> toEntityList(SqlMetaData[] metaData, List<Object[]> dataList) {
-        return SqlFactory.toEntityList(getSqlTableMap(), getSqlForwardTool().getSqlEnumParser(), metaData, dataList);
+    public List<T> loadAll(Class<?> entityClass) {
+        QueryBuilder builder = getSqlProcessor().selectBuilder(entityClass);
+        return fetchList(builder);
     }
 
-    protected void execute(SqlQuery query, SqlReader reader) {
-        ExecutorService executor = Executors.newCachedThreadPool();
-        SqlResultSet resultSet = new SqlResultSet(getApplicationControl().getConnectionPool(), query, reader);
-        executor.execute(resultSet);
+    protected List<T> fetchList(QueryBuilder queryBuilder) {
+        try {
+            SqlMetaDataResult dataResult = getSqlReader().sqlMetaDataResult(queryBuilder.getSqlQuery());
+            return SqlFactory.toEntityList(getSqlProcessor(), dataResult);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return new ArrayList<T>();
     }
 
     protected T findByCode(Class<?> entityClass, String code) {
-        QueryTool builder = getSqlForwardTool().selectBuilder(entityClass);
-        builder.where("code", code);
-        SqlResultSet resultSet = getSqlResultSet();
-        SqlMetaDataResult dataResult = resultSet.findSqlMetaDataResult(builder.getSqlQuery());
-        List<T> typeList = SqlFactory.toEntityList(getSqlTableMap(), getSqlForwardTool().getSqlEnumParser(),
-                dataResult.getMetaData(), dataResult.getObjectsList());
-        return typeList == null || typeList.isEmpty() ? null : typeList.get(0);
+        QueryBuilder builder = getSqlProcessor().selectBuilder(entityClass);
+        builder.where("code", code).limitOffset(1, 1);
+        List<T> dList = fetchList(builder);
+        return dList.isEmpty() ? null : dList.get(0);
+    }
+
+    public List<String> loadCodeList() {
+        QueryBuilder queryBuilder = getSqlProcessor().createQueryBuilder().selectColumns("code");
+        try {
+            return getSqlReader().textList(queryBuilder.getSqlQuery());
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return null;
     }
 }

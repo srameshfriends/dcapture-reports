@@ -32,7 +32,6 @@ public class ReadableTableView<T> {
         tableView.setContextMenu(contextMenu);
     }
 
-    @Deprecated
     public void addContextMenuItem(final String actionId, String title) {
         StyleBuilder builder = new StyleBuilder();
         builder.padding(2);

@@ -5,8 +5,6 @@ import excel.accounting.shared.AbstractControl;
 
 import java.sql.SQLException;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 /**
@@ -17,61 +15,38 @@ import java.util.stream.Collectors;
  */
 public abstract class AbstractService extends AbstractControl {
 
-    @Deprecated
-    protected final Transaction createTransaction() {
-        return new Transaction(getApplicationControl().getConnectionPool());
-    }
-
     protected abstract String getSqlFileName();
 
-    protected QueryBuilder getQueryBuilder(String queryName) {
-        return getDataProcessor().getQueryBuilder(getSqlFileName(), queryName);
-    }
-
-    protected void executeBatch(Transaction transaction) {
+    private void executeBatch(List<SqlQuery> queryList) {
+        SqlTransaction transaction = getSqlProcessor().createSqlTransaction();
         try {
-            transaction.executeBatch();
+            transaction.executeBatch(queryList);
         } catch (SQLException ex) {
-            setMessage(ex.getErrorCode() + " : " + ex.getMessage());
+            ex.printStackTrace();
         }
     }
 
-    protected void executeBatch(int pid, List<SqlQuery> queryList, SqlWriter response) {
-        SqlTransaction transaction = new SqlTransaction(getApplicationControl().getConnectionPool());
-        transaction.setResponse(response);
-        transaction.setProcessId(pid);
-        transaction.setDoBatchUpdate(true);
-        transaction.addAll(queryList);
-        ExecutorService executor = Executors.newCachedThreadPool();
-        executor.execute(transaction);
+    private void executeCommit(List<SqlQuery> queryList) {
+        SqlTransaction transaction = getSqlProcessor().createSqlTransaction();
+        try {
+            transaction.executeCommit(queryList);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
     }
 
-    protected void executeCommit(int pid, List<SqlQuery> queryList, SqlWriter response) {
-        SqlTransaction transaction = new SqlTransaction(getApplicationControl().getConnectionPool());
-        transaction.setResponse(response);
-        transaction.setProcessId(pid);
-        transaction.addAll(queryList);
-        ExecutorService executor = Executors.newCachedThreadPool();
-        executor.execute(transaction);
+    protected void insert(List<?> dataList) {
+        SqlProcessor forwardTool = getApplicationControl().getSqlProcessor();
+        executeCommit(dataList.stream().map(forwardTool::insertQuery).collect(Collectors.toList()));
     }
 
-    protected void insert(List<?> dataList, int pid, SqlWriter response) {
-        SqlTransaction transaction = new SqlTransaction(getApplicationControl().getConnectionPool());
-        transaction.setResponse(response);
-        transaction.setProcessId(pid);
-        SqlForwardTool forwardTool = getApplicationControl().getSqlForwardTool();
-        transaction.addAll(dataList.stream().map(forwardTool::insertQuery).collect(Collectors.toList()));
-        ExecutorService executor = Executors.newCachedThreadPool();
-        executor.execute(transaction);
+    protected void update(List<?> dataList) {
+        SqlProcessor forwardTool = getApplicationControl().getSqlProcessor();
+        executeBatch(dataList.stream().map(forwardTool::updateQuery).collect(Collectors.toList()));
     }
 
-    protected void delete(List<?> dataList, int pid, SqlWriter response) {
-        SqlTransaction transaction = new SqlTransaction(getApplicationControl().getConnectionPool());
-        transaction.setResponse(response);
-        transaction.setProcessId(pid);
-        SqlForwardTool forwardTool = getApplicationControl().getSqlForwardTool();
-        transaction.addAll(dataList.stream().map(forwardTool::deleteQuery).collect(Collectors.toList()));
-        ExecutorService executor = Executors.newCachedThreadPool();
-        executor.execute(transaction);
+    protected void delete(List<?> dataList) {
+        SqlProcessor forwardTool = getApplicationControl().getSqlProcessor();
+        executeBatch(dataList.stream().map(forwardTool::deleteQuery).collect(Collectors.toList()));
     }
 }
