@@ -13,6 +13,10 @@ public interface SqlProcessor {
 
     SqlReader getSqlReader();
 
+    SqlTransaction getSqlTransaction();
+
+    SqlTable getSqlTable(Class<?> tableClass);
+
     SqlTableMap getSqlTableMap();
 
     SqlEnumParser enumParser();
@@ -24,14 +28,4 @@ public interface SqlProcessor {
     List<SqlQuery> createTableQueries();
 
     List<SqlQuery> alterTableQueries();
-
-    QueryBuilder selectBuilder(Class<?> entityClass);
-
-    SqlQuery insertQuery(Object object);
-
-    SqlQuery updateQuery(Object object);
-
-    SqlQuery deleteQuery(Object object);
-
-    SqlTransaction createSqlTransaction();
 }

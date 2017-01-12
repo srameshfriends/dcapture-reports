@@ -26,11 +26,6 @@ public class IncomeItemService extends AbstractService implements ExcelTypeConve
         return incomeItemDao;
     }
 
-    @Override
-    protected String getSqlFileName() {
-        return "income-item";
-    }
-
     /**
      * status, code
      */

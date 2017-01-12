@@ -20,7 +20,7 @@ public abstract class AbstractControl {
         return control.getBean(name);
     }
 
-    protected void setMessage(String message) {
+    protected void showMessage(String message) {
         control.setMessage(message);
     }
 
@@ -28,7 +28,15 @@ public abstract class AbstractControl {
         return control.getSqlProcessor();
     }
 
+    protected SqlTransaction getSqlTransaction() {
+        return control.getSqlProcessor().getSqlTransaction();
+    }
+
     protected SqlReader getSqlReader() {
         return control.getSqlProcessor().getSqlReader();
+    }
+
+    protected QueryBuilder createQueryBuilder() {
+        return control.getSqlProcessor().createQueryBuilder();
     }
 }

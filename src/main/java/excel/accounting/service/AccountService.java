@@ -2,7 +2,6 @@ package excel.accounting.service;
 
 import excel.accounting.dao.AccountDao;
 import excel.accounting.dao.CurrencyDao;
-import excel.accounting.db.*;
 import excel.accounting.entity.Account;
 import excel.accounting.entity.AccountType;
 import excel.accounting.entity.Currency;
@@ -13,7 +12,7 @@ import excel.accounting.shared.RulesType;
 import excel.accounting.shared.StringRules;
 import org.apache.poi.ss.usermodel.Cell;
 
-import java.math.BigDecimal;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -23,11 +22,6 @@ import java.util.stream.Collectors;
 public class AccountService extends AbstractService implements ExcelTypeConverter<Account> {
     private AccountDao accountDao;
     private CurrencyDao currencyDao;
-
-    @Override
-    protected String getSqlFileName() {
-        return "account";
-    }
 
     private AccountDao getAccountDao() {
         if (accountDao == null) {
@@ -64,7 +58,7 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
     public void updateCurrency(Currency currency, List<Account> accountList) {
       /*  List<Account> filteredList = filteredByStatus(Status.Drafted, accountList);
         if (filteredList.isEmpty()) {
-            setMessage("Error : Only drafted accounts are allowed to change currency");
+            showMessage("Error : Only drafted accounts are allowed to change currency");
             return;
         }
         final String currencyCode = currency == null ? null : currency.getCode();
@@ -83,7 +77,7 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
     public void updateAccountType(AccountType accountType, List<Account> accountList) {
         List<Account> filteredList = filteredByStatus(Status.Drafted, accountList);
         if (filteredList.isEmpty()) {
-            setMessage("Error : Only drafted accounts are allowed to modify");
+            showMessage("Error : Only drafted accounts are allowed to modify");
             return;
         }
         for (Account account : filteredList) {
@@ -101,24 +95,28 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
     public void setAsDrafted(List<Account> accountList) {
         List<Account> filteredList = filteredByStatus(Status.Confirmed, accountList);
         if (filteredList.isEmpty()) {
-            setMessage("Wrong Status : confirmed accounts are allowed to modify as drafted");
+            showMessage("Wrong Status : confirmed accounts are allowed to modify as drafted");
             return;
         }
-        for (Account account : filteredList) {
-            Object errorMessage = getAccountDao().getUsedReference(account);
-            if(errorMessage != null) {
-                setMessage(errorMessage.toString());
-                return;
+        try {
+            for (Account account : filteredList) {
+                Object errorMessage = getSqlReader().getUsedReference(Account.class, account.getCode());
+                if (errorMessage != null) {
+                    showMessage(errorMessage.toString());
+                    return;
+                }
+                account.setStatus(Status.Drafted);
             }
-            account.setStatus(Status.Drafted);
+            updateStatus(filteredList);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
         }
-        updateStatus(filteredList);
     }
 
     public void setAsConfirmed(List<Account> accountList) {
         List<Account> filteredList = filteredByStatus(Status.Drafted, accountList);
         if (filteredList.isEmpty()) {
-            setMessage("Error : Only drafted accounts are allowed to confirm");
+            showMessage("Error : Only drafted accounts are allowed to confirm");
             return;
         }
         List<Account> validList = new ArrayList<>();
@@ -127,7 +125,7 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
             validList.add(account);
         });
         if (validList.isEmpty()) {
-            setMessage("Error : valid drafted accounts not found");
+            showMessage("Error : valid drafted accounts not found");
             return;
         }
         updateStatus(validList);
@@ -136,7 +134,7 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
     public void setAsClosed(List<Account> accountList) {
         List<Account> filteredList = filteredByStatus(Status.Confirmed, accountList);
         if (filteredList.isEmpty()) {
-            setMessage("Wrong Status : Only confirmed accounts should be closed");
+            showMessage("Wrong Status : Only confirmed accounts should be closed");
             return;
         }
         for (Account account : filteredList) {
@@ -148,7 +146,7 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
     public void reopenAccount(List<Account> accountList) {
         List<Account> filteredList = filteredByStatus(Status.Closed, accountList);
         if (filteredList.isEmpty()) {
-            setMessage("Wrong Status : closed accounts are allowed to reopen");
+            showMessage("Wrong Status : closed accounts are allowed to reopen");
             return;
         }
         for (Account account : filteredList) {
@@ -167,13 +165,13 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
     }
 
     public void insertAccount(List<Account> accountList) {
-        setMessage("Account number, name should not be empty");
+        showMessage("Account number, name should not be empty");
         StringRules rules = new StringRules();
         rules.setMinMaxLength(3, 6);
         rules.setFirstCharAlphaOnly(true);
         rules.setRulesType(RulesType.Alphanumeric);
         //
-        List<String> existingList = getAccountDao().findCodeList();
+        List<String> existingList = getAccountDao().loadCodeList();
         List<Account> validList = new ArrayList<>();
         for (Account account : accountList) {
             if (insertValidate(account, rules) && !existingList.contains(account.getCode())) {
@@ -181,7 +179,7 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
             }
         }
         if (validList.isEmpty()) {
-            setMessage("Valid accounts not found");
+            showMessage("Valid accounts not found");
             return;
         }
         List<String> currencyList = new ArrayList<>(); //getCurrencyDao().findCodeList();
@@ -204,7 +202,7 @@ public class AccountService extends AbstractService implements ExcelTypeConverte
     public void deleteAccount(List<Account> accountList) {
         List<Account> filteredList = filteredByStatus(Status.Drafted, accountList);
         if (filteredList.isEmpty()) {
-            setMessage("Error : Drafted accounts not found to delete");
+            showMessage("Error : Drafted accounts not found to delete");
             return;
         }
        /* QueryBuilder queryBuilder = getQueryBuilder("deleteAccount");

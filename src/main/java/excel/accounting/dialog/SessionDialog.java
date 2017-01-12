@@ -120,7 +120,7 @@ public class SessionDialog extends AbstractDialog {
         if (enteredPassword != null && password != null && password.equals(enteredPassword)) {
             getApplicationControl().setAuthenticated(selected.getCode(), selected.getTextValue());
             hide();
-            setMessage("Welcome " + selected.getTextValue());
+            showMessage("Welcome " + selected.getTextValue());
             viewHandler.onActionEvent(viewId);
         } else {
             messageLabel.setText("Wrong Password");

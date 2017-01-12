@@ -1,6 +1,5 @@
 package excel.accounting.dao;
 
-import excel.accounting.db.AbstractDao;
 import excel.accounting.entity.IncomeCategory;
 
 /**
@@ -12,11 +11,6 @@ import excel.accounting.entity.IncomeCategory;
 public class IncomeCategoryDao extends AbstractDao<IncomeCategory> {
     @Override
     protected String getTableName() {
-        return "entity.income_category";
-    }
-
-    @Override
-    protected String getSqlFileName() {
-        return "income-category";
+        return "income_category";
     }
 }

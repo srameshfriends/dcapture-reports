@@ -1,11 +1,9 @@
 package excel.accounting.db;
 
-import org.apache.commons.beanutils.PropertyUtils;
 import org.h2.jdbcx.JdbcConnectionPool;
 import org.h2.tools.Server;
 
 import javax.persistence.TemporalType;
-import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
@@ -19,6 +17,7 @@ public class H2Processor implements SqlProcessor {
     private SqlTableMap tableMap;
     private SqlEnumParser enumParser;
     private H2Reader reader;
+    private H2Transaction transaction;
 
     public static void main(String... args) throws Exception {
         Server.createTcpServer().start();
@@ -27,7 +26,8 @@ public class H2Processor implements SqlProcessor {
 
     void setConnectionPool(JdbcConnectionPool connectionPool) {
         this.connectionPool = connectionPool;
-        reader = new H2Reader(connectionPool);
+        reader = new H2Reader(this);
+        transaction = new H2Transaction(this);
     }
 
     JdbcConnectionPool getConnectionPool() {
@@ -47,14 +47,13 @@ public class H2Processor implements SqlProcessor {
         return tableMap.getSchema();
     }
 
-    @Override
     public QueryBuilder createQueryBuilder() {
         return new H2QueryBuilder(getSchema());
     }
 
     @Override
-    public SqlTableMap getSqlTableMap() {
-        return tableMap;
+    public SqlTable getSqlTable(Class<?> tableClass) {
+        return tableMap.get(tableClass);
     }
 
     @Override
@@ -69,71 +68,6 @@ public class H2Processor implements SqlProcessor {
 
     @Override
     public List<SqlReference> getSqlReference(Class<?> entityClass) {
-        return null;
-    }
-
-    @Override
-    public SqlQuery insertQuery(Object object) {
-        SqlTable table = getSqlTableMap().get(object.getClass());
-        if (table != null) {
-            H2QueryBuilder builder = new H2QueryBuilder(getSchema());
-            builder.insertInto(table.getName());
-            for (SqlColumn sqlColumn : table) {
-                Object fieldValue = getFieldObject(object, sqlColumn.getFieldName());
-                builder.insertColumns(sqlColumn.getName(), fieldValue);
-            }
-            return builder.getSqlQuery();
-        }
-        return null;
-    }
-
-    @Override
-    public SqlQuery updateQuery(Object object) {
-        SqlTable table = getSqlTableMap().get(object.getClass());
-        if (table != null) {
-            H2QueryBuilder builder = new H2QueryBuilder(getSchema());
-            builder.update(table.getName());
-            for (SqlColumn sqlColumn : table) {
-                Object fieldValue = getFieldObject(object, sqlColumn.getFieldName());
-                builder.updateColumns(sqlColumn.getName(), fieldValue);
-            }
-            return builder.getSqlQuery();
-        }
-        return null;
-    }
-
-    @Override
-    public SqlQuery deleteQuery(Object object) {
-        SqlTable table = getSqlTableMap().get(object.getClass());
-        if (table != null) {
-            H2QueryBuilder builder = new H2QueryBuilder(getSchema());
-            builder.deleteFrom(table.getName());
-            SqlColumn sqlColumn = table.getPrimaryColumn();
-            Object fieldValue = getFieldObject(object, sqlColumn.getFieldName());
-            builder.where(sqlColumn.getName(), fieldValue);
-            return builder.getSqlQuery();
-        }
-        return null;
-    }
-
-    private Object getFieldObject(Object obj, String fieldName) {
-        try {
-            return PropertyUtils.getProperty(obj, fieldName);
-        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
-            // ignore Exception
-        }
-        return null;
-    }
-
-    @Override
-    public H2QueryBuilder selectBuilder(Class<?> entityClass) {
-        SqlTable sqlTable = getSqlTableMap().get(entityClass);
-        if (sqlTable != null) {
-            H2QueryBuilder builder = new H2QueryBuilder(getSchema());
-            builder.selectFrom(sqlTable.getName());
-            builder.selectColumns(sqlTable.getColumnFieldMap().keySet());
-            return builder;
-        }
         return null;
     }
 
@@ -170,8 +104,13 @@ public class H2Processor implements SqlProcessor {
     }
 
     @Override
-    public SqlTransaction createSqlTransaction() {
-        return new H2Transaction(this);
+    public SqlTransaction getSqlTransaction() {
+        return transaction;
+    }
+
+    @Override
+    public SqlTableMap getSqlTableMap() {
+        return tableMap;
     }
 
     private String createTableQuery(String table, List<SqlColumn> columnList) {

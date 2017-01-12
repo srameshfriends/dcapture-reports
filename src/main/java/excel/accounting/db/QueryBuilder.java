@@ -7,8 +7,6 @@ import java.util.Set;
  * Query Builder
  */
 public interface QueryBuilder {
-    int getId();
-
     String getSchema();
 
     SqlQuery getSqlQuery();

@@ -14,13 +14,9 @@ import java.util.List;
  * @since Oct, 2016
  */
 public class AccountDao extends AbstractDao<Account> {
-    @Override
-    protected String getTableName() {
-        return "entity.account";
-    }
 
     @Override
-    protected String getSqlFileName() {
+    protected String getTableName() {
         return "account";
     }
 
@@ -38,9 +34,5 @@ public class AccountDao extends AbstractDao<Account> {
             queryBuilder.where(searchTextQuery);
         }
         return fetchList(queryBuilder);
-    }
-
-    public List<String> findCodeList() {
-        return null;
     }
 }

@@ -20,11 +20,6 @@ import java.util.stream.Collectors;
  */
 public class IncomeCategoryService extends AbstractService implements ExcelTypeConverter<IncomeCategory> {
 
-    @Override
-    protected String getSqlFileName() {
-        return "income-category";
-    }
-
     public List<IncomeCategory> searchIncomeCategory(String searchText, Status... statuses) {
        /* ClauseQuery clauseQuery = new ClauseQuery("status");
         clauseQuery.addParameter(statuses);

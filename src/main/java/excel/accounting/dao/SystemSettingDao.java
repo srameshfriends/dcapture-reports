@@ -16,12 +16,7 @@ import java.util.List;
 public class SystemSettingDao extends AbstractDao<SystemSetting> {
     @Override
     protected String getTableName() {
-        return "entity.system_setting";
-    }
-
-    @Override
-    protected String getSqlFileName() {
-        return "system-setting";
+        return "system_setting";
     }
 
     private List<SystemSetting> findByCodeArray(String... codeArray) {

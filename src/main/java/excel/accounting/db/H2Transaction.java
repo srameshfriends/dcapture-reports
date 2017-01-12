@@ -9,63 +9,96 @@ import java.util.List;
 /**
  * H2 Transaction
  */
-public class H2Transaction implements SqlTransaction {
-    private H2Processor processor;
+public class H2Transaction extends AbstractTransaction implements SqlTransaction {
+    private final H2Processor processor;
 
-    public H2Transaction(H2Processor processor) {
+    H2Transaction(H2Processor processor) {
         this.processor = processor;
     }
 
-    @Override
-    public void executeBatch(SqlQuery... queries) throws SQLException {
-        List<SqlQuery> queryList = new ArrayList<>();
-        Collections.addAll(queryList, queries);
-        executeBatch(queryList);
+    private H2Processor getProcessor() {
+        return processor;
     }
 
     @Override
-    public void executeCommit(SqlQuery... queries) throws SQLException {
-        List<SqlQuery> queryList = new ArrayList<>();
-        Collections.addAll(queryList, queries);
-        executeCommit(queryList);
-    }
-
-    @Override
-    public void insert(List<Object> dataList) throws SQLException {
-        List<SqlQuery> queryList = new ArrayList<>();
-        for (Object object : dataList) {
-            queryList.add(processor.insertQuery(object));
+    public void executeBatch(SqlQuery sqlQuery) throws SQLException {
+        Connection connection = getProcessor().getConnectionPool().getConnection();
+        connection.setAutoCommit(false);
+        try {
+            PreparedStatement statement = connection.prepareStatement(sqlQuery.toString());
+            addParameter(statement, sqlQuery.getParameterList());
+            statement.addBatch();
+            statement.executeBatch();
+            connection.commit();
+            close(statement);
+            close(connection);
+        } catch (SQLException ex) {
+            rollback(connection);
+            throw ex;
         }
-        executeCommit(queryList);
     }
 
     @Override
-    public void update(List<Object> dataList) throws SQLException {
-        List<SqlQuery> queryList = new ArrayList<>();
-        for (Object object : dataList) {
-            queryList.add(processor.updateQuery(object));
+    public void executeCommit(SqlQuery sqlQuery) throws SQLException {
+        Connection connection = null;
+        try {
+            connection = getProcessor().getConnectionPool().getConnection();
+            connection.setAutoCommit(false);
+            PreparedStatement statement = connection.prepareStatement(sqlQuery.toString());
+            addParameter(statement, sqlQuery.getParameterList());
+            statement.execute();
+            connection.commit();
+            close(connection);
+        } catch (SQLException ex) {
+            rollback(connection);
+            throw ex;
         }
-        executeCommit(queryList);
     }
 
     @Override
-    public void delete(List<Object> dataList) throws SQLException {
-        List<SqlQuery> queryList = new ArrayList<>();
-        for (Object object : dataList) {
-            queryList.add(processor.deleteQuery(object));
+    public SqlQuery insertQuery(Object object) {
+        SqlTable table = getProcessor().getSqlTable(object.getClass());
+        H2QueryBuilder builder = new H2QueryBuilder(getProcessor().getSchema());
+        builder.insertInto(table.getName());
+        for (SqlColumn sqlColumn : table) {
+            Object fieldValue = getFieldObject(object, sqlColumn.getFieldName());
+            builder.insertColumns(sqlColumn.getName(), fieldValue);
         }
-        executeCommit(queryList);
+        return builder.getSqlQuery();
+    }
+
+    @Override
+    public SqlQuery updateQuery(Object object) {
+        SqlTable table = getProcessor().getSqlTable(object.getClass());
+        H2QueryBuilder builder = new H2QueryBuilder(getProcessor().getSchema());
+        builder.update(table.getName());
+        for (SqlColumn sqlColumn : table) {
+            Object fieldValue = getFieldObject(object, sqlColumn.getFieldName());
+            builder.updateColumns(sqlColumn.getName(), fieldValue);
+        }
+        return builder.getSqlQuery();
+    }
+
+    @Override
+    public SqlQuery deleteQuery(Object object) {
+        SqlTable table = getProcessor().getSqlTable(object.getClass());
+        H2QueryBuilder builder = new H2QueryBuilder(getProcessor().getSchema());
+        builder.deleteFrom(table.getName());
+        SqlColumn sqlColumn = table.getPrimaryColumn();
+        Object fieldValue = getFieldObject(object, sqlColumn.getFieldName());
+        builder.where(sqlColumn.getName(), fieldValue);
+        return builder.getSqlQuery();
     }
 
     @Override
     public void executeBatch(List<SqlQuery> queries) throws SQLException {
-        Connection connection = processor.getConnectionPool().getConnection();
+        Connection connection = getProcessor().getConnectionPool().getConnection();
         connection.setAutoCommit(false);
         try {
             SqlQuery sqlQuery = queries.get(0);
-            PreparedStatement statement = connection.prepareStatement(sqlQuery.getQuery());
+            PreparedStatement statement = connection.prepareStatement(sqlQuery.toString());
             for (SqlQuery sql : queries) {
-                addParameter(statement, sql);
+                addParameter(statement, sql.getParameterList());
                 statement.addBatch();
             }
             statement.executeBatch();
@@ -82,11 +115,11 @@ public class H2Transaction implements SqlTransaction {
     public void executeCommit(List<SqlQuery> queries) throws SQLException {
         Connection connection = null;
         try {
-            connection = processor.getConnectionPool().getConnection();
+            connection = getProcessor().getConnectionPool().getConnection();
             connection.setAutoCommit(false);
             for (SqlQuery sql : queries) {
-                PreparedStatement statement = connection.prepareStatement(sql.getQuery());
-                addParameter(statement, sql);
+                PreparedStatement statement = connection.prepareStatement(sql.toString());
+                addParameter(statement, sql.getParameterList());
                 statement.execute();
             }
             connection.commit();

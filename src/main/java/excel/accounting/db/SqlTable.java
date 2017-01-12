@@ -6,7 +6,7 @@ import java.util.*;
 /**
  * Sql Table
  */
-class SqlTable extends ArrayList<SqlColumn> {
+public class SqlTable extends ArrayList<SqlColumn> {
     private final Class<?> type;
     private final String name;
     private List<Field> fieldList;

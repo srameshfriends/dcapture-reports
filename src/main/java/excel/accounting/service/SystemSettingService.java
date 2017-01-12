@@ -1,12 +1,9 @@
 package excel.accounting.service;
 
 import excel.accounting.dao.SystemSettingDao;
-import excel.accounting.db.*;
 import excel.accounting.entity.SystemSetting;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * System Setting Service
@@ -16,11 +13,6 @@ import java.util.Map;
  */
 public class SystemSettingService extends AbstractService {
     private SystemSettingDao currencyDao;
-
-    @Override
-    protected String getSqlFileName() {
-        return "system-setting";
-    }
 
     private SystemSettingDao getSystemSettingDao() {
         if (currencyDao == null) {

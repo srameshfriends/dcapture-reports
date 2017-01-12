@@ -46,4 +46,8 @@ public interface SqlReader {
     List<BigDecimal> bigDecimalList(SqlQuery query) throws SQLException;
 
     List<BigDecimal[]> bigDecimalArrayList(SqlQuery query) throws SQLException;
+
+    Object getUsedReference(Class<?> entityClass, String code) throws SQLException;
+
+    H2QueryBuilder selectBuilder(Class<?> tableClass);
 }

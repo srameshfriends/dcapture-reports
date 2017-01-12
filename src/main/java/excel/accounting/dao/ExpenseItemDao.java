@@ -1,11 +1,7 @@
 package excel.accounting.dao;
 
-import excel.accounting.db.*;
 import excel.accounting.entity.*;
-import excel.accounting.shared.DataConverter;
 
-import java.math.BigDecimal;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -15,11 +11,6 @@ public class ExpenseItemDao extends AbstractDao<ExpenseItem> {
     @Override
     protected String getTableName() {
         return "expense_item";
-    }
-
-    @Override
-    protected String getSqlFileName() {
-        return "expense-item";
     }
 
     public List<ExpenseItem> searchExpenseItems(String searchText, Status[] status, PaidStatus[] paidStatuses) {

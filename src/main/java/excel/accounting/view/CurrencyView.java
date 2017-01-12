@@ -1,7 +1,6 @@
 package excel.accounting.view;
 
 import excel.accounting.dao.CurrencyDao;
-import excel.accounting.db.*;
 import excel.accounting.entity.Currency;
 import excel.accounting.poi.ReadExcelData;
 import excel.accounting.poi.WriteExcelData;
@@ -27,8 +26,7 @@ import java.util.List;
  * @author Ramesh
  * @since Oct, 2016
  */
-public class CurrencyView extends AbstractView implements ViewHolder, SqlWriter,
-        ListChangeListener<Integer>, ActionHandler {
+public class CurrencyView extends AbstractView implements ViewHolder, ListChangeListener<Integer>, ActionHandler {
     private final int IMPORT = 100, EXPORT = 110, EXPORT_SELECTED = 120;
     private final int DELETE_RECORD = 10, SET_DRAFTED = 20, SET_CONFIRMED = 30, SET_CLOSED = 40, REOPEN_CLOSED = 50;
     private final int REFRESH_RECORD = 1100;
@@ -140,30 +138,27 @@ public class CurrencyView extends AbstractView implements ViewHolder, SqlWriter,
         }
         switch (actionId) {
             case SET_CONFIRMED:
-                currencyService.setAsConfirmed(tableView.getSelectedItems(), actionId, this);
+                currencyService.setAsConfirmed(tableView.getSelectedItems());
                 break;
             case SET_DRAFTED:
                 currencyService.setAsDrafted(tableView.getSelectedItems());
                 break;
             case SET_CLOSED:
-                currencyService.setAsClosed(tableView.getSelectedItems(), actionId, this);
+                currencyService.setAsClosed(tableView.getSelectedItems());
                 break;
             case REOPEN_CLOSED:
-                currencyService.reopenCurrency(tableView.getSelectedItems(), actionId, this);
+                currencyService.reopenCurrency(tableView.getSelectedItems());
                 break;
         }
+        loadRecords();
     }
 
     private void deleteEvent() {
         if (!confirmDialog("Are you really wish to delete?")) {
             return;
         }
-        currencyService.deleteCurrency(tableView.getSelectedItems(), DELETE_RECORD, this);
-    }
-
-    @Override
-    public void onSqlUpdated(int pid) {
-        setItems(currencyDao.loadAll(Currency.class));
+        currencyService.deleteCurrency(tableView.getSelectedItems());
+        loadRecords();
     }
 
     private void setItems(List<Currency> dataList) {

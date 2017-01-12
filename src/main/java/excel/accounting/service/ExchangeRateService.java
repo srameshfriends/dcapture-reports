@@ -36,11 +36,6 @@ public class ExchangeRateService extends AbstractService implements ExcelTypeCon
         return currencyDao;
     }
 
-    @Override
-    protected String getSqlFileName() {
-        return "exchange-rate";
-    }
-
     private boolean insertValidate(ExchangeRate exchangeRate) {
         return !(exchangeRate.getCode() == null || exchangeRate.getAsOfDate() == null);
     }
@@ -64,24 +59,24 @@ public class ExchangeRateService extends AbstractService implements ExcelTypeCon
     public void setAsDrafted(List<ExchangeRate> dataList) {
         List<ExchangeRate> filteredList = filteredByStatus(Status.Confirmed, dataList);
         if (filteredList.isEmpty()) {
-            setMessage("Only confirmed exchange rate set as drafted");
+            showMessage("Only confirmed exchange rate set as drafted");
             return;
         }
-        for (ExchangeRate exchangeRate : filteredList) {
+       /* for (ExchangeRate exchangeRate : filteredList) {
             Object usedReference = getExchangeRateDao().getUsedReference(exchangeRate);
             if (usedReference != null) {
-                setMessage(usedReference.toString());
+                showMessage(usedReference.toString());
                 return;
             }
             exchangeRate.setStatus(Status.Drafted);
-        }
+        }*/
         updateStatus(filteredList);
     }
 
     public void setAsConfirmed(List<ExchangeRate> dataList) {
         List<ExchangeRate> filteredList = filteredByStatus(Status.Drafted, dataList);
         if (filteredList.isEmpty()) {
-            setMessage("Error : Only drafted exchange rate allowed to confirm");
+            showMessage("Error : Only drafted exchange rate allowed to confirm");
             return;
         }
         List<ExchangeRate> validList = new ArrayList<>();
@@ -90,14 +85,14 @@ public class ExchangeRateService extends AbstractService implements ExcelTypeCon
             validList.add(exchangeRate);
         });
         if (validList.isEmpty()) {
-            setMessage("Error : valid exchange rate not found");
+            showMessage("Error : valid exchange rate not found");
             return;
         }
         updateStatus(validList);
     }
 
     public boolean insertExchangeRate(List<ExchangeRate> dataList) {
-        setMessage("");
+        showMessage("");
         int sequence = getExchangeRateDao().findLastSequence();
         List<ExchangeRate> validList = new ArrayList<>();
         for (ExchangeRate exchangeRate : dataList) {
@@ -106,7 +101,7 @@ public class ExchangeRateService extends AbstractService implements ExcelTypeCon
             }
         }
         if (validList.isEmpty()) {
-            setMessage("Valid exchange rate not found");
+            showMessage("Valid exchange rate not found");
             return false;
         }
         List<String> currencyList = new ArrayList<>(); // getCurrencyDao().findCodeList();
@@ -139,7 +134,7 @@ public class ExchangeRateService extends AbstractService implements ExcelTypeCon
     public void deleteExchangeRate(List<ExchangeRate> itemList) {
         List<ExchangeRate> filteredList = filteredByStatus(Status.Drafted, itemList);
         if (filteredList.isEmpty()) {
-            setMessage("Drafted exchange rate not found to delete");
+            showMessage("Drafted exchange rate not found to delete");
             return;
         }
         /*QueryBuilder queryBuilder = getQueryBuilder("deleteExchangeRate");

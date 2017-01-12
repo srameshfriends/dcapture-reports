@@ -28,11 +28,6 @@ public class PaymentService extends AbstractService implements ExcelTypeConverte
         return paymentDao;
     }
 
-    @Override
-    protected String getSqlFileName() {
-        return "payment";
-    }
-
     private boolean insertValid(int index, Payment payment) {
         StringBuilder builder = new StringBuilder();
         if (StringRules.isEmpty(payment.getCode())) {
@@ -45,7 +40,7 @@ public class PaymentService extends AbstractService implements ExcelTypeConverte
             builder.append("Description Empty");
         }
         if (builder.length() != 0) {
-            setMessage("Line : " + index + " \t " + builder.toString());
+            showMessage("Line : " + index + " \t " + builder.toString());
             return false;
         }
         return true;

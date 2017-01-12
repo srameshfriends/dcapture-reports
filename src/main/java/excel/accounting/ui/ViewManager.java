@@ -168,7 +168,7 @@ public class ViewManager extends AbstractControl implements ActionHandler {
             sessionDialog.show(name);
             return;
         }*/
-        setMessage("");
+        showMessage("");
         ViewConfig viewConfig = getViewConfig(name);
         if (viewConfig == null) {
             throw new NullPointerException("View config not found " + name);

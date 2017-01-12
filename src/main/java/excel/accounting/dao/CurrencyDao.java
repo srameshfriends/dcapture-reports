@@ -12,11 +12,6 @@ import java.util.List;
 public class CurrencyDao extends AbstractDao<Currency> {
     @Override
     protected String getTableName() {
-        return "entity.currency";
-    }
-
-    @Override
-    protected String getSqlFileName() {
         return "currency";
     }
 

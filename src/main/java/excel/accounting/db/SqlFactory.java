@@ -233,7 +233,7 @@ public abstract class SqlFactory {
     }
 
     @SuppressWarnings("unchecked")
-    static <T> List<T> toEntityList(SqlProcessor processor, SqlMetaDataResult dataResult) {
+    public static <T> List<T> toEntityList(SqlProcessor processor, SqlMetaDataResult dataResult) {
         SqlTable table = getValidOrmTable(processor.getSqlTableMap(), dataResult.getMetaData());
         if (table == null) {
             return new ArrayList<T>();

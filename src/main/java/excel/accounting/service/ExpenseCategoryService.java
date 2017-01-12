@@ -1,6 +1,5 @@
 package excel.accounting.service;
 
-import excel.accounting.db.*;
 import excel.accounting.entity.*;
 import excel.accounting.poi.ExcelTypeConverter;
 import excel.accounting.dao.ExpenseCategoryDao;
@@ -10,9 +9,7 @@ import excel.accounting.shared.StringRules;
 import org.apache.poi.ss.usermodel.Cell;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -29,11 +26,6 @@ public class ExpenseCategoryService extends AbstractService implements ExcelType
             expenseCategoryDao = (ExpenseCategoryDao) getBean("expenseCategoryDao");
         }
         return expenseCategoryDao;
-    }
-
-    @Override
-    protected String getSqlFileName() {
-        return "expense-category";
     }
 
     private boolean confirmValidate(ExpenseCategory expenseCategory) {
@@ -57,24 +49,24 @@ public class ExpenseCategoryService extends AbstractService implements ExcelType
     public void setAsDrafted(List<ExpenseCategory> dataList) {
         List<ExpenseCategory> filteredList = filteredByStatus(Status.Confirmed, dataList);
         if (filteredList.isEmpty()) {
-            setMessage("Wrong Status : Only confirmed expense category set as drafted");
+            showMessage("Wrong Status : Only confirmed expense category set as drafted");
             return;
         }
-        for (ExpenseCategory data : filteredList) {
+       /* for (ExpenseCategory data : filteredList) {
             Object usedReference = getExpenseCategoryDao().getUsedReference(data);
             if (usedReference != null) {
-                setMessage(usedReference.toString());
+                showMessage(usedReference.toString());
                 return;
             }
             data.setStatus(Status.Drafted);
-        }
+        }*/
         updateStatus(filteredList);
     }
 
     public void setAsConfirmed(List<ExpenseCategory> dataList) {
         List<ExpenseCategory> filteredList = filteredByStatus(Status.Drafted, dataList);
         if (filteredList.isEmpty()) {
-            setMessage("Error : Only drafted expense category are allowed to confirm");
+            showMessage("Error : Only drafted expense category are allowed to confirm");
             return;
         }
         List<ExpenseCategory> validList = new ArrayList<>();
@@ -83,7 +75,7 @@ public class ExpenseCategoryService extends AbstractService implements ExcelType
             validList.add(account);
         });
         if (validList.isEmpty()) {
-            setMessage("Error : valid drafted expense category not found");
+            showMessage("Error : valid drafted expense category not found");
             return;
         }
         updateStatus(validList);
@@ -92,7 +84,7 @@ public class ExpenseCategoryService extends AbstractService implements ExcelType
     public void setAsClosed(List<ExpenseCategory> dataList) {
         List<ExpenseCategory> filteredList = filteredByStatus(Status.Confirmed, dataList);
         if (filteredList.isEmpty()) {
-            setMessage("Error : Only confirmed expense category should be closed");
+            showMessage("Error : Only confirmed expense category should be closed");
             return;
         }
         for (ExpenseCategory expenseCategory : filteredList) {
@@ -104,7 +96,7 @@ public class ExpenseCategoryService extends AbstractService implements ExcelType
     public void reopenExpenseCategory(List<ExpenseCategory> dataList) {
         List<ExpenseCategory> filteredList = filteredByStatus(Status.Closed, dataList);
         if (filteredList.isEmpty()) {
-            setMessage("Wrong Status : closed expense category are allowed to reopen");
+            showMessage("Wrong Status : closed expense category are allowed to reopen");
             return;
         }
         for (ExpenseCategory expenseCategory : filteredList) {
@@ -114,7 +106,7 @@ public class ExpenseCategoryService extends AbstractService implements ExcelType
     }
 
     public void insertExpenseCategory(List<ExpenseCategory> dataList) {
-        setMessage("Expense category, code, name should not be empty");
+        showMessage("Expense category, code, name should not be empty");
         StringRules rules = new StringRules();
         rules.setMinMaxLength(2, 6);
         rules.setFirstCharAlphaOnly(true);
@@ -128,7 +120,7 @@ public class ExpenseCategoryService extends AbstractService implements ExcelType
             }
         }
         if (validList.isEmpty()) {
-            setMessage("Valid expense category not found");
+            showMessage("Valid expense category not found");
             return;
         }
         /*QueryBuilder queryBuilder = getQueryBuilder("insertExpenseCategory");

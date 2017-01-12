@@ -1,7 +1,5 @@
 package excel.accounting.db;
 
-import org.h2.jdbcx.JdbcConnectionPool;
-
 import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
@@ -12,10 +10,18 @@ import java.util.stream.Collectors;
  * Sql Reader
  */
 public class H2Reader implements SqlReader {
-    private final JdbcConnectionPool pool;
+    private final H2Processor processor;
 
-    public H2Reader(JdbcConnectionPool pool) {
-        this.pool = pool;
+    H2Reader(H2Processor processor) {
+        this.processor = processor;
+    }
+
+    private Connection getConnection() throws SQLException {
+        return processor.getConnectionPool().getConnection();
+    }
+
+    private SqlProcessor getProcessor() {
+        return processor;
     }
 
     @Override
@@ -24,9 +30,9 @@ public class H2Reader implements SqlReader {
         PreparedStatement statement = null;
         ResultSet resultSet = null;
         try {
-            connection = pool.getConnection();
-            statement = connection.prepareStatement(sql.getQuery());
-            addParameter(statement, sql);
+            connection = getConnection();
+            statement = connection.prepareStatement(sql.toString());
+            addParameter(statement, sql.getParameterList());
             resultSet = statement.executeQuery();
             Object data = null;
             if (resultSet.next()) {
@@ -46,9 +52,9 @@ public class H2Reader implements SqlReader {
         PreparedStatement statement = null;
         ResultSet result = null;
         try {
-            connection = pool.getConnection();
-            statement = connection.prepareStatement(sql.getQuery());
-            addParameter(statement, sql);
+            connection = getConnection();
+            statement = connection.prepareStatement(sql.toString());
+            addParameter(statement, sql.getParameterList());
             result = statement.executeQuery();
             Object[] dataArray = objectArray(result);
             close(result, statement, connection);
@@ -65,9 +71,9 @@ public class H2Reader implements SqlReader {
         PreparedStatement statement = null;
         ResultSet resultSet = null;
         try {
-            connection = pool.getConnection();
-            statement = connection.prepareStatement(sql.getQuery());
-            addParameter(statement, sql);
+            connection = getConnection();
+            statement = connection.prepareStatement(sql.toString());
+            addParameter(statement, sql.getParameterList());
             resultSet = statement.executeQuery();
             List<Object> dataList = objectList(resultSet);
             close(resultSet, statement, connection);
@@ -84,9 +90,9 @@ public class H2Reader implements SqlReader {
         PreparedStatement statement = null;
         ResultSet result = null;
         try {
-            connection = pool.getConnection();
-            statement = connection.prepareStatement(sql.getQuery());
-            addParameter(statement, sql);
+            connection = getConnection();
+            statement = connection.prepareStatement(sql.toString());
+            addParameter(statement, sql.getParameterList());
             result = statement.executeQuery();
             List<Object[]> resultList = objectArrayList(result);
             close(result, statement, connection);
@@ -104,9 +110,9 @@ public class H2Reader implements SqlReader {
         ResultSet result = null;
         SqlMetaDataResult dataResult = null;
         try {
-            connection = pool.getConnection();
-            statement = connection.prepareStatement(sql.getQuery());
-            addParameter(statement, sql);
+            connection = getConnection();
+            statement = connection.prepareStatement(sql.toString());
+            addParameter(statement, sql.getParameterList());
             result = statement.executeQuery();
             SqlMetaData[] metaData = getMetaData(result);
             List<Object[]> resultList = objectArrayList(result);
@@ -201,6 +207,33 @@ public class H2Reader implements SqlReader {
             result.add(bigDecimalArray(objArr));
         }
         return result;
+    }
+
+    @Override
+    public Object getUsedReference(Class<?> entityClass, String code) throws SQLException {
+        List<SqlReference> referenceList = code == null ? null : getProcessor().getSqlReference(entityClass);
+        if (referenceList == null) {
+            return null;
+        }
+        for (SqlReference reference : referenceList) {
+            QueryBuilder tool = new H2QueryBuilder(getProcessor().getSchema());
+            tool.selectFrom(reference.getReferenceTable().getName()).selectColumns(reference.getReferenceColumn().getName());
+            tool.where(reference.getReferenceColumn().getName(), code);
+            Object object = objectValue(tool.getSqlQuery());
+            if (object != null) {
+                return object;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public H2QueryBuilder selectBuilder(Class<?> tableClass) {
+        SqlTable sqlTable = getProcessor().getSqlTable(tableClass);
+        H2QueryBuilder builder = new H2QueryBuilder(getProcessor().getSchema());
+        builder.selectFrom(sqlTable.getName());
+        builder.selectColumns(sqlTable.getColumnFieldMap().keySet());
+        return builder;
     }
 
     private List<Object> objectList(ResultSet rs) throws SQLException {

@@ -26,11 +26,6 @@ public class AssetService extends AbstractService implements ExcelTypeConverter<
         return assetDao;
     }
 
-    @Override
-    protected String getSqlFileName() {
-        return "asset";
-    }
-
     private void updateStatus(Status requiredStatus, Status changedStatus, List<Asset> assetList) {
         List<Asset> filteredList = filteredByStatus(requiredStatus, assetList);
         if (filteredList.isEmpty()) {

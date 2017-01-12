@@ -8,17 +8,17 @@ import java.util.List;
  */
 public interface SqlTransaction {
 
-    void executeBatch(SqlQuery... queries) throws SQLException;
+    void executeBatch(SqlQuery query) throws SQLException;
 
     void executeBatch(List<SqlQuery> queries) throws SQLException;
 
-    void executeCommit(SqlQuery... queries) throws SQLException;
+    void executeCommit(SqlQuery query) throws SQLException;
 
     void executeCommit(List<SqlQuery> queries) throws SQLException;
 
-    void insert(List<Object> dataList) throws SQLException;
+    SqlQuery insertQuery(Object object) throws SQLException;
 
-    void update(List<Object> dataList) throws SQLException;
+    SqlQuery updateQuery(Object object) throws SQLException;
 
-    void delete(List<Object> dataList) throws SQLException;
+    SqlQuery deleteQuery(Object object) throws SQLException;
 }

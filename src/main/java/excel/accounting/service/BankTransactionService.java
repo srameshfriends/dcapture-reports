@@ -19,11 +19,6 @@ import java.util.stream.Collectors;
 public class BankTransactionService extends AbstractService implements ExcelTypeConverter<BankTransaction> {
     private BankTransactionDao bankTransactionDao;
 
-    @Override
-    protected String getSqlFileName() {
-        return "bank-transaction";
-    }
-
     private BankTransactionDao getBankTransactionDao() {
         if (bankTransactionDao == null) {
             bankTransactionDao = (BankTransactionDao) getBean("bankTransactionDao");

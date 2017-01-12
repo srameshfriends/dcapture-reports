@@ -15,20 +15,10 @@ public class H2QueryBuilder implements QueryBuilder {
     private List<Object> updateParameters, insertParameters;
     private StringBuilder joinBuilder;
     private SqlQuery sqlQuery;
-    private int id, limit = -1, offset = -1;
+    private int limit = -1, offset = -1;
 
-    public H2QueryBuilder(String schema) {
+    H2QueryBuilder(String schema) {
         this.schema = schema;
-    }
-
-    public H2QueryBuilder setId(int id) {
-        this.id = id;
-        return H2QueryBuilder.this;
-    }
-
-    @Override
-    public int getId() {
-        return id;
     }
 
     @Override
@@ -155,7 +145,6 @@ public class H2QueryBuilder implements QueryBuilder {
     public SqlQuery getSqlQuery() {
         if (sqlQuery == null) {
             sqlQuery = new SqlQuery();
-            sqlQuery.setId(getId());
             if (selectTable != null) {
                 buildSelectQuery(sqlQuery);
             } else if (updateTable != null) {

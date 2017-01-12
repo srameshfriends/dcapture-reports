@@ -116,8 +116,8 @@ public class ApplicationControl {
         queryList.add(sqlProcessor.createSchemaQuery());
         queryList.addAll(sqlProcessor.createTableQueries());
         queryList.addAll(sqlProcessor.alterTableQueries());
-        SqlTransaction transaction = sqlProcessor.createSqlTransaction();
         try {
+            SqlTransaction transaction = sqlProcessor.getSqlTransaction();
             transaction.executeCommit(queryList);
         } catch (SQLException ex) {
             ex.printStackTrace();

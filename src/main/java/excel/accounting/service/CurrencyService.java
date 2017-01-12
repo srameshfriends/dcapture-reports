@@ -1,6 +1,7 @@
 package excel.accounting.service;
 
-import excel.accounting.db.*;
+import excel.accounting.db.QueryBuilder;
+import excel.accounting.db.SqlQuery;
 import excel.accounting.entity.Currency;
 import excel.accounting.entity.Status;
 import excel.accounting.poi.ExcelTypeConverter;
@@ -19,13 +20,8 @@ import java.util.stream.Collectors;
  * @author Ramesh
  * @since Oct, 2016
  */
-public class CurrencyService extends AbstractService implements ExcelTypeConverter<Currency> {
+public class CurrencyService extends AbstractService<Currency> implements ExcelTypeConverter<Currency> {
     private CurrencyDao currencyDao;
-
-    @Override
-    protected String getSqlFileName() {
-        return "currency";
-    }
 
     private CurrencyDao getCurrencyDao() {
         if (currencyDao == null) {
@@ -42,7 +38,7 @@ public class CurrencyService extends AbstractService implements ExcelTypeConvert
                 tool.update("currency").updateColumns("status", currency.getStatus()).where("code", currency.getCode());
                 queryList.add(tool.getSqlQuery());
             }
-            update(queryList);
+            executeBatch(queryList);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -51,24 +47,28 @@ public class CurrencyService extends AbstractService implements ExcelTypeConvert
     public void setAsDrafted(List<Currency> currencyList) {
         List<Currency> filteredList = filteredByStatus(Status.Confirmed, currencyList);
         if (filteredList.isEmpty()) {
-            setMessage("Wrong Status : confirmed currency are allowed to modify as drafted");
+            showMessage("Wrong Status : confirmed currency are allowed to modify as drafted");
             return;
         }
-        for (Currency currency : filteredList) {
-            Object errorMessage = getCurrencyDao().getUsedReference(currency);
-            if (errorMessage != null) {
-                setMessage(errorMessage.toString());
-                return;
+        try {
+            for (Currency currency : filteredList) {
+                Object errorMessage = getSqlReader().getUsedReference(Currency.class, currency.getCode());
+                if (errorMessage != null) {
+                    showMessage(errorMessage.toString());
+                    return;
+                }
+                currency.setStatus(Status.Drafted);
             }
-            currency.setStatus(Status.Drafted);
+            updateStatus(filteredList);
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
-        updateStatus(filteredList);
     }
 
-    public void setAsConfirmed(List<Currency> currencyList, int pid, SqlWriter writer) {
+    public void setAsConfirmed(List<Currency> currencyList) {
         List<Currency> filteredList = filteredByStatus(Status.Drafted, currencyList);
         if (filteredList.isEmpty()) {
-            setMessage("Wrong Status : drafted currency are allowed to modify as confirmed");
+            showMessage("Wrong Status : drafted currency are allowed to modify as confirmed");
             return;
         }
         for (Currency currency : filteredList) {
@@ -77,10 +77,10 @@ public class CurrencyService extends AbstractService implements ExcelTypeConvert
         updateStatus(filteredList);
     }
 
-    public void setAsClosed(List<Currency> currencyList, int pid, SqlWriter writer) {
+    public void setAsClosed(List<Currency> currencyList) {
         List<Currency> filteredList = filteredByStatus(Status.Confirmed, currencyList);
         if (filteredList.isEmpty()) {
-            setMessage("Wrong Status : confirmed currency are allowed to modify as closed");
+            showMessage("Wrong Status : confirmed currency are allowed to modify as closed");
             return;
         }
         for (Currency currency : filteredList) {
@@ -89,10 +89,10 @@ public class CurrencyService extends AbstractService implements ExcelTypeConvert
         updateStatus(filteredList);
     }
 
-    public void reopenCurrency(List<Currency> currencyList, int pid, SqlWriter writer) {
+    public void reopenCurrency(List<Currency> currencyList) {
         List<Currency> filteredList = filteredByStatus(Status.Closed, currencyList);
         if (filteredList.isEmpty()) {
-            setMessage("Wrong Status : closed currency are allowed to reopen");
+            showMessage("Wrong Status : closed currency are allowed to reopen");
             return;
         }
         for (Currency currency : filteredList) {
@@ -106,7 +106,7 @@ public class CurrencyService extends AbstractService implements ExcelTypeConvert
     }
 
     public void insertCurrency(List<Currency> currencyList) {
-        setMessage("Currency code, name should not be empty");
+        showMessage("Currency code, name should not be empty");
         StringRules rules = new StringRules();
         rules.setMinMaxLength(3, 3);
         rules.setRulesType(RulesType.AlphaOnly);
@@ -114,18 +114,18 @@ public class CurrencyService extends AbstractService implements ExcelTypeConvert
         List<Currency> validList = currencyList.stream().filter(currency ->
                 insertValid(currency, rules)).collect(Collectors.toList());
         if (validList.isEmpty()) {
-            setMessage("Valid currency not found");
+            showMessage("Valid currency not found");
         } else {
-            insert(currencyList);
+            insertList(currencyList);
         }
     }
 
-    public void deleteCurrency(List<Currency> currencyList, int pid, SqlWriter writer) {
+    public void deleteCurrency(List<Currency> currencyList) {
         List<Currency> filteredList = filteredByStatus(Status.Drafted, currencyList);
         if (filteredList.isEmpty()) {
-            setMessage("Error : Only drafted currency allowed to delete");
+            showMessage("Error : Only drafted currency allowed to delete");
         } else {
-            delete(currencyList);
+            deleteList(currencyList);
         }
     }
 

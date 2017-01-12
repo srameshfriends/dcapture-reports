@@ -25,11 +25,6 @@ public class ExpenseItemService extends AbstractService implements ExcelTypeConv
     private AccountDao accountDao;
     private ExpenseCategoryDao expenseCategoryDao;
 
-    @Override
-    protected String getSqlFileName() {
-        return "expense-item";
-    }
-
     private AccountDao getAccountDao() {
         if (accountDao == null) {
             accountDao = (AccountDao) getBean("accountDao");
@@ -71,17 +66,17 @@ public class ExpenseItemService extends AbstractService implements ExcelTypeConv
     public void setAsDrafted(List<ExpenseItem> dataList) {
         List<ExpenseItem> filteredList = filteredByStatus(Status.Confirmed, dataList);
         if (filteredList.isEmpty()) {
-            setMessage("Wrong Status : Confirmed expense items are allowed to modify as drafted");
+            showMessage("Wrong Status : Confirmed expense items are allowed to modify as drafted");
             return;
         }
-        for (ExpenseItem expenseItem : filteredList) {
+       /* for (ExpenseItem expenseItem : filteredList) {
             Object reference = getExpenseItemDao().getUsedReference(expenseItem);
             if(reference != null) {
-                setMessage(reference.toString());
+                showMessage(reference.toString());
                 return;
             }
             expenseItem.setStatus(Status.Drafted);
-        }
+        }*/
         updateStatus(filteredList);
     }
 
@@ -93,7 +88,7 @@ public class ExpenseItemService extends AbstractService implements ExcelTypeConv
     public void setAsConfirmed(List<ExpenseItem> expenseItemList) {
         List<ExpenseItem> filteredList = filteredByStatus(Status.Drafted, expenseItemList);
         if (filteredList.isEmpty()) {
-            setMessage("Error : Only drafted expenses are allowed to confirm");
+            showMessage("Error : Only drafted expenses are allowed to confirm");
             return;
         }
         List<ExpenseItem> validList = new ArrayList<>();
@@ -102,7 +97,7 @@ public class ExpenseItemService extends AbstractService implements ExcelTypeConv
             validList.add(expenseItem);
         });
         if (validList.isEmpty()) {
-            setMessage("Error : valid drafted expenses not found");
+            showMessage("Error : valid drafted expenses not found");
             return;
         }
         updateStatus(validList);
@@ -114,7 +109,7 @@ public class ExpenseItemService extends AbstractService implements ExcelTypeConv
     }
 
     public boolean insertExpenseItem(List<ExpenseItem> itemList) {
-        setMessage("");
+        showMessage("");
         int sequence = getExpenseItemDao().findLastSequence();
         List<ExpenseItem> validList = new ArrayList<>();
         for (ExpenseItem expenseItem : itemList) {
@@ -123,11 +118,11 @@ public class ExpenseItemService extends AbstractService implements ExcelTypeConv
             }
         }
         if (validList.isEmpty()) {
-            setMessage("Valid accounts not found");
+            showMessage("Valid accounts not found");
             return false;
         }
         List<String> currencyList = new ArrayList<>(); // getCurrencyDao().findCodeList()
-        List<String> accountList = getAccountDao().findCodeList();
+        List<String> accountList = getAccountDao().loadCodeList();
         //
         /*QueryBuilder queryBuilder = getQueryBuilder("insertExpenseItem");
         Transaction transaction = createTransaction();
@@ -185,7 +180,7 @@ public class ExpenseItemService extends AbstractService implements ExcelTypeConv
     public void updateCurrency(Currency currency, List<ExpenseItem> dataList) {
         List<ExpenseItem> filteredList = filteredByStatus(Status.Drafted, dataList);
         if (filteredList.isEmpty()) {
-            setMessage("Error : Only drafted accounts are allowed to change currency");
+            showMessage("Error : Only drafted accounts are allowed to change currency");
             return;
         }
         final String currencyCode = currency == null ? null : currency.getCode();

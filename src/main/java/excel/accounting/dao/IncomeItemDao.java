@@ -1,6 +1,5 @@
 package excel.accounting.dao;
 
-import excel.accounting.db.AbstractDao;
 import excel.accounting.entity.IncomeItem;
 
 /**
@@ -13,10 +12,5 @@ public class IncomeItemDao extends AbstractDao<IncomeItem> {
     @Override
     protected String getTableName() {
         return "income_item";
-    }
-
-    @Override
-    protected String getSqlFileName() {
-        return "Income-item";
     }
 }
