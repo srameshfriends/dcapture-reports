@@ -41,12 +41,13 @@ public class JasperServlet extends HttpServlet {
     private static final SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd hh-mm-ss");
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
     private Path tempReportFolder;
-    private String contextPath;
+    private String hostUrl, contextPath;
 
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
         ReportUtils.setJRRootFolder(config.getServletContext());
+        hostUrl = config.getServletContext().getInitParameter("host_url");
         String conPath = config.getServletContext().getInitParameter("context_path");
         contextPath = conPath == null ? "/dcapture-reports" : conPath;
     }
@@ -122,10 +123,10 @@ public class JasperServlet extends HttpServlet {
             String message = ReportUtils.addJasperReport(reportName, jrXmlPart, jasperPart);
             if (message == null) {
                 logger.info(reportName + " added into the jasper report service.");
-                response.sendRedirect("/index.html?message=" + reportName + " added into the jasper report service.");
+                response.sendRedirect(contextPath + "/index.html?message=" + reportName + " added into the jasper report service.");
             } else {
                 logger.info(reportName + " : " + message);
-                response.sendRedirect("/index.html?message=" + reportName + " : " + message);
+                response.sendRedirect(contextPath + "/index.html?message=" + reportName + " : " + message);
             }
         } else {
             logger.info("ERROR : jrXml Or jasper not valid to add at report service (" + reportName + ").");
@@ -181,8 +182,7 @@ public class JasperServlet extends HttpServlet {
                     = JasperFillManager.fillReport(jasperReport, dataSource.getParameters(), dataSource);
             String link = saveRandomPdfReport(jasperPrint, reportName);
             ObjectNode objectNode = new ObjectMapper().createObjectNode();
-            String kk = getDownloadUrl(request, link);
-            objectNode.put("link", kk);
+            objectNode.put("link", getDownloadUrl(link));
             sendJson(response, objectNode);
         } catch (JRException ex) {
             ex.printStackTrace();
@@ -340,8 +340,8 @@ public class JasperServlet extends HttpServlet {
         return file.getName();
     }
 
-    private String getDownloadUrl(HttpServletRequest request, String fileName) {
-        return request.getRequestURL().toString().replace("generate/link", "download?link=" + fileName);
+    private String getDownloadUrl(String fileName) {
+        return hostUrl + contextPath + "/jasper/download?link=" + fileName;
     }
 
     private Path getTempReportFolder() {

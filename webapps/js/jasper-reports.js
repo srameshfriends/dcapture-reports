@@ -44,6 +44,7 @@ function JasperReports() {
     self.loadJasperReportList = function () {
         remoteCall({
             url: "/dcapture-reports/jasper/loadAll",
+            type:'GET',
             error: function (msg) {
                 DCaptureReportApp.showMessage(msg);
             },

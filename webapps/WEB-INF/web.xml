@@ -29,13 +29,18 @@
     <request-character-encoding>UTF-8</request-character-encoding>
 
     <context-param>
-        <param-name>jasper_reports_path</param-name>
-        <param-value>C:\workspace\jasper-reports</param-value>
+        <param-name>host_url</param-name>
+        <param-value>https://srimalar.com</param-value>
     </context-param>
 
     <context-param>
         <param-name>context_path</param-name>
         <param-value>/dcapture-reports</param-value>
+    </context-param>
+
+    <context-param>
+        <param-name>jasper_reports_path</param-name>
+        <param-value>/opt/tomcat/jasper</param-value>
     </context-param>
 
     <servlet>

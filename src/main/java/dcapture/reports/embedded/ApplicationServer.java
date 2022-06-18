@@ -32,6 +32,7 @@ public class ApplicationServer {
         context.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false");
         context.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false");
         context.setInitParameter("jasper_reports_path", "C:\\workspace\\jasper-reports");
+        context.setInitParameter("host_url", "http://localhost:8080");
         context.setInitParameter("context_path", "/dcapture-reports");
     }
 
@@ -47,7 +48,7 @@ public class ApplicationServer {
         ServletHolder defaultHolder = new ServletHolder(new DefaultServlet());
         servletContext.addServlet(defaultHolder, "/*");
         ServletHolder refreshHolder = new ServletHolder(new JasperServlet());
-        refreshHolder.setInitOrder(8);
+        refreshHolder.setInitOrder(1);
         refreshHolder.getRegistration().setMultipartConfig(getMultipartConfig());
         servletContext.addServlet(refreshHolder, "/jasper/*");
         addInitParam(servletContext);
