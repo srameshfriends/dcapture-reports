@@ -3,8 +3,7 @@ package dcapture.reports.jasper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.DecimalNode;
-import com.fasterxml.jackson.databind.node.NumericNode;
+import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.servlet.http.HttpServletRequest;
 import net.sf.jasperreports.engine.JRDataSource;
@@ -14,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
@@ -29,6 +29,8 @@ public class JsonJRDataSource implements JRDataSource {
     private final ArrayNode dataNode;
     private ObjectNode iteratorNode;
     private int iteratorIndex;
+    private boolean isDebugMode;
+    private StringBuilder debugBuilder;
 
     public JsonJRDataSource(ObjectNode dataObject, ObjectNode dataFormat) {
         ObjectNode pObj;
@@ -64,6 +66,7 @@ public class JsonJRDataSource implements JRDataSource {
         }
         this.parameterTypeMap = Collections.unmodifiableMap(paramTypeMp);
         this.dataTypeMap = Collections.unmodifiableMap(daTypeMap);
+        debugBuilder = new StringBuilder();
     }
 
     public JsonJRDataSource(HttpServletRequest request, ObjectNode dataFormat) {
@@ -106,6 +109,11 @@ public class JsonJRDataSource implements JRDataSource {
         }
         this.parameterTypeMap = Collections.unmodifiableMap(paramTypeMp);
         this.dataTypeMap = Collections.unmodifiableMap(daTypeMap);
+        debugBuilder = new StringBuilder();
+    }
+
+    public void setDebugMode(boolean isDebugMode) {
+        this.isDebugMode = isDebugMode;
     }
 
     public ArrayNode getData() {
@@ -114,8 +122,20 @@ public class JsonJRDataSource implements JRDataSource {
 
     public Map<String, Object> getParameters() {
         Map<String, Object> parameterMap = new HashMap<>();
-        parameterNode.fieldNames().forEachRemaining(name -> parameterMap.put(name,
-                getTypeValue(false, name, parameterNode.get(name))));
+        if (isDebugMode) {
+            logger.info("\t PARAMETER");
+            debugBuilder = new StringBuilder();
+            parameterNode.fieldNames().forEachRemaining(name -> {
+                Object paramValue = getTypeValue(false, name, parameterNode.get(name));
+                parameterMap.put(name, paramValue);
+                debugBuilder.append("\t").append(getParameterType(name)).append("\t").append(name).append("\t")
+                        .append(paramValue).append("\n");
+            });
+            logger.info(debugBuilder.toString());
+        } else {
+            parameterNode.fieldNames().forEachRemaining(name -> parameterMap.put(name,
+                    getTypeValue(false, name, parameterNode.get(name))));
+        }
         return parameterMap;
     }
 
@@ -129,19 +149,24 @@ public class JsonJRDataSource implements JRDataSource {
 
     private Object getTypeValue(boolean isDataType, String name, JsonNode node) {
         String type = isDataType ? getDataType(name) : getParameterType(name);
-        if ("string".equals(type)) {
+        if (node == null || node.isNull()) {
+            return getDefaultValue(type);
+        } else if ("string".equals(type)) {
             return node.textValue();
         } else if ("currency".equals(type)) {
-            if (node instanceof DecimalNode) {
+            if (JsonNodeType.NUMBER.equals(node.getNodeType())) {
                 return node.decimalValue();
-            } else if (node instanceof NumericNode) {
-                return node.numberValue();
             }
-            return node.asDouble();
+            return 0;
         } else if ("int".equals(type)) {
             return node.asInt();
-        } else if ("decimal".equals(type) || "number".equals(type)) {
-            return node.asDouble();
+        } else if ("decimal".equals(type)) {
+            BigDecimal bigDecimal = node.decimalValue();
+            return BigDecimal.ZERO.equals(bigDecimal) ? null : bigDecimal;
+        } else if ("long".equals(type)) {
+            return node.longValue();
+        } else if ("number".equals(type)) {
+            return node.doubleValue();
         } else if ("percentage".equals(type)) {
             return node.textValue() + "%";
         } else if ("date".equals(type)) {
@@ -162,6 +187,23 @@ public class JsonJRDataSource implements JRDataSource {
         return node.toString();
     }
 
+    private Object getDefaultValue(String type) {
+        if (type == null || "string".equals(type)) {
+            return null;
+        } else if ("currency".equals(type) || "decimal".equals(type)) {
+            return null;
+        } else if ("int".equals(type)) {
+            return 0;
+        } else if ("boolean".equals(type)) {
+            return false;
+        } else if ("number".equals(type)) {
+            return 0.0;
+        } else if ("long".equals(type)) {
+            return 0L;
+        }
+        return null;
+    }
+
     @Override
     public boolean next() {
         int size = dataNode.size();
@@ -176,6 +218,10 @@ public class JsonJRDataSource implements JRDataSource {
             }
         }
         iteratorIndex += 1;
+        if (isDebugMode) {
+            logger.info(debugBuilder.toString());
+            debugBuilder = new StringBuilder("\t").append(iteratorIndex).append("\n");
+        }
         return isNextRecord;
     }
 
@@ -183,6 +229,12 @@ public class JsonJRDataSource implements JRDataSource {
     public Object getFieldValue(JRField jrField) {
         if (iteratorNode == null) {
             throw new RuntimeException("Json Jasper Report row should not be empty.");
+        }
+        if (isDebugMode) {
+            Object value = getTypeValue(true, jrField.getName(), iteratorNode.get(jrField.getName()));
+            debugBuilder.append(getDataType(jrField.getName())).append("\t")
+                    .append(jrField.getName()).append("\t").append(value).append("\n");
+            return value;
         }
         return getTypeValue(true, jrField.getName(), iteratorNode.get(jrField.getName()));
     }

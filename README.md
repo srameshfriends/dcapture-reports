@@ -4,6 +4,11 @@ Reporting service.
 
 #### ACTIVITIES
 
+22.05.04
+
+- Debug mode added into servlet init parameter, debug mode add the data information in log file.
+- Default value added into the JsonJRDataSource.
+
 22.05.03
 
 - jasper-fonts help to render at ubuntu server.

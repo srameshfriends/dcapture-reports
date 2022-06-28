@@ -43,6 +43,11 @@
         <param-value>/opt/tomcat/jasper</param-value>
     </context-param>
 
+    <context-param>
+        <param-name>mode</param-name>
+        <param-value>info</param-value>
+    </context-param>
+
     <servlet>
         <servlet-name>JasperServlet</servlet-name>
         <servlet-class>dcapture.reports.jasper.JasperServlet</servlet-class>

@@ -42,12 +42,15 @@ public class JasperServlet extends HttpServlet {
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
     private Path tempReportFolder;
     private String hostUrl, contextPath;
+    private boolean isDebugMode;
 
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
         ReportUtils.setJRRootFolder(config.getServletContext());
         hostUrl = config.getServletContext().getInitParameter("host_url");
+        String debug = config.getServletContext().getInitParameter("mode");
+        isDebugMode = "debug".equals(debug);
         String conPath = config.getServletContext().getInitParameter("context_path");
         contextPath = conPath == null ? "/dcapture-reports" : conPath;
     }
@@ -178,6 +181,7 @@ public class JasperServlet extends HttpServlet {
         }
         try {
             JsonJRDataSource dataSource = new JsonJRDataSource(request, ReportUtils.getDataFormat(reportName));
+            dataSource.setDebugMode(isDebugMode);
             JasperPrint jasperPrint
                     = JasperFillManager.fillReport(jasperReport, dataSource.getParameters(), dataSource);
             String link = saveRandomPdfReport(jasperPrint, reportName);
@@ -237,6 +241,7 @@ public class JasperServlet extends HttpServlet {
         String error = null;
         try {
             JsonJRDataSource dataSource = new JsonJRDataSource(request, ReportUtils.getDataFormat(reportName));
+            dataSource.setDebugMode(isDebugMode);
             JasperPrint jasperPrint
                     = JasperFillManager.fillReport(jasperReport, dataSource.getParameters(), dataSource);
             sendPdfResponse(response, jasperPrint, reportName);
