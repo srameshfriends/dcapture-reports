@@ -4,6 +4,10 @@ Reporting service.
 
 #### ACTIVITIES
 
+22.05.05
+
+- Jasper report source, compiler and config files keep at repository.
+
 22.05.04
 
 - Debug mode added into servlet init parameter, debug mode add the data information in log file.
