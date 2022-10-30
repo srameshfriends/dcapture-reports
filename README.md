@@ -4,6 +4,11 @@ Reporting service.
 
 #### ACTIVITIES
 
+22.10.00
+
+- Spring boot framework, Arangodb and jakarta json added
+- Server port 8505 used
+
 22.05.05
 
 - Jasper report source, compiler and config files keep at repository.

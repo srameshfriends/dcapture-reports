@@ -1,67 +1,62 @@
 package dcapture.reports.jasper;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.JsonNodeType;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import jakarta.servlet.http.HttpServletRequest;
+import dcapture.reports.util.MessageException;
+import jakarta.json.*;
 import net.sf.jasperreports.engine.JRDataSource;
 import net.sf.jasperreports.engine.JRField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.IOException;
+import java.io.StringReader;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 public class JsonJRDataSource implements JRDataSource {
     private static final Logger logger = LoggerFactory.getLogger(JsonJRDataSource.class);
-    private final SimpleDateFormat timeFormat = new SimpleDateFormat("yy-MM-dd hh:mm");
-    private final SimpleDateFormat dateFormat = new SimpleDateFormat("yy-MM-dd");
-    private final ObjectNode parameterNode;
+    private final SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm");
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+    private final JsonObject parameterNode;
     private final Map<String, String> parameterTypeMap, dataTypeMap;
-    private final ArrayNode dataNode;
-    private ObjectNode iteratorNode;
+    private final JsonArray dataNode;
+    private JsonObject iteratorNode;
     private int iteratorIndex;
-    private boolean isDebugMode;
     private StringBuilder debugBuilder;
 
-    public JsonJRDataSource(ObjectNode dataObject, ObjectNode dataFormat) {
-        ObjectNode pObj;
-        ArrayNode dNode;
-        JsonNode jsonData = dataObject.get("data"), jsonParam = dataObject.get("parameters");
-        if (jsonData instanceof ArrayNode) {
-            dNode = ((ArrayNode) jsonData);
+    public JsonJRDataSource(JsonObject dataObject, JsonObject dataFormat) {
+        JsonObjectBuilder pObj;
+        JsonArrayBuilder dNode;
+        JsonObject jsonData = dataObject.getJsonObject("data"), jsonParam = dataObject.getJsonObject("parameters");
+        if (jsonData instanceof JsonArray) {
+            dNode = Json.createArrayBuilder((JsonArray) jsonData);
         } else {
-            dNode = new ObjectMapper().createArrayNode();
+            dNode = Json.createArrayBuilder();
         }
-        if (jsonParam instanceof ObjectNode) {
-            pObj = (ObjectNode) jsonParam;
+        if (jsonParam != null) {
+            pObj = Json.createObjectBuilder(jsonParam);
         } else {
-            pObj = new ObjectMapper().createObjectNode();
+            pObj = Json.createObjectBuilder();
         }
-        parameterNode = pObj;
-        dataNode = dNode;
+        parameterNode = pObj.build();
+        dataNode = dNode.build();
         Map<String, String> paramTypeMp = new HashMap<>(), daTypeMap = new HashMap<>();
-        JsonNode node1 = dataFormat.get("parameters"), node2 = dataFormat.get("data");
-        if (node1 instanceof ObjectNode) {
-            ObjectNode objNode1 = (ObjectNode) node1;
-            objNode1.fieldNames().forEachRemaining(str -> {
-                String type1 = objNode1.get(str).textValue();
-                paramTypeMp.put(str, type1);
+        JsonObject node1 = dataFormat.getJsonObject("parameters"), node2 = dataFormat.getJsonObject("data");
+        if (node1 != null) {
+            node1.forEach((str, jsonValue) -> {
+                if (jsonValue instanceof JsonString textJson) {
+                    paramTypeMp.put(str, textJson.getString());
+                }
             });
         }
-        if (node2 instanceof ObjectNode) {
-            ObjectNode objNode2 = (ObjectNode) node2;
-            objNode2.fieldNames().forEachRemaining(str -> {
-                String type1 = objNode2.get(str).textValue();
-                daTypeMap.put(str, type1);
+        if (node2 != null) {
+            node2.forEach((str, jsonValue) -> {
+                if (jsonValue instanceof JsonString textJson) {
+                    daTypeMap.put(str, textJson.getString());
+                }
             });
         }
         this.parameterTypeMap = Collections.unmodifiableMap(paramTypeMp);
@@ -69,42 +64,42 @@ public class JsonJRDataSource implements JRDataSource {
         debugBuilder = new StringBuilder();
     }
 
-    public JsonJRDataSource(HttpServletRequest request, ObjectNode dataFormat) {
-        ObjectNode pObj = null;
-        ArrayNode dNode = null;
-        try (BufferedReader requestReader = request.getReader()) {
-            ObjectMapper objectMapper = new ObjectMapper();
-            ObjectNode objectNode = objectMapper.readValue(requestReader, ObjectNode.class);
-            JsonNode jsonData = objectNode.get("data"), jsonParam = objectNode.get("parameters");
-            if (jsonData instanceof ArrayNode) {
-                dNode = ((ArrayNode) jsonData);
-            } else {
-                dNode = new ObjectMapper().createArrayNode();
+    public JsonJRDataSource(String jasperData, JsonObject dataFormat) {
+        JsonObject paramObject = Json.createObjectBuilder().build();
+        JsonArray dataArray = Json.createArrayBuilder().build();
+        try (JsonReader parser = Json.createReader(new StringReader(jasperData))) {
+            JsonObject objectNode = parser.readObject();
+            for (Map.Entry<String, JsonValue> entity : objectNode.entrySet()) {
+                if ("parameters".equalsIgnoreCase(entity.getKey())) {
+                    if (entity.getValue() instanceof JsonObject) {
+                        paramObject = entity.getValue().asJsonObject();
+                    }
+                } else if ("data".equalsIgnoreCase(entity.getKey())) {
+                    if (entity.getValue() instanceof JsonArray) {
+                        dataArray = entity.getValue().asJsonArray();
+                    }
+                }
             }
-            if (jsonParam instanceof ObjectNode) {
-                pObj = (ObjectNode) jsonParam;
-            } else {
-                pObj = new ObjectMapper().createObjectNode();
-            }
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             ex.printStackTrace();
+            throw new MessageException("jasper.data.error", ex.getMessage());
         }
-        parameterNode = pObj;
-        dataNode = dNode;
+        parameterNode = paramObject;
+        dataNode = dataArray;
         Map<String, String> paramTypeMp = new HashMap<>(), daTypeMap = new HashMap<>();
-        JsonNode node1 = dataFormat.get("parameters"), node2 = dataFormat.get("data");
-        if (node1 instanceof ObjectNode) {
-            ObjectNode objNode1 = (ObjectNode) node1;
-            objNode1.fieldNames().forEachRemaining(str -> {
-                String type1 = objNode1.get(str).textValue();
-                paramTypeMp.put(str, type1);
+        JsonValue node1 = dataFormat.get("parameters"), node2 = dataFormat.get("data");
+        if (node1 instanceof JsonObject objNode1) {
+            objNode1.forEach((str, jsonValue) -> {
+                if (jsonValue instanceof JsonString jString) {
+                    paramTypeMp.put(str, jString.getString());
+                }
             });
         }
-        if (node2 instanceof ObjectNode) {
-            ObjectNode objNode2 = (ObjectNode) node2;
-            objNode2.fieldNames().forEachRemaining(str -> {
-                String type1 = objNode2.get(str).textValue();
-                daTypeMap.put(str, type1);
+        if (node2 instanceof JsonObject objNode2) {
+            objNode2.forEach((str, jsonValue) -> {
+                if (jsonValue instanceof JsonString jString) {
+                    daTypeMap.put(str, jString.getString());
+                }
             });
         }
         this.parameterTypeMap = Collections.unmodifiableMap(paramTypeMp);
@@ -112,29 +107,25 @@ public class JsonJRDataSource implements JRDataSource {
         debugBuilder = new StringBuilder();
     }
 
-    public void setDebugMode(boolean isDebugMode) {
-        this.isDebugMode = isDebugMode;
-    }
-
-    public ArrayNode getData() {
+    public JsonArray getData() {
         return dataNode;
     }
 
     public Map<String, Object> getParameters() {
         Map<String, Object> parameterMap = new HashMap<>();
-        if (isDebugMode) {
+        if (logger.isDebugEnabled()) {
             logger.info("\t PARAMETER");
             debugBuilder = new StringBuilder();
-            parameterNode.fieldNames().forEachRemaining(name -> {
-                Object paramValue = getTypeValue(false, name, parameterNode.get(name));
-                parameterMap.put(name, paramValue);
-                debugBuilder.append("\t").append(getParameterType(name)).append("\t").append(name).append("\t")
+            parameterNode.forEach((str, jsonValue) -> {
+                Object paramValue = getTypeValue(false, str, jsonValue);
+                parameterMap.put(str, paramValue);
+                debugBuilder.append("\t").append(getParameterType(str)).append("\t").append(str).append("\t")
                         .append(paramValue).append("\n");
             });
             logger.info(debugBuilder.toString());
         } else {
-            parameterNode.fieldNames().forEachRemaining(name -> parameterMap.put(name,
-                    getTypeValue(false, name, parameterNode.get(name))));
+            parameterNode.forEach((str, jsonValue) -> parameterMap.put(str,
+                    getTypeValue(false, str, jsonValue)));
         }
         return parameterMap;
     }
@@ -147,53 +138,95 @@ public class JsonJRDataSource implements JRDataSource {
         return dataTypeMap.getOrDefault(name, "string");
     }
 
-    private Object getTypeValue(boolean isDataType, String name, JsonNode node) {
+    private Object getTypeValue(boolean isDataType, String name, JsonValue json) {
         String type = isDataType ? getDataType(name) : getParameterType(name);
-        if (node == null || node.isNull()) {
+        if (json == null || json.getValueType().equals(JsonValue.ValueType.NULL)) {
             return getDefaultValue(type);
-        } else if ("string".equals(type)) {
-            return node.textValue();
-        } else if ("currency".equals(type)) {
-            if (JsonNodeType.NUMBER.equals(node.getNodeType())) {
-                return node.decimalValue();
-            }
-            return 0;
-        } else if ("int".equals(type)) {
-            return node.asInt();
-        } else if ("decimal".equals(type)) {
-            BigDecimal bigDecimal = node.decimalValue();
-            return BigDecimal.ZERO.equals(bigDecimal) ? null : bigDecimal;
-        } else if ("long".equals(type)) {
-            return node.longValue();
-        } else if ("number".equals(type)) {
-            return node.doubleValue();
-        } else if ("percentage".equals(type)) {
-            return node.textValue() + "%";
-        } else if ("date".equals(type)) {
-            try {
-                return dateFormat.parse(node.textValue());
-            } catch (ParseException ee) {
-                logger.error("Date Parse : " + ee.getMessage());
-            }
-            return null;
-        } else if ("date_time".equals(type) || "time".equals(type)) {
-            try {
-                return timeFormat.parse(node.textValue());
-            } catch (ParseException pe) {
-                logger.error("Date Time Parse : " + pe.getMessage());
-            }
+        }
+        return switch (type) {
+            case "string" -> asString(json);
+            case "currency", "decimal", "long", "double" -> asNumber(json, type);
+            case "boolean" -> asBoolean(json);
+            case "date" -> asDate(json);
+            case "datetime" -> asDateTime(json);
+            default -> json.toString();
+        };
+    }
+
+    private Object asNumber(JsonValue json, String type) {
+        if (!(json instanceof JsonNumber jsonNum)) {
+            return switch (type) {
+                case "currency", "decimal" -> BigDecimal.ZERO;
+                case "long" -> 0L;
+                case "double" -> 0D;
+                default -> 0;
+            };
+        }
+        return switch (type) {
+            case "currency", "decimal" -> jsonNum.bigDecimalValue();
+            case "long" -> jsonNum.longValue();
+            case "double" -> jsonNum.doubleValue();
+            default -> 0;
+        };
+    }
+
+    private String asString(JsonValue json) {
+        if (json == null || json.getValueType().equals(JsonValue.ValueType.NULL)) {
             return null;
         }
-        return node.toString();
+        if (json instanceof JsonString jsonString) {
+            return jsonString.getString().trim();
+        }
+        return json.toString();
+    }
+
+    private boolean asBoolean(JsonValue json) {
+        return json != null && json.getValueType().equals(JsonValue.ValueType.TRUE);
+    }
+
+    private Date asDate(JsonValue json) {
+        String dateText = asString(json);
+        if (dateText == null || 9 > dateText.length()) {
+            return null;
+        }
+        try {
+            return dateFormat.parse(dateText);
+        } catch (ParseException ex) {
+            if (logger.isDebugEnabled()) {
+                ex.printStackTrace();
+            } else {
+                logger.info("Date Parse Error : " + ex.getMessage());
+            }
+        }
+        return null;
+    }
+
+    private Date asDateTime(JsonValue json) {
+        String dateText = asString(json);
+        if (dateText == null || 14 > dateText.length()) {
+            return null;
+        }
+        try {
+            return timeFormat.parse(dateText);
+        } catch (ParseException ex) {
+            if (logger.isDebugEnabled()) {
+                ex.printStackTrace();
+            } else {
+                logger.info("Date Parse Error : " + ex.getMessage());
+            }
+        }
+        return null;
     }
 
     private Object getDefaultValue(String type) {
         if (type == null || "string".equals(type)) {
             return null;
         } else if ("currency".equals(type) || "decimal".equals(type)) {
-            return null;
+            return BigDecimal.ZERO;
         } else if ("int".equals(type)) {
             return 0;
+        } else if ("double".equals(type)) {
+            return 0D;
         } else if ("boolean".equals(type)) {
             return false;
         } else if ("number".equals(type)) {
@@ -209,16 +242,16 @@ public class JsonJRDataSource implements JRDataSource {
         int size = dataNode.size();
         boolean isNextRecord = false;
         if (0 < size && iteratorIndex < size) {
-            JsonNode jsonNode = dataNode.get(iteratorIndex);
-            if (jsonNode instanceof ObjectNode) {
-                iteratorNode = (ObjectNode) jsonNode;
+            JsonValue jsonNode = dataNode.get(iteratorIndex);
+            if (jsonNode instanceof JsonObject) {
+                iteratorNode = (JsonObject) jsonNode;
                 isNextRecord = true;
             } else {
                 iteratorNode = null;
             }
         }
         iteratorIndex += 1;
-        if (isDebugMode) {
+        if (logger.isDebugEnabled()) {
             logger.info(debugBuilder.toString());
             debugBuilder = new StringBuilder("\t").append(iteratorIndex).append("\n");
         }
@@ -230,7 +263,7 @@ public class JsonJRDataSource implements JRDataSource {
         if (iteratorNode == null) {
             throw new RuntimeException("Json Jasper Report row should not be empty.");
         }
-        if (isDebugMode) {
+        if (logger.isDebugEnabled()) {
             Object value = getTypeValue(true, jrField.getName(), iteratorNode.get(jrField.getName()));
             debugBuilder.append(getDataType(jrField.getName())).append("\t")
                     .append(jrField.getName()).append("\t").append(value).append("\n");

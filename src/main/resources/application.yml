@@ -1,0 +1,30 @@
+server:
+  port: 8505
+  servlet:
+    context-path:
+  error:
+    include-stacktrace: always
+logging:
+  level:
+    org.springframework.web: INFO
+    dcapture.reports: INFO
+
+spring:
+  application:
+    name: SRIMALAR_REPORTS
+  data:
+    arangodb:
+      host: localhost
+      port: 8529
+      database: srimalar_reports
+      username: root
+      password: root
+
+jasper:
+  source_folder: /opt/dcapture/reports/jasper
+
+management:
+  endpoints:
+    shutdown:
+      sensitive: false
+      enabled: true

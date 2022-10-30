@@ -1,26 +1,8 @@
 package dcapture.reports.embedded;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import dcapture.reports.jasper.JsonJRDataSource;
-import dcapture.reports.jasper.ReportUtils;
-import net.sf.jasperreports.engine.JRException;
-import net.sf.jasperreports.engine.JasperFillManager;
-import net.sf.jasperreports.engine.JasperPrint;
-import net.sf.jasperreports.engine.JasperReport;
-import net.sf.jasperreports.engine.export.JRPdfExporter;
-import net.sf.jasperreports.export.SimpleExporterInput;
-import net.sf.jasperreports.export.SimpleOutputStreamExporterOutput;
-import net.sf.jasperreports.export.SimplePdfExporterConfiguration;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.nio.file.Paths;
-import java.util.UUID;
-
+@Deprecated
 public class Test {
-    public static void main(String... args) {
+    /*public static void main(String... args) {
         ReportUtils.setJRRootFolder(Paths.get("C:\\workspace\\jasper-reports"));
         ObjectNode dataFormat = ReportUtils.getDataFormat("pos-invoice");
         ObjectMapper mapper = new ObjectMapper();
@@ -45,5 +27,5 @@ public class Test {
         } catch (JRException | IOException exe) {
             exe.printStackTrace();
         }
-    }
+    }*/
 }

@@ -1,5 +1,5 @@
 package dcapture.reports.embedded;
-
+/*
 import dcapture.reports.jasper.JasperServlet;
 import jakarta.servlet.MultipartConfigElement;
 import org.eclipse.jetty.server.Server;
@@ -10,11 +10,17 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.resource.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+@SpringBootApplication
+*/
+@Deprecated
 public class ApplicationServer {
+    /*
     private static final Logger logger = LoggerFactory.getLogger(ApplicationServer.class);
     private static final int SERVICE_PORT = 8181;
     private static final String RESOURCE_PATH = "C:\\workspace\\dcapture-reports\\webapps";
@@ -42,7 +48,7 @@ public class ApplicationServer {
         ServletContextHandler servletContext = new ServletContextHandler(ServletContextHandler.SESSIONS);
 
         servletContext.setBaseResource(Resource.newResource(Paths.get(RESOURCE_PATH)));
-        servletContext.setContextPath("/dcapture-reports/");
+        servletContext.setContextPath("/d");
         servletContext.insertHandler(new GzipHandler());
         servletContext.setWelcomeFiles(new String[]{"index.html"});
         //
@@ -63,5 +69,5 @@ public class ApplicationServer {
     private MultipartConfigElement getMultipartConfig() { // 5 MB , 20 MB, 0
         Path path = Paths.get(System.getProperty("java.io.tmpdir"), "dcapture", "multipart");
         return new MultipartConfigElement(path.toString()); // 5242880L, 20971520L, 0
-    }
+    }*/
 }

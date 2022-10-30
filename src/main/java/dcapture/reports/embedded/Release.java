@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 
+@Deprecated
 public class Release {
     private static final String SOURCE_DIR = "C:\\Users\\admin\\JaspersoftWorkspace\\dcapture-jasper";
     private static final String TARGET_DIR = "C:\\workspace\\jasper-reports\\classes";

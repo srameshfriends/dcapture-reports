@@ -1,0 +1,1 @@
+set JAVA_HOME=C:\Program Files\Microsoft\jdk-17.0.3.7-hotspot\bin

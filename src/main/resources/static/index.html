@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <meta content="DCapture Reports Factory" name="description">
+    <meta content="Ramesh" name="author">
+    <meta content="DCapture" name="generator">
+    <title>Reports-Srimalar</title>
+    <link href="/img/favicon.ico" rel="shortcut icon">
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/bootstrap-grid.min.css" rel="stylesheet">
+    <link href="/css/bootstrap-reboot.min.css" rel="stylesheet">
+    <link href="/css/bootstrap-utilities.min.css" rel="stylesheet">
+    <link href="/css/notebook.css" rel="stylesheet">
+    <link href="/css/data-table.css" rel="stylesheet">
+    <link href="/css/table-view.css" rel="stylesheet">
+    <script src="/js/remote.js"></script>
+    <script src="/js/core.js"></script>
+    <script src="/js/data-table.js"></script>
+    <script src="/js/jasper-reports.js"></script>
+</head>
+<body>
+<header>
+    <nav class="navbar navbar-expand-md fixed-top">
+        <div class="d-block w-100 text-center" style="background: #B2FFD4">
+            <h1>Srimalar Reports</h1>
+        </div>
+    </nav>
+</header>
+<main style="margin-top:2rem">
+    <div class="container-fluid align-content-center">
+        <div class="container" id="jasper-report-list">
+            <div class="container">
+                <div class="d-flex flex-wrap mb-2">
+                    <button class="btn btn-link me-2" id="actionAddReport">Add Report</button>
+                    <button class="btn btn-link me-2" data-msg="actionReload" id="actionReloadReport">
+                        Reload
+                    </button>
+                </div>
+            </div>
+            <div class="container mb-2">
+                <div class="flex-row" id="jasper-reports-table-div">
+                </div>
+            </div>
+        </div>
+        <div class="container" id="jasper-report-form">
+            <div class="container container-sm">
+                <form action="/jasper/source/add" enctype="multipart/form-data" id="upload_form" method="post">
+                    <div class="d-flex flex-wrap">
+                        <label class="form-label">Report Name</label>
+                        <input class="form-control mb-2" name="report_name"/>
+                    </div>
+                    <div class="d-flex flex-wrap">
+                        <label class="form-label">JrXml</label>
+                        <input class="form-control mb-2" name="jrxml" type="file"/>
+                    </div>
+                    <div class="d-flex flex-wrap">
+                        <label class="form-label">Jasper</label>
+                        <input class="form-control mb-2" name="jasper" type="file"/>
+                    </div>
+                    <div class="d-flex flex-wrap">
+                        <input class="btn btn-primary mb2" type="submit"/>
+                        <button class="btn btn-link mb2" id="actionShowReportList">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="container container-sm" id="jasper-report-update">
+            <div class="d-flex flex-wrap">
+                <h3 id="report_name_display"></h3>
+                <input id="report_name" readonly type="hidden"/>
+            </div>
+            <div class="d-flex flex-wrap">
+                <label class="form-label">Title</label>
+                <input class="form-control mb-2" id="report_title" name="report_title" type="text"/>
+            </div>
+            <div class="d-flex flex-wrap">
+                <label class="form-label">Format</label>
+                <!--<textarea  class="form-control" th:value="${data_format}" ></textarea>-->
+                <div class="form-control text-wrap" contenteditable="true" id="data_format"
+                     style="height:20rem;overflow: auto;"></div>
+            </div>
+            <div class="d-flex justify-content-between mt-3">
+                <div class="flex-fill">
+                    <button class="btn btn-primary" id="actionReportUpdate">Save</button>
+                </div>
+                <div class="flex-fill">
+                    <button class="btn btn-secondary" id="showListViewBtn">Cancel</button>
+                </div>
+                <div class="flex-fill">
+                    <label>Source Created : </label><label class="text-primary" id="source_created_on"></label>
+                    <label class="ms-2">Last Updated : </label><label class="text-primary" id="last_updated_on"></label>
+                </div>
+                <div class="flex-fill justify-content-end">
+                    <button class="btn btn-danger" id="actionReportDelete">Delete</button>
+                </div>
+            </div>
+        </div>
+        <div class="container">
+            <div class="text-danger text-wrap mb-2" id="message-box" style="font-size: 1.4rem;"></div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            JasperReports.initialize();
+        });
+
+    </script>
+</main>
+</body>
+</html>
