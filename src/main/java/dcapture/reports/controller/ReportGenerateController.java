@@ -3,7 +3,6 @@ package dcapture.reports.controller;
 import dcapture.reports.jasper.JasperSource;
 import dcapture.reports.jasper.JsonJRDataSource;
 import dcapture.reports.repository.JasperSourceRepository;
-import dcapture.reports.util.MessageException;
 import dcapture.reports.util.ReportHref;
 import jakarta.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
@@ -41,9 +40,12 @@ public class ReportGenerateController {
     public @ResponseBody StreamingResponseBody generate(@RequestParam("report_name") String reportName,
                                                         @RequestBody String jasperData,
                                                         HttpServletResponse response) {
+        if (reportName == null) {
+            throw new RuntimeException("Report name should not be empty.");
+        }
         JasperSource jasperSource = jasperSourceRepository.findByName(reportName);
         if (jasperSource == null) {
-            throw new MessageException("jasper.source.empty");
+            throw new RuntimeException("PDF report source (" + reportName + ") should not be empty.");
         }
         JsonObject dataFormat = jasperSourceRepository.getJasperDataFormat(jasperSource);
         JsonJRDataSource jsonJRDataSource = new JsonJRDataSource(jasperData, dataFormat);
@@ -54,7 +56,7 @@ public class ReportGenerateController {
             return sendPdfResponse(reportName, jasperPrint, response);
         } catch (JRException ex) {
             ex.printStackTrace();
-            throw new MessageException("jasper.generate.error", reportName, ex.getMessage());
+            throw new RuntimeException(ex);
         }
     }
 
@@ -63,7 +65,7 @@ public class ReportGenerateController {
                                                                  @RequestBody String jasperData) {
         JasperSource jasperSource = jasperSourceRepository.findByName(reportName);
         if (jasperSource == null) {
-            throw new MessageException("jasper.source.empty");
+            throw new RuntimeException("PDF report link source (" + reportName + ") should not be empty.");
         }
         JsonObject dataFormat = jasperSourceRepository.getJasperDataFormat(jasperSource);
         JsonJRDataSource jsonJRDataSource = new JsonJRDataSource(jasperData, dataFormat);
@@ -75,7 +77,7 @@ public class ReportGenerateController {
             return ReportHref.get(jasperSource, link);
         } catch (JRException ex) {
             ex.printStackTrace();
-            throw new MessageException("jasper.generate.error", reportName, ex.getMessage());
+            throw new RuntimeException(ex);
         }
     }
 
@@ -98,7 +100,7 @@ public class ReportGenerateController {
                 jrPdfExporter.exportReport();
             } catch (JRException ex) {
                 ex.printStackTrace();
-                throw new MessageException("jasper.generate.error", reportName, ex.getMessage());
+                throw new RuntimeException(ex);
             }
         };
     }

@@ -4,6 +4,11 @@ Reporting service.
 
 #### ACTIVITIES
 
+22.11.0
+
+- Request parameter added to having more information.
+- URL issue fixed
+
 22.10.00
 
 - Spring boot framework, Arangodb and jakarta json added

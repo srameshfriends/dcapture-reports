@@ -69,7 +69,7 @@ public class JasperSourceServiceImpl implements JasperSourceRepository {
         if (Files.exists(jasperFile)) {
             return (JasperReport) JRLoader.loadObjectFromFile(jasperFile.toString());
         }
-        throw new MessageException("jasper.report.notCreated");
+        throw new MessageException("jasper.report.notCreated", jasperFile.toString());
     }
 
     @Override
@@ -98,16 +98,14 @@ public class JasperSourceServiceImpl implements JasperSourceRepository {
     public JasperSource findByName(String reportName) {
         JasperSource result = null;
         Map<String, Object> bindVars = new HashMap<>();
-        bindVars.put("report_name", reportName);
+        bindVars.put("report_name", reportName.trim());
         String query = "FOR doc IN jasper_source FILTER doc.report_name == @report_name RETURN doc";
         try (ArangoCursor<JasperSource> cursor = arangoOperations.query(query, bindVars, JasperSource.class)) {
             if (cursor.hasNext()) {
                 result = cursor.next();
             }
         } catch (IOException ex) {
-            if (log.isDebugEnabled()) {
-                ex.printStackTrace();
-            }
+            ex.printStackTrace();
             throw new MessageException("jasper.loading.error", reportName, ex.getMessage());
         }
         return result;

@@ -19,7 +19,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -27,20 +31,16 @@ import java.util.stream.Stream;
 @RestController
 @RequestMapping(value = "/download")
 public class DownloadController {
+    private static final SimpleDateFormat TIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd hh-mm");
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
     public static final String ENCODING = "UTF-8";
     private static final int BUFFER_SIZE = 256 * 1024;
     private static Path tempReportFolder;
-    private final Map<Long, Path> cacheReportFileMap;
-
-    public DownloadController() {
-        cacheReportFileMap = new HashMap<>();
-        deleteReportFiles();
-    }
 
     public static Path getTempReportFolder() {
         if (tempReportFolder == null) {
             String pathText = System.getProperty("java.io.tmpdir");
-            Path folder = Paths.get(pathText, "srimalar", "reports");
+            Path folder = Paths.get(pathText, "dcapture", "reports");
             if (!Files.exists(folder)) {
                 try {
                     folder = Files.createDirectories(folder);
@@ -71,14 +71,17 @@ public class DownloadController {
     }
 
     @GetMapping("/report")
-    public @ResponseBody StreamingResponseBody download(@RequestParam("href") String href,
-                                                        HttpServletResponse response) {
-        if (href == null) {
+    public @ResponseBody StreamingResponseBody download(
+            @RequestParam(value = "href", defaultValue = "") String href,
+            @RequestParam(value = "type", defaultValue = "inline", required = false) String type,
+            @RequestParam(value = "prefix", defaultValue = "", required = false) String prefix,
+            @RequestParam(value = "suffix", defaultValue = "time", required = false) String suffix, HttpServletResponse response) {
+        if (href.isBlank()) {
             throw new MessageException("jasper.link.empty");
         }
         Path reportPath = getTempReportFolder().resolve(href);
         if (!Files.exists(reportPath)) {
-            throw new MessageException("jasper.report.notCreated");
+            throw new MessageException("jasper.report.notCreated", reportPath.toString());
         }
         String contentDisposition = "inline; filename=" + href;
         String format = "pdf";
@@ -91,17 +94,32 @@ public class DownloadController {
         } else {
             response.setContentType("application/" + format);
         }
+        if (!"inline".equalsIgnoreCase(type) && !"attachment".equalsIgnoreCase(type)) {
+            type = "inline";
+        }
+        prefix = prefix.trim();
+        if ("date".equalsIgnoreCase(suffix)) {
+            suffix = DATE_FORMAT.format(new Date());
+            suffix = suffix.replaceAll("-", "").replaceAll("\\s+", "") + "." + format;
+        } else if ("time".equalsIgnoreCase(suffix)) {
+            suffix = TIME_FORMAT.format(new Date());
+            suffix = suffix.replaceAll("-", "").replaceAll("\\s+", "") + "." + format;
+        } else if (!suffix.contains(format)) {
+            suffix = suffix + "." + format;
+        } else {
+            suffix = href;
+        }
+        type = type.toLowerCase();
         try {
             response.setHeader("Content-disposition", contentDisposition);
             response.setHeader("Content-Encoding", ENCODING);
-            response.setHeader("Content-disposition", "inline; filename=" + href);
+            response.setHeader("Content-disposition", type + "; filename=" + prefix + suffix);
             response.setStatus(HttpServletResponse.SC_OK);
             response.setContentLength(((int) Files.size(reportPath)));
         } catch (IOException ex) {
             ex.printStackTrace();
             throw new MessageException("jasper.generate.error", href, ex.getMessage());
         }
-        cacheAndDeleteReportFiles(reportPath);
         return outputStream -> {
             try (FileInputStream fileInputStream = new FileInputStream(reportPath.toFile())) {
                 int nRead;
@@ -113,9 +131,11 @@ public class DownloadController {
         };
     }
 
-    private void deleteReportFiles() {
+    @DeleteMapping("/disk/clean")
+    public @ResponseBody String diskClean() {
+        StringBuilder result = new StringBuilder("Disk clean completed successfully.");
         Path root = getTempReportFolder();
-        long deleteTime = System.currentTimeMillis() - (1000 * 60 * 10); // 10 minutes
+        long deleteTime = System.currentTimeMillis() - (1000 * 60 * 60); // 1 hour
         List<Path> deletePaths = new ArrayList<>();
         try (Stream<Path> pathStream = Files.list(root)) {
             pathStream.forEach(path -> {
@@ -124,10 +144,9 @@ public class DownloadController {
                     long createdOnTime = attributes.creationTime().to(TimeUnit.MILLISECONDS);
                     if (createdOnTime < deleteTime) {
                         deletePaths.add(path);
-                    } else {
-                        cacheReportFileMap.put(createdOnTime, path);
                     }
                 } catch (IOException ioe) {
+                    result.append("ERROR : Delete report file info, ").append(ioe.getMessage()).append("\n");
                     log.info("ERROR : Delete report file info, " + ioe.getMessage());
                 }
             });
@@ -139,32 +158,9 @@ public class DownloadController {
                 Files.deleteIfExists(path);
             } catch (IOException epn) {
                 log.info("ERROR : Delete report file, " + epn.getMessage());
+                result.append("ERROR : Delete report file, ").append(epn.getMessage()).append("\n");
             }
         });
-    }
-
-    private void cacheAndDeleteReportFiles(Path cacheReportPath) {
-        long deleteTime = System.currentTimeMillis() - (1000 * 60 * 10); // 10 minutes
-        Map<Long, Path> deletePathMap = new HashMap<>();
-        cacheReportFileMap.forEach((createdOnTime, deletePath) -> {
-            if (createdOnTime < deleteTime) {
-                deletePathMap.put(createdOnTime, deletePath);
-            }
-        });
-        deletePathMap.forEach((createTime, delPath) -> {
-            try {
-                Files.deleteIfExists(delPath);
-                cacheReportFileMap.remove(createTime);
-            } catch (IOException ex) {
-                log.info("ERROR : Delete cached report file, " + ex.getMessage());
-            }
-        });
-        try {
-            BasicFileAttributes attributes = Files.readAttributes(cacheReportPath, BasicFileAttributes.class);
-            long createdOnTime = attributes.creationTime().to(TimeUnit.MILLISECONDS);
-            cacheReportFileMap.put(createdOnTime, cacheReportPath);
-        } catch (IOException ioe) {
-            log.info("ERROR : Cache report file, " + ioe.getMessage());
-        }
+        return result.toString();
     }
 }
