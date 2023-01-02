@@ -422,6 +422,17 @@
         <root url="jar://$MAVEN_REPOSITORY$/com/arangodb/arangodb-spring-data/3.7.1/arangodb-spring-data-3.7.1-sources.jar!/" />
       </SOURCES>
     </library>
+    <library name="Maven: com.arangodb:jackson-dataformat-velocypack:3.1.0">
+      <CLASSES>
+        <root url="jar://$MAVEN_REPOSITORY$/com/arangodb/jackson-dataformat-velocypack/3.1.0/jackson-dataformat-velocypack-3.1.0.jar!/" />
+      </CLASSES>
+      <JAVADOC>
+        <root url="jar://$MAVEN_REPOSITORY$/com/arangodb/jackson-dataformat-velocypack/3.1.0/jackson-dataformat-velocypack-3.1.0-javadoc.jar!/" />
+      </JAVADOC>
+      <SOURCES>
+        <root url="jar://$MAVEN_REPOSITORY$/com/arangodb/jackson-dataformat-velocypack/3.1.0/jackson-dataformat-velocypack-3.1.0-sources.jar!/" />
+      </SOURCES>
+    </library>
     <library name="Maven: com.arangodb:velocypack:2.5.4">
       <CLASSES>
         <root url="jar://$MAVEN_REPOSITORY$/com/arangodb/velocypack/2.5.4/velocypack-2.5.4.jar!/" />

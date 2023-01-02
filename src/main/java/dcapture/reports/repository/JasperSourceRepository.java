@@ -1,7 +1,7 @@
 package dcapture.reports.repository;
 
+import dcapture.reports.jasper.JRTypeMap;
 import dcapture.reports.jasper.JasperSource;
-import jakarta.json.JsonObject;
 import net.sf.jasperreports.engine.JasperReport;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,7 +22,7 @@ public interface JasperSourceRepository {
 
     JasperReport getJasperReport(String reportName);
 
-    JsonObject getJasperDataFormat(JasperSource jasperSource);
+    JRTypeMap getJasperTypeMap(JasperSource jasperSource);
 
     JasperSource insert(JasperSource jasperSource);
 }

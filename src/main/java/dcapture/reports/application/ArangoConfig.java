@@ -2,7 +2,6 @@ package dcapture.reports.application;
 
 import com.arangodb.ArangoDB;
 import com.arangodb.springframework.config.ArangoConfiguration;
-import com.arangodb.springframework.core.ArangoOperations;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
@@ -82,7 +81,6 @@ public class ArangoConfig implements ArangoConfiguration {
 
     @Override
     public ArangoDB.Builder arango() {
-        ArangoOperations arangoOperations;
         return new ArangoDB.Builder().host(getHost(), getPortNumber()).user(getUsername()).password(getPassword());
     }
 

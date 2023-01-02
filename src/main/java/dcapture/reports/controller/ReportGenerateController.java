@@ -1,10 +1,12 @@
 package dcapture.reports.controller;
 
+import dcapture.reports.jasper.JRTypeMap;
 import dcapture.reports.jasper.JasperSource;
 import dcapture.reports.jasper.JsonJRDataSource;
 import dcapture.reports.repository.JasperSourceRepository;
+import dcapture.reports.util.MessageException;
 import dcapture.reports.util.ReportHref;
-import jakarta.json.JsonObject;
+import jakarta.json.*;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.JasperFillManager;
@@ -20,8 +22,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.StringReader;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -38,7 +42,7 @@ public class ReportGenerateController {
 
     @PostMapping("/pdf/file")
     public @ResponseBody StreamingResponseBody generate(@RequestParam("report_name") String reportName,
-                                                        @RequestBody String jasperData,
+                                                        @RequestBody String requestJson,
                                                         HttpServletResponse response) {
         if (reportName == null) {
             throw new RuntimeException("Report name should not be empty.");
@@ -47,8 +51,31 @@ public class ReportGenerateController {
         if (jasperSource == null) {
             throw new RuntimeException("PDF report source (" + reportName + ") should not be empty.");
         }
-        JsonObject dataFormat = jasperSourceRepository.getJasperDataFormat(jasperSource);
-        JsonJRDataSource jsonJRDataSource = new JsonJRDataSource(jasperData, dataFormat);
+        JsonObject configJson = Json.createObjectBuilder().build(), paramJson = Json.createObjectBuilder().build();
+        JsonArray dataJson = Json.createArrayBuilder().build();
+        try (JsonReader parser = Json.createReader(new StringReader(requestJson))) {
+            JsonObject objectNode = parser.readObject();
+            for (Map.Entry<String, JsonValue> entity : objectNode.entrySet()) {
+                if ("config".equalsIgnoreCase(entity.getKey())) {
+                    if (entity.getValue() instanceof JsonObject) {
+                        configJson = entity.getValue().asJsonObject();
+                    }
+                } else if ("parameters".equalsIgnoreCase(entity.getKey())) {
+                    if (entity.getValue() instanceof JsonObject) {
+                        paramJson = entity.getValue().asJsonObject();
+                    }
+                } else if ("data".equalsIgnoreCase(entity.getKey())) {
+                    if (entity.getValue() instanceof JsonArray) {
+                        dataJson = entity.getValue().asJsonArray();
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            throw new MessageException("jasper.data.error", ex.getMessage());
+        }
+        JRTypeMap jrTypeMap = jasperSourceRepository.getJasperTypeMap(jasperSource);
+        JsonJRDataSource jsonJRDataSource = new JsonJRDataSource(jrTypeMap, configJson, paramJson, dataJson);
         JasperReport jasperReport = jasperSourceRepository.getJasperReport(reportName);
         try {
             JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, jsonJRDataSource.getParameters(),
@@ -62,13 +89,36 @@ public class ReportGenerateController {
 
     @PostMapping("/pdf/link")
     public @ResponseBody ResponseEntity<ReportHref> generateLink(@RequestParam("report_name") String reportName,
-                                                                 @RequestBody String jasperData) {
+                                                                 @RequestBody String requestJson) {
         JasperSource jasperSource = jasperSourceRepository.findByName(reportName);
         if (jasperSource == null) {
             throw new RuntimeException("PDF report link source (" + reportName + ") should not be empty.");
         }
-        JsonObject dataFormat = jasperSourceRepository.getJasperDataFormat(jasperSource);
-        JsonJRDataSource jsonJRDataSource = new JsonJRDataSource(jasperData, dataFormat);
+        JsonObject configJson = Json.createObjectBuilder().build(), paramJson = Json.createObjectBuilder().build();
+        JsonArray dataJson = Json.createArrayBuilder().build();
+        try (JsonReader parser = Json.createReader(new StringReader(requestJson))) {
+            JsonObject objectNode = parser.readObject();
+            for (Map.Entry<String, JsonValue> entity : objectNode.entrySet()) {
+                if ("config".equalsIgnoreCase(entity.getKey())) {
+                    if (entity.getValue() instanceof JsonObject) {
+                        configJson = entity.getValue().asJsonObject();
+                    }
+                } else if ("parameters".equalsIgnoreCase(entity.getKey())) {
+                    if (entity.getValue() instanceof JsonObject) {
+                        paramJson = entity.getValue().asJsonObject();
+                    }
+                } else if ("data".equalsIgnoreCase(entity.getKey())) {
+                    if (entity.getValue() instanceof JsonArray) {
+                        dataJson = entity.getValue().asJsonArray();
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            throw new MessageException("jasper.data.error", ex.getMessage());
+        }
+        JRTypeMap typeMap = jasperSourceRepository.getJasperTypeMap(jasperSource);
+        JsonJRDataSource jsonJRDataSource = new JsonJRDataSource(typeMap, configJson, paramJson, dataJson);
         try {
             JasperReport jasperReport = jasperSourceRepository.getJasperReport(reportName);
             JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, jsonJRDataSource.getParameters(),

@@ -2,6 +2,7 @@ package dcapture.reports.arangodb;
 
 import com.arangodb.ArangoCursor;
 import com.arangodb.springframework.core.ArangoOperations;
+import dcapture.reports.jasper.JRTypeMap;
 import dcapture.reports.jasper.JasperSource;
 import dcapture.reports.repository.JasperSourceRepository;
 import dcapture.reports.util.LocaleMessage;
@@ -35,7 +36,7 @@ import java.util.Map;
 @Scope(ConfigurableBeanFactory.SCOPE_SINGLETON)
 public class JasperSourceServiceImpl implements JasperSourceRepository {
     private static Map<String, JasperReport> jasperReportMap;
-    private static Map<String, JsonObject> jasperDataFormatMap;
+    private static Map<String, JRTypeMap> jasperDataFormatMap;
     private final ArangoOperations arangoOperations;
     private final LocaleMessage localeMessage;
     @Value("${jasper.source_folder}")
@@ -177,7 +178,7 @@ public class JasperSourceServiceImpl implements JasperSourceRepository {
     }
 
     @Override
-    public JsonObject getJasperDataFormat(JasperSource source) {
+    public JRTypeMap getJasperTypeMap(JasperSource source) {
         if (jasperDataFormatMap == null) {
             initialize();
         }
@@ -185,7 +186,7 @@ public class JasperSourceServiceImpl implements JasperSourceRepository {
             if (source.getDataFormat() != null) {
                 try (JsonReader parser = Json.createReader(new StringReader(source.getDataFormat()))) {
                     JsonObject dataFormat = parser.readObject();
-                    jasperDataFormatMap.put(source.getReportName(), dataFormat);
+                    jasperDataFormatMap.put(source.getReportName(), createJRTypeMap(dataFormat));
                 } catch (Exception ex) {
                     ex.printStackTrace();
                     throw new MessageException("jasper.data_format.error", ex.getMessage());
@@ -196,6 +197,14 @@ public class JasperSourceServiceImpl implements JasperSourceRepository {
             return jasperDataFormatMap.get(source.getReportName());
         }
         throw new MessageException("jasper.data_format.error");
+    }
+
+    private JRTypeMap createJRTypeMap(JsonObject json) {
+        JRTypeMap typeMap = new JRTypeMap();
+        typeMap.setParameterTypeMap(json.get("parameters"));
+        typeMap.setConfigTypeMap(json.get("config"));
+        typeMap.setDataTypeMap(json.get("data"));
+        return typeMap;
     }
 
     public Path getJasperSourceFolder() {

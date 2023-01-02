@@ -45,6 +45,7 @@
     <orderEntry type="library" name="Maven: com.arangodb:arangodb-java-driver:6.18.0" level="project" />
     <orderEntry type="library" name="Maven: com.arangodb:velocypack:2.5.4" level="project" />
     <orderEntry type="library" name="Maven: org.slf4j:slf4j-api:1.7.36" level="project" />
+    <orderEntry type="library" name="Maven: com.arangodb:jackson-dataformat-velocypack:3.1.0" level="project" />
     <orderEntry type="library" name="Maven: com.arangodb:arangodb-spring-data:3.7.1" level="project" />
     <orderEntry type="library" name="Maven: org.springframework:spring-tx:5.3.23" level="project" />
     <orderEntry type="library" name="Maven: org.springframework:spring-context:5.3.23" level="project" />

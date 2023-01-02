@@ -36,6 +36,7 @@
         <beanutils>1.9.4</beanutils>
         <json>2.0.1</json>
         <json-impl>2.0.1</json-impl>
+        <arangodb-jackson>3.1.0</arangodb-jackson>
         <arangodb-driver>6.18.0</arangodb-driver>
         <arangodb-spring>3.7.1</arangodb-spring>
         <arangodb-spring-boot>2.6-0</arangodb-spring-boot>
@@ -81,6 +82,13 @@
             <groupId>com.arangodb</groupId>
             <artifactId>arangodb-java-driver</artifactId>
             <version>${arangodb-driver}</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.arangodb/jackson-dataformat-velocypack -->
+        <dependency>
+            <groupId>com.arangodb</groupId>
+            <artifactId>jackson-dataformat-velocypack</artifactId>
+            <version>${arangodb-jackson}</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/com.arangodb/arangodb-spring-data -->

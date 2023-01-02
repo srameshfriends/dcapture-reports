@@ -4,6 +4,11 @@ Reporting service.
 
 #### ACTIVITIES
 
+23.01.0
+
+- Indian currency format updated.
+- Data type config header used for reports.
+
 22.11.0
 
 - Request parameter added to having more information.

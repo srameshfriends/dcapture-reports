@@ -21,7 +21,7 @@ spring:
       password: root
 
 jasper:
-  source_folder: /opt/dcapture/reports/jasper
+  source_folder: C:\\Users\\admin\\JaspersoftWorkspace\\dcapture-jasper
 
 management:
   endpoints:
