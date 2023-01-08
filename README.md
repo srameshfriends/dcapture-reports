@@ -4,6 +4,11 @@ Reporting service.
 
 #### ACTIVITIES
 
+23.01.1
+
+- QR Code generator added
+- POS Receipt report improvements
+
 23.01.0
 
 - Indian currency format updated.

@@ -36,6 +36,7 @@
         <beanutils>1.9.4</beanutils>
         <json>2.0.1</json>
         <json-impl>2.0.1</json-impl>
+        <zxing>3.5.1</zxing>
         <arangodb-jackson>3.1.0</arangodb-jackson>
         <arangodb-driver>6.18.0</arangodb-driver>
         <arangodb-spring>3.7.1</arangodb-spring>
@@ -196,6 +197,21 @@
             <artifactId>jasperreports-fonts</artifactId>
             <version>${jasper}</version>
         </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.google.zxing/core -->
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>${zxing}</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.google.zxing/javase -->
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>javase</artifactId>
+            <version>${zxing}</version>
+        </dependency>
+
 
     </dependencies>
 

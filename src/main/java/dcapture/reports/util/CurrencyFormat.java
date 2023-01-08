@@ -1,23 +1,24 @@
 package dcapture.reports.util;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 
 public class CurrencyFormat {
     private final DecimalFormat decimalFormat = new DecimalFormat("###,###,###.00");
     private boolean isMinusPrefix, isZeroEmpty, isIndianCurrency;
+    private MathContext mathContext;
 
     public CurrencyFormat() {
-        this.isZeroEmpty = true;
         this.isMinusPrefix = false;
+        this.isZeroEmpty = true;
         this.isIndianCurrency = true;
+        mathContext = new MathContext(2);
     }
 
-    public CurrencyFormat(boolean isMinusPrefix, boolean isZeroEmpty) {
-        this.isMinusPrefix = isMinusPrefix;
-        this.isZeroEmpty = isZeroEmpty;
-        this.isIndianCurrency = true;
+    public void setMathContext(MathContext mathContext) {
+        this.mathContext = mathContext;
     }
 
     public void setMinusPrefix(boolean minusPrefix) {
@@ -39,27 +40,11 @@ public class CurrencyFormat {
         if (!isIndianCurrency) {
             return decimalFormat.format(value);
         }
-        return toFormattedText(value + "", 0 > value);
+        return toFormattedText(value + "", 0 > value, 0);
     }
 
     public String format(double value) {
-        if (0 == value) {
-            return isZeroEmpty ? "" : "0";
-        }
-        if (!isIndianCurrency) {
-            return decimalFormat.format(value);
-        }
-        return toFormattedText(value + "", 0 > value);
-    }
-
-    public String format(float value) {
-        if (0 == value) {
-            return isZeroEmpty ? "" : "0";
-        }
-        if (!isIndianCurrency) {
-            return decimalFormat.format(value);
-        }
-        return toFormattedText(value + "", 0 > value);
+        return format(BigDecimal.valueOf(value));
     }
 
     public String format(BigDecimal value) {
@@ -69,10 +54,11 @@ public class CurrencyFormat {
         if (BigDecimal.ZERO.equals(value)) {
             return isZeroEmpty ? "" : "0";
         }
+        value = value.round(mathContext);
         if (!isIndianCurrency) {
             return decimalFormat.format(value);
         }
-        return toFormattedText(value.toString(), 0 < BigDecimal.ZERO.compareTo(value));
+        return toFormattedText(value.toPlainString(), 0 < BigDecimal.ZERO.compareTo(value), mathContext.getPrecision());
     }
 
     public Number parse(String text) {
@@ -138,7 +124,7 @@ public class CurrencyFormat {
         return BigDecimal.valueOf(parse(text).doubleValue());
     }
 
-    private String toFormattedText(String text, boolean isNegative) {
+    private String toFormattedText(String text, boolean isNegative, int precision) {
         int dotIndex = text.indexOf(".");
         String afterDot = 0 > dotIndex ? "" : text.substring(dotIndex + 1);
         String beforeDot = 0 > dotIndex ? text : text.substring(0, dotIndex);
@@ -161,12 +147,27 @@ public class CurrencyFormat {
         if (text.startsWith(",")) {
             text = text.substring(1);
         }
-        if (0 < afterDot.length()) {
-            text = text + "." + afterDot;
-        }
+        text = text + getDecimalText(afterDot, precision);
         if (isNegative) {
             return isMinusPrefix ? "-" + text : "(" + text + ")";
         }
         return text;
+    }
+
+    private String getDecimalText(String text, int precision) {
+        if (0 == precision) {
+            return "";
+        }
+        if (text.length() == precision) {
+            return "." + text;
+        } else if (text.length() > precision) {
+            return "." + text.substring(0, precision);
+        } else {
+            int size = precision - text.length();
+            for (int idx = 0; idx < size; idx++) {
+                text = text.concat("0");
+            }
+            return "." + text;
+        }
     }
 }

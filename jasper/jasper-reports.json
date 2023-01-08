@@ -2,7 +2,8 @@
   "config": {
     "currency": "string",
     "org_logo": "string",
-    "upi_pay_qr": "string"
+    "upi_pay_qr": "string",
+    "precision": "int"
   },
   "parameters": {
     "report_title": "string",
@@ -52,13 +53,22 @@
     "taxable_amount": "currency",
     "total_price": "currency",
     "total_unit_price": "currency",
-    "total_amount": "currency"
+    "total_amount": "currency",
+    "bank_name": "string",
+    "bank_branch": "string",
+    "bank_ifsc": "string",
+    "bank_acc_name": "string",
+    "bank_acc_num": "string",
+    "bank_acc_type": "string",
+    "note1": "string",
+    "note2": "string"
   },
   "data": {
     "tax_amount": "currency",
     "quantity": "decimal",
     "total_price": "currency",
     "fk": "string",
+    "hsn": "string",
     "product_fk": "string",
     "description": "string",
     "discount": "currency",

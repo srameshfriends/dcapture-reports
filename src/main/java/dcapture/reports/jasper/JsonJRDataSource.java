@@ -10,6 +10,7 @@ import org.springframework.core.io.ClassPathResource;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.MathContext;
 import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -148,6 +149,10 @@ public class JsonJRDataSource implements JRDataSource {
             if (config.containsKey("currency")) {
                 currencyFormat.setIndianCurrency("INR".equals(config.getString("currency")));
             }
+            if (config.containsKey("precision")) {
+                int precision = config.getInt("precision", 2);
+                currencyFormat.setMathContext(new MathContext(precision));
+            }
         }
         return currencyFormat;
     }
@@ -163,11 +168,15 @@ public class JsonJRDataSource implements JRDataSource {
             URL payQRUrl = getClassPathURL(suffix, "Organisation upi payment QR url not found at (" + suffix + ")");
             paramMap.put("upi_pay_qr", payQRUrl);
         }
+        paramMap.put("printed_on", timeFormat.format(new Date()));
     }
 
     private URL getClassPathURL(String suffix, String error) {
         try {
             ClassPathResource resource = new ClassPathResource("static" + suffix);
+            if (!resource.exists()) {
+                throw new NullPointerException(error);
+            }
             return resource.getURL();
         } catch (IOException ex) {
             throw new RuntimeException(error, ex);

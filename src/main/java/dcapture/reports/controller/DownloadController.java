@@ -1,5 +1,6 @@
 package dcapture.reports.controller;
 
+import dcapture.reports.util.IOFolderFileUtil;
 import dcapture.reports.util.MessageException;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jasperreports.engine.JasperPrint;
@@ -17,15 +18,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 
 @Slf4j
 @RestController
@@ -35,27 +30,10 @@ public class DownloadController {
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
     public static final String ENCODING = "UTF-8";
     private static final int BUFFER_SIZE = 256 * 1024;
-    private static Path tempReportFolder;
-
-    public static Path getTempReportFolder() {
-        if (tempReportFolder == null) {
-            String pathText = System.getProperty("java.io.tmpdir");
-            Path folder = Paths.get(pathText, "dcapture", "reports");
-            if (!Files.exists(folder)) {
-                try {
-                    folder = Files.createDirectories(folder);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            tempReportFolder = folder;
-        }
-        return tempReportFolder;
-    }
 
     public static String saveRandomPdfReport(JasperPrint jasperPrint, String reportName) {
         String name = reportName + "-" + UUID.randomUUID().toString().replaceAll("-", "") + ".pdf";
-        File file = getTempReportFolder().resolve(name).toFile();
+        File file = IOFolderFileUtil.getTempDirectory().resolve(name).toFile();
         try (FileOutputStream outputStream = new FileOutputStream(file)) {
             JRPdfExporter jrPdfExporter = new JRPdfExporter();
             jrPdfExporter.setExporterInput(new SimpleExporterInput(jasperPrint));
@@ -79,7 +57,7 @@ public class DownloadController {
         if (href.isBlank()) {
             throw new MessageException("jasper.link.empty");
         }
-        Path reportPath = getTempReportFolder().resolve(href);
+        Path reportPath = IOFolderFileUtil.getTempDirectory().resolve(href);
         if (!Files.exists(reportPath)) {
             throw new MessageException("jasper.report.notCreated", reportPath.toString());
         }
@@ -129,38 +107,5 @@ public class DownloadController {
                 }
             }
         };
-    }
-
-    @DeleteMapping("/disk/clean")
-    public @ResponseBody String diskClean() {
-        StringBuilder result = new StringBuilder("Disk clean completed successfully.");
-        Path root = getTempReportFolder();
-        long deleteTime = System.currentTimeMillis() - (1000 * 60 * 60); // 1 hour
-        List<Path> deletePaths = new ArrayList<>();
-        try (Stream<Path> pathStream = Files.list(root)) {
-            pathStream.forEach(path -> {
-                try {
-                    BasicFileAttributes attributes = Files.readAttributes(path, BasicFileAttributes.class);
-                    long createdOnTime = attributes.creationTime().to(TimeUnit.MILLISECONDS);
-                    if (createdOnTime < deleteTime) {
-                        deletePaths.add(path);
-                    }
-                } catch (IOException ioe) {
-                    result.append("ERROR : Delete report file info, ").append(ioe.getMessage()).append("\n");
-                    log.info("ERROR : Delete report file info, " + ioe.getMessage());
-                }
-            });
-        } catch (IOException exception) {
-            exception.printStackTrace();
-        }
-        deletePaths.forEach(path -> {
-            try {
-                Files.deleteIfExists(path);
-            } catch (IOException epn) {
-                log.info("ERROR : Delete report file, " + epn.getMessage());
-                result.append("ERROR : Delete report file, ").append(epn.getMessage()).append("\n");
-            }
-        });
-        return result.toString();
     }
 }
